@@ -6,6 +6,8 @@
 @import './admin.css';
 @import './admin-bookings.css';
 @import './admin-fleet.css';
+@import './admin-customers.css';
+@import './admin-rentals.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';

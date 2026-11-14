@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\User;
@@ -127,7 +126,7 @@ class AdminBookingManagementTest extends TestCase
         $this->assertSame(Booking::class, $audit->fresh()->subject_type);
     }
 
-    public function test_admin_actions_follow_existing_transitions_and_create_audit_entries(): void
+    public function test_admin_reservation_actions_preserve_transitions_and_rentals_use_their_own_flow(): void
     {
         $admin = $this->userWithRole('admin');
         $booking = $this->booking();
@@ -144,17 +143,15 @@ class AdminBookingManagementTest extends TestCase
         $this->assertSame('Availability confirmed.', $booking->fresh()->admin_remarks);
         $this->assertAuditTransition($booking, 'booking_approved', Booking::STATUS_PENDING, Booking::STATUS_APPROVED, $admin);
 
-        $this->from(route('admin.bookings.show', $booking))
-            ->patch(route('admin.bookings.status', $booking), ['status' => Booking::STATUS_ONGOING])
-            ->assertRedirect(route('admin.bookings.show', $booking));
-        $this->assertAuditTransition($booking, 'booking_marked_ongoing', Booking::STATUS_APPROVED, Booking::STATUS_ONGOING, $admin);
-        $this->assertSame('Availability confirmed.', $booking->fresh()->admin_remarks);
+        $this->patchJson(route('admin.bookings.status', $booking), ['status' => Booking::STATUS_ONGOING])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+        $this->patchJson(route('admin.bookings.status', $booking), ['status' => Booking::STATUS_COMPLETED])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
 
-        $this->from(route('admin.bookings.show', $booking))
-            ->patch(route('admin.bookings.status', $booking), ['status' => Booking::STATUS_COMPLETED])
-            ->assertRedirect(route('admin.bookings.show', $booking));
-        $this->assertAuditTransition($booking, 'booking_marked_completed', Booking::STATUS_ONGOING, Booking::STATUS_COMPLETED, $admin);
-        $this->assertSame(Booking::STATUS_COMPLETED, $booking->fresh()->status);
+        $this->assertSame(Booking::STATUS_APPROVED, $booking->fresh()->status);
+        $this->assertDatabaseCount('audit_logs', 1);
     }
 
     public function test_pending_booking_can_be_rejected_or_cancelled_and_reason_is_preserved_in_history(): void
@@ -181,9 +178,9 @@ class AdminBookingManagementTest extends TestCase
         ]);
         $this->from(route('admin.bookings.show', $cancelledBooking))
             ->patch(route('admin.bookings.status', $cancelledBooking), [
-            'status' => Booking::STATUS_CANCELLED,
-            'admin_remarks' => 'Customer requested cancellation.',
-        ])->assertRedirect(route('admin.bookings.show', $cancelledBooking));
+                'status' => Booking::STATUS_CANCELLED,
+                'admin_remarks' => 'Customer requested cancellation.',
+            ])->assertRedirect(route('admin.bookings.show', $cancelledBooking));
 
         $this->assertSame(Booking::STATUS_CANCELLED, $cancelledBooking->fresh()->status);
         $this->assertDatabaseHas('bookings', ['id' => $cancelledBooking->id]);

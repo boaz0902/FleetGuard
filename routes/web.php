@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FleetController;
+use App\Http\Controllers\Admin\RentalController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\VehicleAvailabilityController;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,10 @@ Route::middleware(['auth', 'can:review,App\\Models\\Booking'])->prefix('admin')-
     Route::get('/bookings', [BookingManagementController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [BookingManagementController::class, 'show'])->name('bookings.show');
     Route::patch('/bookings/{booking}/status', [BookingManagementController::class, 'updateStatus'])->name('bookings.status');
+    Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
+    Route::get('/rentals/{booking}', [RentalController::class, 'show'])->name('rentals.show');
+    Route::post('/rentals/{booking}/checkout', [RentalController::class, 'checkOut'])->name('rentals.checkout');
+    Route::post('/rentals/{booking}/checkin', [RentalController::class, 'checkIn'])->name('rentals.checkin');
     Route::get('/calendar', [BookingCalendarController::class, 'index'])->name('calendar.index');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
@@ -76,4 +81,15 @@ Route::middleware(['auth', 'can:viewAny,App\\Models\\Vehicle'])->prefix('admin')
     Route::get('/fleet/{vehicle}', [FleetController::class, 'show'])
         ->middleware('can:view,vehicle')
         ->name('fleet.show');
+});
+
+Route::middleware(['auth', 'can:viewAny,App\\Models\\Customer'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+    Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])
+        ->middleware('can:update,customer')
+        ->name('customers.edit');
+    Route::put('/customers/{customer}', [CustomerController::class, 'update'])
+        ->middleware('can:update,customer')
+        ->name('customers.update');
 });

@@ -145,6 +145,36 @@ if (fleetViewButtons.length > 0) {
     });
 }
 
+const customerViewButtons = document.querySelectorAll('[data-customer-view-toggle]');
+
+if (customerViewButtons.length > 0) {
+    const viewPanels = document.querySelectorAll('[data-customer-view-panel]');
+    const viewStorageKey = 'admin-customer-directory-view';
+
+    const setCustomerView = (view, persist = true) => {
+        viewPanels.forEach((panel) => {
+            panel.hidden = panel.dataset.customerViewPanel !== view;
+        });
+        customerViewButtons.forEach((button) => {
+            button.setAttribute('aria-pressed', String(button.dataset.customerViewToggle === view));
+        });
+
+        if (persist) {
+            window.localStorage.setItem(viewStorageKey, view);
+        }
+    };
+
+    const storedView = window.localStorage.getItem(viewStorageKey);
+    setCustomerView(
+        ['table', 'grid'].includes(storedView) ? storedView : 'table',
+        false,
+    );
+
+    customerViewButtons.forEach((button) => {
+        button.addEventListener('click', () => setCustomerView(button.dataset.customerViewToggle));
+    });
+}
+
 document.querySelectorAll('[data-fleet-tabs]').forEach((tabList) => {
     const tabs = [...tabList.querySelectorAll('[data-fleet-tab]')];
     const panels = [...document.querySelectorAll('[data-fleet-tab-panel]')];
@@ -226,5 +256,48 @@ document.querySelectorAll('form[data-admin-disable-submit]').forEach((form) => {
         form.querySelectorAll('button[type="submit"]').forEach((button) => {
             button.disabled = true;
         });
+    });
+});
+
+const rentalViewButtons = document.querySelectorAll('[data-rental-view-toggle]');
+
+if (rentalViewButtons.length > 0) {
+    const rentalViewPanels = document.querySelectorAll('[data-rental-view-panel]');
+    const viewStorageKey = 'admin-rental-directory-view';
+    const setRentalView = (view, persist = true) => {
+        rentalViewPanels.forEach((panel) => {
+            panel.hidden = panel.dataset.rentalViewPanel !== view;
+        });
+        rentalViewButtons.forEach((button) => {
+            button.setAttribute('aria-pressed', String(button.dataset.rentalViewToggle === view));
+        });
+
+        if (persist) {
+            window.localStorage.setItem(viewStorageKey, view);
+        }
+    };
+    const storedView = window.localStorage.getItem(viewStorageKey);
+
+    setRentalView(['table', 'grid'].includes(storedView) ? storedView : 'table', false);
+    rentalViewButtons.forEach((button) => {
+        button.addEventListener('click', () => setRentalView(button.dataset.rentalViewToggle));
+    });
+}
+
+document.querySelectorAll('[data-rental-dialog-open]').forEach((button) => {
+    const dialog = document.getElementById(button.dataset.rentalDialogOpen);
+
+    if (!dialog) {
+        return;
+    }
+
+    button.addEventListener('click', () => dialog.showModal());
+    dialog.querySelectorAll('[data-rental-dialog-close]').forEach((closeButton) => {
+        closeButton.addEventListener('click', () => dialog.close());
+    });
+    dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+            dialog.close();
+        }
     });
 });

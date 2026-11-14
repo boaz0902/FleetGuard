@@ -21,15 +21,13 @@
             'booking_approved' => 'Reservation approved',
             'booking_rejected' => 'Reservation rejected',
             'booking_cancelled' => 'Reservation cancelled',
-            'booking_marked_ongoing' => 'Rental marked ongoing',
-            'booking_marked_completed' => 'Rental marked completed',
+            'rental_checked_out' => 'Rental checked out',
+            'rental_checked_in' => 'Rental checked in',
             'booking_status_changed' => 'Status changed',
         ];
         $transitionLabels = [
             \App\Models\Booking::STATUS_APPROVED => ['Approve reservation', 'check2-circle', 'admin-booking-action--approve'],
             \App\Models\Booking::STATUS_REJECTED => ['Reject request', 'x-circle', 'admin-booking-action--reject'],
-            \App\Models\Booking::STATUS_ONGOING => ['Mark rental ongoing', 'car-front', 'admin-booking-action--ongoing'],
-            \App\Models\Booking::STATUS_COMPLETED => ['Mark completed', 'check2-circle', 'admin-booking-action--complete'],
             \App\Models\Booking::STATUS_CANCELLED => ['Cancel reservation', 'slash-circle', 'admin-booking-action--cancel'],
         ];
     @endphp
@@ -208,11 +206,22 @@
                             @endforeach
                         </div>
                     </form>
+                @elseif ($booking->status === \App\Models\Booking::STATUS_ONGOING)
+                    <div class="admin-booking-terminal-state">
+                        <i class="bi bi-key" aria-hidden="true"></i>
+                        <span>Check-in actions are available from the Rental details page.</span>
+                    </div>
                 @else
                     <div class="admin-booking-terminal-state">
                         <i class="bi bi-shield-check" aria-hidden="true"></i>
                         <span>This reservation is in a terminal state and has no further available actions.</span>
                     </div>
+                @endif
+                @if (in_array($booking->status, [\App\Models\Booking::STATUS_APPROVED, \App\Models\Booking::STATUS_ONGOING, \App\Models\Booking::STATUS_COMPLETED], true))
+                    <a class="admin-bookings-back" href="{{ route('admin.rentals.show', $booking) }}">
+                        <i class="bi bi-key" aria-hidden="true"></i>
+                        <span>View rental details</span>
+                    </a>
                 @endif
             </section>
         </div>

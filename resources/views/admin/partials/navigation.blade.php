@@ -31,6 +31,13 @@
                 <i class="bi bi-calendar-check" aria-hidden="true"></i>
                 <span class="admin-nav-label">Reservations</span>
             </a>
+            <a class="admin-nav-item {{ request()->routeIs('admin.rentals.*') ? 'is-active' : '' }}"
+               href="{{ route('admin.rentals.index') }}"
+               @if (request()->routeIs('admin.rentals.*')) aria-current="page" @endif
+               title="Rentals">
+                <i class="bi bi-key" aria-hidden="true"></i>
+                <span class="admin-nav-label">Rentals</span>
+            </a>
             <a class="admin-nav-item {{ request()->routeIs('admin.calendar.*') ? 'is-active' : '' }}"
                href="{{ route('admin.calendar.index') }}"
                @if (request()->routeIs('admin.calendar.*')) aria-current="page" @endif
@@ -48,10 +55,13 @@
                 <i class="bi bi-car-front" aria-hidden="true"></i>
                 <span class="admin-nav-label">Fleet / Vehicles</span>
             </a>
-            <div class="admin-nav-item is-disabled" aria-disabled="true" title="Customers — upcoming">
+            <a class="admin-nav-item {{ request()->routeIs('admin.customers.*') ? 'is-active' : '' }}"
+               href="{{ route('admin.customers.index') }}"
+               @if (request()->routeIs('admin.customers.*')) aria-current="page" @endif
+               title="Customers">
                 <i class="bi bi-people" aria-hidden="true"></i>
-                <span class="admin-nav-label">Customers <small>Upcoming</small></span>
-            </div>
+                <span class="admin-nav-label">Customers</span>
+            </a>
             <div class="admin-nav-item is-disabled" aria-disabled="true" title="Reports — upcoming">
                 <i class="bi bi-bar-chart" aria-hidden="true"></i>
                 <span class="admin-nav-label">Reports <small>Upcoming</small></span>

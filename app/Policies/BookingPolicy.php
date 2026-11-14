@@ -42,4 +42,9 @@ class BookingPolicy
     {
         return $this->review($user);
     }
+
+    public function manageRental(User $user, Booking $booking): bool
+    {
+        return $user->isAdmin();
+    }
 }

@@ -4,15 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateBookingStatusRequest;
-use App\Models\AuditLog;
 use App\Models\Booking;
-use App\Models\Vehicle;
-use App\Services\VehicleAvailabilityService;
+use App\Services\BookingStatusTransitionService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -62,7 +58,7 @@ class BookingManagementController extends Controller
             $timeSearches = $this->parseSearchTime($search);
 
             $bookingsQuery->where(function (Builder $query) use (
-                $search,
+
                 $searchPattern,
                 $durationSearch,
                 $totalSearch,
@@ -262,85 +258,39 @@ class BookingManagementController extends Controller
                 ->orderBy('id'),
         ]);
 
+        $allowedTransitions = array_values(array_diff(
+            $booking->getStatusTransitions()[$booking->status] ?? [],
+            [Booking::STATUS_ONGOING, Booking::STATUS_COMPLETED],
+        ));
+
+        if ($booking->status === Booking::STATUS_ONGOING) {
+            $allowedTransitions = array_values(array_diff($allowedTransitions, [Booking::STATUS_CANCELLED]));
+        }
+
         return view('admin.bookings.show', [
             'booking' => $booking,
-            'allowedTransitions' => $booking->getStatusTransitions()[$booking->status] ?? [],
+            'allowedTransitions' => $allowedTransitions,
         ]);
     }
 
     public function updateStatus(
         UpdateBookingStatusRequest $request,
         Booking $booking,
-        VehicleAvailabilityService $availability,
-    )
-    {
+        BookingStatusTransitionService $transitions,
+    ) {
         $this->authorize('review', Booking::class);
 
         $validated = $request->validated();
         $status = $validated['status'];
         $reason = trim((string) ($validated['admin_remarks'] ?? ''));
 
-        $booking = DB::transaction(function () use ($booking, $status, $reason, $availability) {
-            $vehicle = Vehicle::query()
-                ->whereKey($booking->vehicle_id)
-                ->lockForUpdate()
-                ->firstOrFail();
-            $lockedBooking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
-
-            if (! $lockedBooking->canTransitionTo($status)) {
-                throw ValidationException::withMessages([
-                    'status' => ['This status transition is not allowed.'],
-                ]);
-            }
-
-            if ($status === Booking::STATUS_APPROVED) {
-                if (! $availability->isAvailable(
-                    $vehicle,
-                    $lockedBooking->pickup_datetime,
-                    $lockedBooking->return_datetime,
-                    $lockedBooking->id,
-                )) {
-                    throw ValidationException::withMessages([
-                        'status' => ['This booking conflicts with an approved or ongoing booking or a maintenance period.'],
-                    ]);
-                }
-            }
-
-            $previousStatus = $lockedBooking->status;
-            $updates = ['status' => $status];
-
-            if ($reason !== '') {
-                $updates['admin_remarks'] = $reason;
-            }
-
-            $lockedBooking->update($updates);
-            $action = match ($status) {
-                Booking::STATUS_APPROVED => 'booking_approved',
-                Booking::STATUS_REJECTED => 'booking_rejected',
-                Booking::STATUS_CANCELLED => 'booking_cancelled',
-                Booking::STATUS_ONGOING => 'booking_marked_ongoing',
-                Booking::STATUS_COMPLETED => 'booking_marked_completed',
-            };
-            $changes = [
-                'from' => $previousStatus,
-                'to' => $status,
-            ];
-
-            if ($reason !== '') {
-                $changes['reason'] = $reason;
-            }
-
-            AuditLog::query()->create([
-                'user_id' => Auth::id(),
-                'action' => $action,
-                'subject_type' => Booking::class,
-                'subject_id' => $lockedBooking->id,
-                'changes' => $changes,
-                'created_at' => now(),
+        if (in_array($status, [Booking::STATUS_ONGOING, Booking::STATUS_COMPLETED], true)) {
+            throw ValidationException::withMessages([
+                'status' => ['Use the Rentals page to check vehicles out or in.'],
             ]);
+        }
 
-            return $lockedBooking;
-        });
+        $booking = $transitions->transition($booking, $status, $request->user(), $reason);
 
         if ($request->expectsJson()) {
             return response()->json([
