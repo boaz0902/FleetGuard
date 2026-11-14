@@ -2,14 +2,25 @@
 
 @section('content')
     <div class="admin-shell" data-admin-shell>
+        <script>
+            if (!window.matchMedia('(max-width: 760px)').matches
+                && window.localStorage.getItem('fleetguard.admin-sidebar-collapsed') === 'true') {
+                document.currentScript.parentElement.classList.add('is-sidebar-collapsed');
+            }
+        </script>
         <button class="admin-sidebar-backdrop" type="button" aria-label="Close navigation menu" data-admin-backdrop></button>
 
         @include('admin.partials.navigation')
 
+        <button class="admin-sidebar-edge-toggle" type="button" aria-controls="admin-sidebar" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar" data-admin-menu-toggle data-admin-sidebar-toggle>
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+
         <div class="admin-main">
             <header class="admin-topbar">
                 <div class="admin-topbar-heading">
-                    <button class="admin-menu-toggle" type="button" aria-controls="admin-sidebar" aria-expanded="true" aria-label="Collapse sidebar" data-admin-menu-toggle>
+                    <button class="admin-menu-toggle admin-mobile-menu-toggle" type="button" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open navigation menu" data-admin-menu-toggle data-admin-mobile-menu-toggle>
                         <i class="bi bi-list" aria-hidden="true"></i>
                         <i class="bi bi-x-lg" aria-hidden="true"></i>
                     </button>

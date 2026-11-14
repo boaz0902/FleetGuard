@@ -1,10 +1,15 @@
 const adminShell = document.querySelector('[data-admin-shell]');
 
 if (adminShell) {
-    const menuToggle = adminShell.querySelector('[data-admin-menu-toggle]');
+    const sidebarStorageKey = 'fleetguard.admin-sidebar-collapsed';
+    const menuToggles = adminShell.querySelectorAll('[data-admin-menu-toggle]');
     const backdrop = adminShell.querySelector('[data-admin-backdrop]');
     const sidebar = adminShell.querySelector('#admin-sidebar');
     const mobileNavigation = window.matchMedia('(max-width: 760px)');
+
+    if (!mobileNavigation.matches && window.localStorage.getItem(sidebarStorageKey) === 'true') {
+        adminShell.classList.add('is-sidebar-collapsed');
+    }
 
     const updateToggleState = () => {
         const isMobile = mobileNavigation.matches;
@@ -12,12 +17,14 @@ if (adminShell) {
             ? adminShell.classList.contains('is-sidebar-open')
             : !adminShell.classList.contains('is-sidebar-collapsed');
 
+        document.body.classList.toggle('admin-sidebar-open', isMobile && isExpanded);
+
         if (sidebar) {
             sidebar.inert = isMobile && !isExpanded;
             sidebar.setAttribute('aria-hidden', String(isMobile && !isExpanded));
         }
 
-        if (menuToggle) {
+        menuToggles.forEach((menuToggle) => {
             menuToggle.setAttribute('aria-expanded', String(isExpanded));
             menuToggle.setAttribute(
                 'aria-label',
@@ -25,7 +32,13 @@ if (adminShell) {
                     ? (isExpanded ? 'Close navigation menu' : 'Open navigation menu')
                     : (isExpanded ? 'Collapse sidebar' : 'Expand sidebar'),
             );
-        }
+            menuToggle.setAttribute(
+                'title',
+                isMobile
+                    ? (isExpanded ? 'Close navigation menu' : 'Open navigation menu')
+                    : (isExpanded ? 'Collapse sidebar' : 'Expand sidebar'),
+            );
+        });
     };
 
     const closeMobileNavigation = () => {
@@ -33,14 +46,26 @@ if (adminShell) {
         updateToggleState();
     };
 
-    menuToggle?.addEventListener('click', () => {
-        if (mobileNavigation.matches) {
-            adminShell.classList.toggle('is-sidebar-open');
-        } else {
-            adminShell.classList.toggle('is-sidebar-collapsed');
-        }
+    menuToggles.forEach((menuToggle) => {
+        menuToggle.addEventListener('click', () => {
+            const isMobile = mobileNavigation.matches;
 
-        updateToggleState();
+            if (isMobile) {
+                adminShell.classList.toggle('is-sidebar-open');
+            } else {
+                adminShell.classList.toggle('is-sidebar-collapsed');
+                window.localStorage.setItem(
+                    sidebarStorageKey,
+                    String(adminShell.classList.contains('is-sidebar-collapsed')),
+                );
+            }
+
+            updateToggleState();
+
+            if (!isMobile && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                window.dispatchEvent(new Event('resize'));
+            }
+        });
     });
 
     backdrop?.addEventListener('click', closeMobileNavigation);
@@ -56,11 +81,28 @@ if (adminShell) {
     });
 
     mobileNavigation.addEventListener('change', () => {
-        adminShell.classList.remove('is-sidebar-open', 'is-sidebar-collapsed');
+        adminShell.classList.remove('is-sidebar-open');
+        adminShell.classList.toggle(
+            'is-sidebar-collapsed',
+            !mobileNavigation.matches && window.localStorage.getItem(sidebarStorageKey) === 'true',
+        );
         updateToggleState();
     });
 
+    adminShell.addEventListener('transitionend', (event) => {
+        if (
+            !mobileNavigation.matches
+            && event.target === adminShell
+            && event.propertyName === 'grid-template-columns'
+        ) {
+            window.dispatchEvent(new Event('resize'));
+        }
+    });
+
     updateToggleState();
+    window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => adminShell.classList.add('is-sidebar-motion-ready'));
+    });
 }
 
 const searchForm = document.querySelector('form[data-preserve-search-position]');
@@ -300,4 +342,41 @@ document.querySelectorAll('[data-rental-dialog-open]').forEach((button) => {
             dialog.close();
         }
     });
+});
+
+document.querySelectorAll('[data-customer-dialog-open]').forEach((button) => {
+    const dialog = document.getElementById(button.dataset.customerDialogOpen);
+
+    if (!dialog) {
+        return;
+    }
+
+    button.addEventListener('click', () => dialog.showModal());
+    dialog.querySelectorAll('[data-customer-dialog-close]').forEach((closeButton) => {
+        closeButton.addEventListener('click', () => dialog.close());
+    });
+    dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+            dialog.close();
+        }
+    });
+
+    if (dialog.hasAttribute('data-dialog-open-on-load')) {
+        dialog.showModal();
+    }
+});
+
+document.querySelectorAll('[data-customer-note-input]').forEach((input) => {
+    const count = document.querySelector('[data-customer-note-count]');
+
+    if (!count) {
+        return;
+    }
+
+    const updateCount = () => {
+        count.textContent = String(input.value.length);
+    };
+
+    input.addEventListener('input', updateCount);
+    updateCount();
 });
