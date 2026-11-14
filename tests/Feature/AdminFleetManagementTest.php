@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
-use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleUnavailability;

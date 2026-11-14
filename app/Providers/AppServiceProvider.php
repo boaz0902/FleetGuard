@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\AuditLog;
+use App\Models\Booking;
+use App\Models\Customer;
+use App\Models\Vehicle;
 use App\Policies\AuditLogPolicy;
 use App\Policies\BookingPolicy;
 use App\Policies\CustomerPolicy;
@@ -27,10 +31,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::policy(\App\Models\Vehicle::class, VehiclePolicy::class);
-        Gate::policy(\App\Models\Booking::class, BookingPolicy::class);
-        Gate::policy(\App\Models\Customer::class, CustomerPolicy::class);
-        Gate::policy(\App\Models\AuditLog::class, AuditLogPolicy::class);
+        Gate::policy(Vehicle::class, VehiclePolicy::class);
+        Gate::policy(Booking::class, BookingPolicy::class);
+        Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(AuditLog::class, AuditLogPolicy::class);
 
         Gate::before(function ($user, $ability) {
             if ($user && $user->isAdmin()) {
@@ -42,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('login', function (Request $request) {
             return [
-                Limit::perMinute(5)->by($request->ip() . ':' . ($request->input('email') ?? 'guest')),
+                Limit::perMinute(5)->by($request->ip().':'.($request->input('email') ?? 'guest')),
                 Limit::perMinute(20)->by($request->ip()),
             ];
         });

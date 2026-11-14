@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVehicleUnavailabilityRequest;
 use App\Models\AuditLog;
-use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Models\VehicleUnavailability;
 use App\Services\VehicleAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingCalendarController extends Controller
@@ -52,8 +51,7 @@ class BookingCalendarController extends Controller
     public function storeUnavailability(
         StoreVehicleUnavailabilityRequest $request,
         VehicleAvailabilityService $availability,
-    )
-    {
+    ) {
         $this->authorize('manage', Vehicle::class);
         $validated = $request->validated();
         $start = Carbon::createFromFormat(
