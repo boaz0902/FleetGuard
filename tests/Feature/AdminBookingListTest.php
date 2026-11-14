@@ -45,6 +45,10 @@ class AdminBookingListTest extends TestCase
                 'pickup_to' => '2026-12-05',
             ]))
             ->assertOk()
+            ->assertSee('method="GET"', false)
+            ->assertSee('data-preserve-search-position', false)
+            ->assertSee('Press Enter to search')
+            ->assertDontSee('Apply filters')
             ->assertSee($matchingBooking->booking_reference)
             ->assertSee('Alice Example')
             ->assertDontSee('FG-OTHER456')
@@ -63,6 +67,76 @@ class AdminBookingListTest extends TestCase
             ->assertOk()
             ->assertSee('FG-OTHER456')
             ->assertDontSee('FG-MATCH123');
+    }
+
+    public function test_booking_search_covers_visible_fields_without_filter_controls(): void
+    {
+        $manager = $this->userWithRole('manager');
+        $vehicle = $this->vehicle('toyota-vios', 'Toyota Vios');
+        $booking = $this->booking(
+            $vehicle,
+            'FG-SEARCH789',
+            'Alice Example',
+            'alice@example.com',
+            Booking::STATUS_PENDING,
+            '2026-11-15 09:00:00',
+            '2026-11-16 16:00:00',
+        );
+        $booking->forceFill(['created_at' => '2026-11-14 08:00:00'])->save();
+
+        foreach ([
+            'FG-SEARCH789',
+            'Alice Example',
+            'Toyota Vios',
+            '2026-11-15',
+            '2026-11-16',
+            'Nov 15',
+            'Nov 16',
+            'Nov 14',
+            'Nov',
+            'November',
+            'nOvEmBeR',
+            '2 days',
+            '₱5,000.00',
+            'Pending',
+            'Nov 14, 2026',
+            '9:00',
+            '9:00 AM',
+            '4:00',
+            '4:00 PM',
+            '8:00 AM',
+        ] as $search) {
+            $this->actingAs($manager)
+                ->get(route('admin.bookings.index', ['search' => $search]))
+                ->assertOk()
+                ->assertSee($booking->booking_reference)
+                ->assertViewHas('bookings', fn ($bookings) => $bookings->total() === 1)
+                ->assertSee('Press Enter to search')
+                ->assertDontSee('name="status"', false)
+                ->assertDontSee('name="vehicle_id"', false)
+                ->assertDontSee('name="pickup_from"', false)
+                ->assertDontSee('name="pickup_to"', false)
+                ->assertDontSee('Clear');
+        }
+    }
+
+    public function test_booking_details_use_shared_admin_section_surfaces(): void
+    {
+        $manager = $this->userWithRole('manager');
+        $vehicle = $this->vehicle('toyota-vios', 'Toyota Vios');
+        $booking = $this->booking(
+            $vehicle,
+            'FG-DETAIL123',
+            'Alice Example',
+            'alice@example.com',
+            Booking::STATUS_PENDING,
+            '2026-12-01 09:00:00',
+        );
+
+        $this->actingAs($manager)
+            ->get(route('admin.bookings.show', $booking))
+            ->assertOk()
+            ->assertSee('admin-section-card', false);
     }
 
     public function test_booking_list_rejects_unknown_status_and_reversed_pickup_dates(): void

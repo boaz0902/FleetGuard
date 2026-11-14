@@ -1,0 +1,1969 @@
+.admin-fleet,
+.admin-fleet-form-page,
+.admin-fleet-details {
+    width: min(100%, 1600px);
+    margin-inline: auto;
+    padding: 28px clamp(18px, 3.1vw, 48px) 36px;
+    color: #1b2530;
+}
+
+.admin-fleet-flash,
+.admin-fleet-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+    border: 1px solid #d5e8dc;
+    border-radius: 9px;
+    background: #f0f8f3;
+    color: #286544;
+    padding: 12px 14px;
+    font-size: 12px;
+}
+
+.admin-fleet-alert {
+    border-color: #f0d7d2;
+    background: #fff7f5;
+    color: #9c4c40;
+}
+
+.admin-fleet-flash > .bi,
+.admin-fleet-alert > .bi {
+    margin-top: 1px;
+    font-size: 15px;
+}
+
+.admin-fleet-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 17px;
+}
+
+.admin-fleet-metric,
+.admin-fleet-panel,
+.admin-fleet-maintenance,
+.admin-fleet-form-panel,
+.admin-fleet-detail-card {
+    min-width: 0;
+    border: 1px solid #e4e9ee;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 3px 12px rgb(26 39 52 / 3%);
+}
+
+.admin-fleet-metric {
+    padding: 16px 18px 15px;
+}
+
+.admin-fleet-metric-heading {
+    display: flex;
+    min-height: 31px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: #63707d;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.admin-fleet-metric-heading > .bi {
+    display: grid;
+    width: 31px;
+    height: 31px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 8px;
+    background: #eaf3fb;
+    color: #2879bd;
+    font-size: 16px;
+}
+
+.admin-fleet-metric > strong {
+    display: block;
+    margin-top: 9px;
+    color: #18232e;
+    font-family: var(--font-display);
+    font-size: clamp(24px, 2.2vw, 31px);
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.admin-fleet-metric > small {
+    display: block;
+    overflow: hidden;
+    margin-top: 6px;
+    color: #84909c;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-fleet-panel,
+.admin-fleet-maintenance {
+    padding: 19px;
+}
+
+.admin-fleet-panel-heading,
+.admin-fleet-panel-actions,
+.admin-fleet-form-page-heading,
+.admin-fleet-details-header,
+.admin-fleet-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.admin-fleet-panel-heading {
+    margin-bottom: 17px;
+}
+
+.admin-fleet-eyebrow {
+    margin: 0 0 5px;
+    color: #72808d;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.admin-fleet-panel-heading h2,
+.admin-fleet-form-panel-heading h2,
+.admin-fleet-detail-heading h2 {
+    margin: 0;
+    color: #1c2732;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.admin-fleet-panel-actions {
+    flex: 0 0 auto;
+}
+
+.admin-fleet-result-count {
+    color: #798692;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.admin-fleet-primary-link,
+.admin-fleet-secondary-link,
+.admin-fleet-filter-button,
+.admin-fleet-action-link,
+.admin-fleet-remove-maintenance {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.admin-fleet-primary-link {
+    border: 1px solid #2e7ec5;
+    background: #3988d6;
+    color: #fff;
+    padding: 0 12px;
+    box-shadow: 0 3px 8px rgb(34 103 163 / 12%);
+}
+
+.admin-fleet-primary-link:hover {
+    background: #2879c2;
+    color: #fff;
+}
+
+.admin-fleet-secondary-link {
+    border: 1px solid #dfe5ea;
+    background: #fff;
+    color: #536170;
+    padding: 0 12px;
+}
+
+.admin-fleet-secondary-link:hover {
+    border-color: #bfd0df;
+    background: #f8fafc;
+    color: #2e75b2;
+}
+
+.admin-fleet-filters {
+    display: flex;
+    margin-bottom: 17px;
+    padding: 14px;
+    border: 1px solid #e8edf1;
+    border-radius: 9px;
+    background: #f9fbfc;
+}
+
+.admin-fleet-search {
+    width: min(100%, 560px);
+}
+
+.admin-fleet-filters label,
+.admin-fleet-maintenance-fields label,
+.admin-fleet-form label {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+    color: #596674;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.admin-fleet-input-wrap {
+    display: flex;
+    min-width: 0;
+    min-height: 38px;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #dfe5ea;
+    border-radius: 7px;
+    background: #fff;
+    padding: 0 10px;
+}
+
+.admin-fleet-input-wrap > .bi {
+    flex: 0 0 auto;
+    color: #8a96a2;
+    font-size: 13px;
+}
+
+.admin-fleet-filters input,
+.admin-fleet-filters select,
+.admin-fleet-maintenance-fields input,
+.admin-fleet-maintenance-fields select,
+.admin-fleet-form input,
+.admin-fleet-form select,
+.admin-fleet-form textarea {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    border: 1px solid #dfe5ea;
+    border-radius: 7px;
+    background: #fff;
+    color: #273441;
+    padding: 0 10px;
+    font-size: 11px;
+}
+
+.admin-fleet-filters .admin-fleet-input-wrap input {
+    min-height: 36px;
+    border: 0;
+    padding: 0;
+    outline: 0;
+}
+
+.admin-fleet-filters input::placeholder,
+.admin-fleet-maintenance-fields input::placeholder {
+    color: #9aa4ad;
+}
+
+.admin-fleet-filter-button {
+    min-height: 38px;
+    border: 1px solid #d9e3eb;
+    background: #edf4fa;
+    color: #2d6798;
+    padding: 0 12px;
+    cursor: pointer;
+}
+
+.admin-fleet-filter-button:hover {
+    border-color: #bfd5e7;
+    background: #e3eff8;
+}
+
+.admin-fleet-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e8edf1;
+    border-radius: 8px;
+}
+
+.admin-fleet-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #465361;
+    text-align: left;
+}
+
+.admin-fleet-table thead {
+    background: #f7f9fa;
+}
+
+.admin-fleet-table th {
+    color: #75818c;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.admin-fleet-table th,
+.admin-fleet-table td {
+    padding: 11px 10px;
+}
+
+.admin-fleet-table td {
+    border-top: 1px solid #eff2f4;
+    font-size: 10px;
+    vertical-align: middle;
+}
+
+.admin-fleet-table tbody tr:not(.admin-fleet-empty-row):hover {
+    background: #f8fbfd;
+}
+
+.admin-fleet-vehicle {
+    display: flex;
+    min-width: 145px;
+    align-items: center;
+    gap: 9px;
+}
+
+.admin-fleet-vehicle-image,
+.admin-fleet-hero-image {
+    display: grid;
+    width: 40px;
+    height: 36px;
+    flex: 0 0 auto;
+    overflow: hidden;
+    place-items: center;
+    border: 1px solid #e4e9ee;
+    border-radius: 7px;
+    background: #f4f7f9;
+    color: #63809a;
+}
+
+.admin-fleet-vehicle-image > img,
+.admin-fleet-hero-image > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-fleet-vehicle-image > .bi {
+    font-size: 20px;
+}
+
+.admin-fleet-vehicle strong,
+.admin-fleet-vehicle small {
+    display: block;
+}
+
+.admin-fleet-vehicle strong {
+    color: #283542;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.admin-fleet-vehicle small {
+    margin-top: 3px;
+    color: #89949e;
+    font-size: 8px;
+    letter-spacing: 0.04em;
+}
+
+.admin-fleet-status,
+.admin-fleet-availability {
+    display: inline-flex;
+    min-height: 23px;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    background: #eef0f4;
+    color: #606e7b;
+    padding: 3px 8px;
+    font-size: 9px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.admin-fleet-status > .bi {
+    font-size: 6px;
+}
+
+.admin-fleet-status--active,
+.admin-fleet-availability--available {
+    background: #e7f6ef;
+    color: #237b58;
+}
+
+.admin-fleet-status--inactive,
+.admin-fleet-availability--inactive,
+.admin-fleet-availability--completed {
+    background: #eef0f4;
+    color: #606e7b;
+}
+
+.admin-fleet-status--maintenance,
+.admin-fleet-availability--maintenance {
+    background: #fff2df;
+    color: #9a6416;
+}
+
+.admin-fleet-availability--reserved {
+    background: #e8f2fc;
+    color: #24689f;
+}
+
+.admin-fleet-availability--ongoing {
+    background: #e4f5ee;
+    color: #237b58;
+}
+
+.admin-fleet-rate {
+    color: #2a5f8c !important;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.admin-fleet-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.admin-fleet-action-link {
+    min-height: 28px;
+    color: #3677ad;
+    font-size: 10px;
+}
+
+.admin-fleet-action-link:hover {
+    color: #174e7c;
+}
+
+.admin-fleet-empty {
+    padding: 36px 16px !important;
+    color: #7e8b97;
+    text-align: center;
+}
+
+.admin-fleet-empty > .bi {
+    display: block;
+    margin-bottom: 9px;
+    color: #a7b6c3;
+    font-size: 25px;
+}
+
+.admin-fleet-empty > strong,
+.admin-fleet-empty > span {
+    display: block;
+}
+
+.admin-fleet-empty > strong {
+    color: #465361;
+    font-size: 12px;
+}
+
+.admin-fleet-empty > span {
+    margin-top: 5px;
+    font-size: 10px;
+}
+
+.admin-fleet-pagination {
+    margin-top: 14px;
+}
+
+.admin-fleet-pagination nav {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.admin-fleet-maintenance {
+    margin-top: 17px;
+}
+
+.admin-fleet-maintenance-empty,
+.admin-fleet-empty-inline {
+    display: flex;
+    min-height: 94px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    color: #7c8995;
+    text-align: center;
+}
+
+.admin-fleet-maintenance-empty > .bi,
+.admin-fleet-empty-inline > .bi {
+    color: #91a6b8;
+    font-size: 21px;
+}
+
+.admin-fleet-maintenance-empty strong {
+    color: #52606d;
+    font-size: 11px;
+}
+
+.admin-fleet-maintenance-empty span,
+.admin-fleet-empty-inline span {
+    font-size: 10px;
+}
+
+.admin-fleet-maintenance-list {
+    display: grid;
+    gap: 8px;
+}
+
+.admin-fleet-maintenance-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    border: 1px solid #e9edf0;
+    border-radius: 8px;
+    background: #fcfdfe;
+    padding: 10px;
+}
+
+.admin-fleet-maintenance-icon,
+.admin-fleet-detail-icon {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 9px;
+    background: #edf4fa;
+    color: #2e75b2;
+    font-size: 16px;
+}
+
+.admin-fleet-maintenance-info {
+    display: grid;
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 3px;
+}
+
+.admin-fleet-maintenance-info strong {
+    color: #293744;
+    font-size: 11px;
+}
+
+.admin-fleet-maintenance-info span,
+.admin-fleet-maintenance-info small {
+    color: #6f7c88;
+    font-size: 10px;
+}
+
+.admin-fleet-maintenance-info small > .bi,
+.admin-fleet-history-row small > .bi {
+    margin-inline: 3px;
+    color: #91a0ad;
+}
+
+.admin-fleet-remove-maintenance {
+    min-height: 32px;
+    border: 1px solid #eedcda;
+    background: #fff8f7;
+    color: #9c554d;
+    padding: 0 9px;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.admin-fleet-remove-maintenance:hover {
+    border-color: #e5c4c0;
+    background: #fff1ef;
+}
+
+.admin-fleet-maintenance-form {
+    margin-top: 16px;
+    padding-top: 15px;
+    border-top: 1px solid #e9edf0;
+}
+
+.admin-fleet-maintenance-form-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.admin-fleet-maintenance-form-heading strong,
+.admin-fleet-maintenance-form-heading small {
+    display: block;
+}
+
+.admin-fleet-maintenance-form-heading strong {
+    color: #33404d;
+    font-size: 11px;
+}
+
+.admin-fleet-maintenance-form-heading small {
+    margin-top: 3px;
+    color: #87929d;
+    font-size: 9px;
+}
+
+.admin-fleet-maintenance-fields {
+    display: grid;
+    grid-template-columns: 1.1fr repeat(3, minmax(130px, 1fr)) auto;
+    align-items: end;
+    gap: 9px;
+}
+
+.admin-fleet-maintenance-fields .admin-fleet-filter-button {
+    min-height: 38px;
+}
+
+.admin-fleet-form-page-heading {
+    justify-content: flex-start;
+    margin-bottom: 14px;
+}
+
+.admin-fleet-form-panel {
+    padding: 21px;
+}
+
+.admin-fleet-form-panel-heading,
+.admin-fleet-detail-heading {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.admin-fleet-form-panel-heading {
+    margin-bottom: 19px;
+}
+
+.admin-fleet-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.admin-fleet-form label {
+    gap: 7px;
+}
+
+.admin-fleet-form label > span {
+    color: #586573;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.admin-fleet-form input,
+.admin-fleet-form select {
+    min-height: 42px;
+}
+
+.admin-fleet-form textarea {
+    min-height: 100px;
+    padding: 10px;
+    resize: vertical;
+}
+
+.admin-fleet-form label > small:not(.admin-fleet-field-error) {
+    color: #87929d;
+    font-size: 9px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.admin-fleet-field-error {
+    color: #ae4e42;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.admin-fleet-form-full {
+    grid-column: 1 / -1;
+}
+
+.admin-fleet-form-actions {
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e9edf0;
+}
+
+.admin-fleet-details-header {
+    display: block;
+    margin-bottom: 16px;
+}
+
+.admin-fleet-vehicle-hero {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 14px;
+    border: 1px solid #e4e9ee;
+    border-radius: 12px;
+    background: #fff;
+    padding: 18px;
+    box-shadow: 0 3px 12px rgb(26 39 52 / 3%);
+}
+
+.admin-fleet-hero-image {
+    width: 74px;
+    height: 66px;
+    border-radius: 10px;
+}
+
+.admin-fleet-hero-image > .bi {
+    font-size: 34px;
+}
+
+.admin-fleet-hero-copy {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.admin-fleet-hero-copy h2 {
+    overflow: hidden;
+    margin: 0;
+    color: #1b2631;
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2vw, 27px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    text-overflow: ellipsis;
+}
+
+.admin-fleet-hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 9px;
+}
+
+.admin-fleet-details-grid {
+    column-count: 2;
+    column-gap: 14px;
+    column-fill: balance;
+}
+
+.admin-fleet-detail-card {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 14px;
+    vertical-align: top;
+    break-inside: avoid;
+    padding: 17px;
+}
+
+.admin-fleet-detail-heading {
+    margin-bottom: 15px;
+}
+
+.admin-fleet-detail-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 15px;
+    margin: 0;
+}
+
+.admin-fleet-detail-list > div {
+    min-width: 0;
+    padding: 10px 0;
+    border-top: 1px solid #eff2f4;
+}
+
+.admin-fleet-detail-list dt {
+    color: #84909c;
+    font-size: 9px;
+}
+
+.admin-fleet-detail-list dd {
+    overflow-wrap: anywhere;
+    margin: 4px 0 0;
+    color: #33404d;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.admin-fleet-detail-list .admin-fleet-detail-full {
+    grid-column: 1 / -1;
+}
+
+.admin-fleet-rate-large {
+    display: block;
+    margin-top: 22px;
+    color: #23689f;
+    font-family: var(--font-display);
+    font-size: clamp(30px, 3vw, 41px);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+}
+
+.admin-fleet-rate-note {
+    max-width: 380px;
+    margin: 9px 0 0;
+    color: #7c8995;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.admin-fleet-history-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border-top: 1px solid #eff2f4;
+    padding: 11px 0;
+}
+
+.admin-fleet-history-row > div {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+}
+
+.admin-fleet-history-row strong {
+    color: #354250;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.admin-fleet-history-row small,
+.admin-fleet-history-row > span {
+    color: #7c8995;
+    font-size: 9px;
+}
+
+.admin-fleet-audit-row {
+    align-items: flex-start;
+}
+
+.admin-fleet-audit-row > span {
+    flex: 0 0 auto;
+    text-align: right;
+}
+
+@media (max-width: 1199px) {
+    .admin-fleet-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .admin-fleet-maintenance-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-fleet-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .admin-fleet-table {
+        min-width: 850px;
+    }
+}
+
+@media (max-width: 800px) {
+    .admin-fleet,
+    .admin-fleet-form-page,
+    .admin-fleet-details {
+        padding: 23px 18px 28px;
+    }
+
+    .admin-fleet-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .admin-fleet-metric {
+        padding: 13px;
+    }
+
+    .admin-fleet-metric > strong {
+        font-size: 25px;
+    }
+
+    .admin-fleet-panel,
+    .admin-fleet-maintenance {
+        padding: 15px;
+    }
+
+    .admin-fleet-table-wrap {
+        overflow: visible;
+        border: 0;
+    }
+
+    .admin-fleet-table,
+    .admin-fleet-table tbody,
+    .admin-fleet-table tr,
+    .admin-fleet-table td {
+        display: block;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .admin-fleet-table thead {
+        display: none;
+    }
+
+    .admin-fleet-table tbody tr:not(.admin-fleet-empty-row) {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 2px 12px;
+        margin-bottom: 9px;
+        border: 1px solid #e8edf1;
+        border-radius: 9px;
+        background: #fff;
+        padding: 9px 11px;
+    }
+
+    .admin-fleet-table td {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        justify-content: space-between;
+        gap: 7px;
+        border: 0;
+        padding: 5px 1px;
+        font-size: 9px;
+        text-align: right;
+    }
+
+    .admin-fleet-table td::before {
+        color: #87929d;
+        content: attr(data-label);
+        font-size: 8px;
+        text-align: left;
+    }
+
+    .admin-fleet-table td[data-label="Vehicle"],
+    .admin-fleet-table td[data-label="Actions"] {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .admin-fleet-table td[data-label="Vehicle"]::before,
+    .admin-fleet-table td[data-label="Actions"]::before {
+        min-width: 72px;
+    }
+
+    .admin-fleet-table td[data-label="Vehicle"] {
+        padding-bottom: 8px;
+        border-bottom: 1px solid #eff2f4;
+    }
+
+    .admin-fleet-table td[data-label="Actions"] {
+        justify-content: space-between;
+        border-top: 1px solid #eff2f4;
+        padding-top: 8px;
+    }
+
+    .admin-fleet-table .admin-fleet-empty {
+        display: block;
+        padding: 30px 12px !important;
+        border: 1px solid #e8edf1;
+        border-radius: 9px;
+    }
+
+    .admin-fleet-table .admin-fleet-empty::before {
+        display: none;
+    }
+
+    .admin-fleet-maintenance-item {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .admin-fleet-maintenance-item > form {
+        margin-left: 44px;
+    }
+
+    .admin-fleet-maintenance-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-fleet-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-fleet-details-grid {
+        column-count: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-fleet,
+    .admin-fleet-form-page,
+    .admin-fleet-details {
+        padding-inline: 13px;
+    }
+
+    .admin-fleet-panel-heading,
+    .admin-fleet-panel-actions {
+        align-items: flex-start;
+    }
+
+    .admin-fleet-panel-heading {
+        flex-direction: column;
+    }
+
+    .admin-fleet-panel-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .admin-fleet-filters {
+        gap: 9px;
+        padding: 11px;
+    }
+
+    .admin-fleet-maintenance-fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-fleet-maintenance-fields .admin-fleet-filter-button {
+        width: 100%;
+    }
+
+    .admin-fleet-form-panel {
+        padding: 16px 13px;
+    }
+
+    .admin-fleet-vehicle-hero {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        padding: 14px;
+    }
+
+    .admin-fleet-hero-image {
+        width: 56px;
+        height: 52px;
+    }
+
+    .admin-fleet-hero-copy {
+        flex-basis: calc(100% - 75px);
+    }
+
+    .admin-fleet-vehicle-hero > .admin-fleet-primary-link {
+        margin-left: 70px;
+    }
+
+    .admin-fleet-detail-list {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-fleet-detail-list .admin-fleet-detail-full {
+        grid-column: auto;
+    }
+
+    .admin-fleet-audit-row {
+        flex-direction: column;
+    }
+
+    .admin-fleet-audit-row > span {
+        text-align: left;
+    }
+}
+
+.admin-fleet,
+.admin-fleet-form-page,
+.admin-fleet-details {
+    --fleet-navy: var(--admin-navy, #101820);
+    --fleet-blue: var(--admin-blue, #3988d6);
+    --fleet-ice: var(--admin-ice, #f4f6f8);
+    --fleet-steel: var(--admin-steel, #89939f);
+    --fleet-border: var(--admin-border, #e4e9ee);
+}
+
+.admin-fleet-metric,
+.admin-fleet-panel,
+.admin-fleet-health,
+.admin-fleet-maintenance,
+.admin-fleet-form-panel,
+.admin-fleet-form-section,
+.admin-fleet-detail-card,
+.admin-fleet-stat-card,
+.admin-fleet-vehicle-card {
+    border-radius: 16px;
+    box-shadow: 0 2px 6px rgb(16 24 32 / 3%), 0 8px 24px rgb(16 24 32 / 4%);
+}
+
+.admin-fleet-overview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.admin-fleet-breadcrumb,
+.admin-fleet-last-updated {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--fleet-steel);
+    font-size: 11px;
+}
+
+.admin-fleet-breadcrumb > span {
+    color: #64707c;
+}
+
+.admin-fleet-breadcrumb > .bi {
+    font-size: 9px;
+}
+
+.admin-fleet-overview-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.admin-fleet-overview-actions .admin-fleet-primary-link {
+    min-height: 40px;
+    border-radius: 9px;
+}
+
+.admin-fleet-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+a.admin-fleet-metric {
+    display: block;
+    color: inherit;
+    padding: 16px;
+    text-decoration: none;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+a.admin-fleet-metric:hover {
+    transform: translateY(-2px);
+    border-color: #cfdeeb;
+    box-shadow: 0 5px 12px rgb(16 24 32 / 5%), 0 12px 28px rgb(16 24 32 / 7%);
+}
+
+a.admin-fleet-metric:focus-visible,
+.admin-fleet a:focus-visible,
+.admin-fleet button:focus-visible,
+.admin-fleet-details a:focus-visible,
+.admin-fleet-details button:focus-visible,
+.admin-fleet-form-page a:focus-visible,
+.admin-fleet-form-page button:focus-visible,
+.admin-fleet-form-page input:focus-visible,
+.admin-fleet-form-page select:focus-visible,
+.admin-fleet-form-page textarea:focus-visible {
+    outline: 3px solid rgb(57 136 214 / 35%);
+    outline-offset: 2px;
+}
+
+.admin-fleet-metric-heading {
+    justify-content: flex-start;
+    gap: 10px;
+    min-height: 36px;
+    color: #667380;
+    font-size: 11px;
+}
+
+.admin-fleet-metric-heading > .bi {
+    order: -1;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+}
+
+.admin-fleet-metric > strong {
+    margin-top: 12px;
+    font-size: clamp(26px, 2.2vw, 32px);
+}
+
+.admin-fleet-health {
+    margin-bottom: 16px;
+    border: 1px solid var(--fleet-border);
+    background: #fff;
+    padding: 16px 18px;
+}
+
+.admin-fleet-health-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.admin-fleet-health-heading h2 {
+    margin: 0;
+    color: var(--fleet-navy);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.admin-fleet-health-heading > span {
+    color: #697582;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.admin-fleet-health-bar {
+    display: flex;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #edf0f3;
+}
+
+.admin-fleet-health-segment {
+    min-width: 0;
+    transition: width 180ms ease;
+}
+
+.admin-fleet-health-segment--available,
+.admin-fleet-health-dot--available {
+    background: #237b58;
+}
+
+.admin-fleet-health-segment--reserved,
+.admin-fleet-health-dot--reserved {
+    background: #24689f;
+}
+
+.admin-fleet-health-segment--ongoing,
+.admin-fleet-health-dot--ongoing {
+    background: #237b58;
+}
+
+.admin-fleet-health-segment--maintenance,
+.admin-fleet-health-dot--maintenance {
+    background: #9a6416;
+}
+
+.admin-fleet-health-segment--inactive,
+.admin-fleet-health-dot--inactive {
+    background: #606e7b;
+}
+
+.admin-fleet-health-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: 12px 0 0;
+    padding: 0;
+    color: #667380;
+    font-size: 10px;
+    list-style: none;
+}
+
+.admin-fleet-health-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-fleet-health-legend strong {
+    color: #263441;
+    font-variant-numeric: tabular-nums;
+}
+
+.admin-fleet-health-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.admin-fleet-panel,
+.admin-fleet-maintenance {
+    border-color: var(--fleet-border);
+}
+
+.admin-fleet-panel-actions {
+    gap: 12px;
+}
+
+.admin-fleet-result-count {
+    text-align: right;
+}
+
+.admin-fleet-view-toggle {
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 3px;
+    border: 1px solid var(--fleet-border);
+    border-radius: 9px;
+    background: #f7f9fb;
+    padding: 3px;
+}
+
+.admin-fleet-view-toggle button {
+    display: grid;
+    width: 34px;
+    height: 32px;
+    place-items: center;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #71808e;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.admin-fleet-view-toggle button[aria-pressed="true"] {
+    background: #fff;
+    color: var(--fleet-blue);
+    box-shadow: 0 1px 4px rgb(16 24 32 / 12%);
+}
+
+.admin-fleet-filters {
+    display: grid;
+    grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(128px, 1fr)) repeat(2, minmax(112px, .8fr)) auto;
+    align-items: end;
+    gap: 10px;
+    border-color: var(--fleet-border);
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.admin-fleet-filters label {
+    gap: 6px;
+}
+
+.admin-fleet-filters input,
+.admin-fleet-filters select {
+    min-height: 40px;
+    border-radius: 8px;
+    font-size: 11px;
+}
+
+.admin-fleet-clear-filters {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    color: #3579b5;
+    font-size: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.admin-fleet-clear-filters:hover,
+.admin-fleet-filter-chip:hover {
+    color: #174e7c;
+    text-decoration: underline;
+}
+
+.admin-fleet-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    margin: -5px 0 14px;
+}
+
+.admin-fleet-filter-chip {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid #dce7f0;
+    border-radius: 999px;
+    background: #f0f6fb;
+    color: #3d6c92;
+    padding: 0 10px;
+    font-size: 9px;
+    text-decoration: none;
+}
+
+.admin-fleet-table-wrap {
+    border-color: var(--fleet-border);
+    border-radius: 12px;
+}
+
+.admin-fleet-vehicle-image {
+    width: 56px;
+    height: 40px;
+    border-radius: 8px;
+}
+
+.admin-fleet-table td {
+    padding-block: 13px;
+}
+
+.admin-fleet-table th {
+    padding-block: 12px;
+}
+
+.admin-fleet-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.admin-fleet-grid[hidden],
+.admin-fleet-table-wrap[hidden],
+.admin-fleet-tab-panel[hidden] {
+    display: none !important;
+}
+
+.admin-fleet-vehicle-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--fleet-border);
+    background: #fff;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.admin-fleet-vehicle-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgb(16 24 32 / 5%), 0 12px 28px rgb(16 24 32 / 7%);
+}
+
+.admin-fleet-grid-image {
+    display: grid;
+    aspect-ratio: 16 / 10;
+    place-items: center;
+    overflow: hidden;
+    background: var(--fleet-ice);
+    color: #72889a;
+    text-decoration: none;
+}
+
+.admin-fleet-grid-image > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 220ms ease;
+}
+
+.admin-fleet-vehicle-card:hover .admin-fleet-grid-image > img {
+    transform: scale(1.02);
+}
+
+.admin-fleet-grid-image > .bi {
+    font-size: 42px;
+}
+
+.admin-fleet-grid-card-body {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+}
+
+.admin-fleet-grid-title {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.admin-fleet-grid-title h3 {
+    overflow: hidden;
+    margin: 0;
+    color: #263441;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-fleet-grid-title p {
+    margin: 4px 0 0;
+    color: var(--fleet-steel);
+    font-size: 10px;
+}
+
+.admin-fleet-category-pill {
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: #edf4fa;
+    color: #3e7199;
+    padding: 5px 8px;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.admin-fleet-grid-rate {
+    color: #245c89;
+    font-family: var(--font-display);
+    font-size: 18px;
+}
+
+.admin-fleet-grid-rate small {
+    color: #89939f;
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 500;
+}
+
+.admin-fleet-grid-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.admin-fleet-grid-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px solid #eff2f4;
+    padding: 11px 14px;
+}
+
+.admin-fleet-grid-actions .admin-fleet-primary-link,
+.admin-fleet-grid-actions .admin-fleet-secondary-link {
+    min-height: 34px;
+    border-radius: 8px;
+    font-size: 10px;
+}
+
+.admin-fleet-grid-empty {
+    display: grid;
+    min-height: 220px;
+    grid-column: 1 / -1;
+    justify-items: center;
+    align-content: center;
+    gap: 8px;
+    color: #7c8995;
+    text-align: center;
+}
+
+.admin-fleet-grid-empty > .bi {
+    color: #91a6b8;
+    font-size: 28px;
+}
+
+.admin-fleet-grid-empty > strong {
+    color: #465361;
+    font-size: 12px;
+}
+
+.admin-fleet-grid-empty > span {
+    font-size: 10px;
+}
+
+.admin-fleet-grid-empty > .admin-fleet-secondary-link {
+    margin-top: 6px;
+}
+
+.admin-fleet-vehicle-hero {
+    border-radius: 16px;
+    box-shadow: 0 2px 6px rgb(16 24 32 / 3%), 0 8px 24px rgb(16 24 32 / 4%);
+}
+
+.admin-fleet-hero-actions {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.admin-fleet-hero-actions .admin-fleet-primary-link,
+.admin-fleet-hero-actions .admin-fleet-secondary-link {
+    min-height: 36px;
+    border-radius: 8px;
+    font-size: 10px;
+}
+
+.admin-fleet-stat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin: 14px 0;
+}
+
+.admin-fleet-stat-card {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 11px;
+    border: 1px solid var(--fleet-border);
+    background: #fff;
+    padding: 14px;
+}
+
+.admin-fleet-stat-icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 50%;
+    background: #eaf3fb;
+    color: #2879bd;
+    font-size: 16px;
+}
+
+.admin-fleet-stat-card small,
+.admin-fleet-stat-card strong {
+    display: block;
+}
+
+.admin-fleet-stat-card small {
+    color: #7b8792;
+    font-size: 9px;
+}
+
+.admin-fleet-stat-card strong {
+    overflow: hidden;
+    margin-top: 4px;
+    color: var(--fleet-navy);
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+}
+
+.admin-fleet-tabs {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--fleet-border);
+    margin: 16px 0;
+}
+
+.admin-fleet-tabs button {
+    position: relative;
+    min-height: 42px;
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: #77838f;
+    padding: 0 14px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.admin-fleet-tabs button[aria-selected="true"] {
+    color: #2879bd;
+}
+
+.admin-fleet-tabs button[aria-selected="true"]::after {
+    position: absolute;
+    right: 12px;
+    bottom: -1px;
+    left: 12px;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--fleet-blue);
+    content: "";
+}
+
+.admin-fleet-tab-panel {
+    display: grid;
+    gap: 14px;
+}
+
+.admin-fleet-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-count: initial;
+    column-gap: 14px;
+    column-fill: initial;
+}
+
+.admin-fleet-detail-card {
+    display: block;
+    width: auto;
+    margin: 0;
+    border-radius: 16px;
+}
+
+.admin-fleet-timeline-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.admin-fleet-timeline-item + .admin-fleet-timeline-item {
+    border-top: 1px solid #eff2f4;
+}
+
+.admin-fleet-timeline-marker {
+    position: relative;
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    border-radius: 50%;
+    background: #fff2df;
+    color: #9a6416;
+    font-size: 10px;
+}
+
+.admin-fleet-timeline-content {
+    display: grid;
+    min-width: 0;
+    gap: 5px;
+}
+
+.admin-fleet-timeline-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.admin-fleet-timeline-heading > strong {
+    color: #354250;
+    font-size: 11px;
+}
+
+.admin-fleet-timeline-content > small {
+    color: #7c8995;
+    font-size: 9px;
+}
+
+.admin-fleet-form-sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.admin-fleet-form-section {
+    min-width: 0;
+    margin: 0;
+    border: 1px solid var(--fleet-border);
+    background: #fff;
+    padding: 16px;
+}
+
+.admin-fleet-form-section legend {
+    float: none;
+    width: auto;
+    margin: 0;
+    color: var(--fleet-navy);
+    padding: 0 6px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.admin-fleet-form-section--wide {
+    grid-column: 1 / -1;
+}
+
+.admin-fleet-form-section--wide .admin-fleet-form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-fleet-currency-field {
+    display: flex;
+    min-height: 42px;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #dfe5ea;
+    border-radius: 8px;
+    background: #fff;
+    color: #6f7c88;
+    padding-left: 11px;
+}
+
+.admin-fleet-currency-field > span {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.admin-fleet-currency-field input {
+    border: 0;
+}
+
+.admin-fleet-media-field {
+    display: grid;
+    grid-template-columns: 156px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+}
+
+.admin-fleet-media-preview {
+    display: grid;
+    aspect-ratio: 16 / 10;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid var(--fleet-border);
+    border-radius: 10px;
+    background: var(--fleet-ice);
+    color: #70869a;
+}
+
+.admin-fleet-media-preview > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-fleet-media-preview > .bi {
+    font-size: 34px;
+}
+
+.admin-fleet-media-preview [hidden] {
+    display: none !important;
+}
+
+.admin-fleet-form-actions .admin-fleet-primary-link:disabled {
+    cursor: wait;
+    opacity: .7;
+}
+
+@media (max-width: 1199px) {
+    .admin-fleet-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .admin-fleet-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1000px) {
+    .admin-fleet-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-fleet-search,
+    .admin-fleet-clear-filters {
+        width: 100%;
+        grid-column: 1 / -1;
+    }
+
+    .admin-fleet-clear-filters {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 800px) {
+    .admin-fleet-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-fleet-stat-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-fleet-details-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-fleet-form-section--wide .admin-fleet-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-fleet-hero-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-fleet-overview-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-fleet-overview-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .admin-fleet-panel-actions {
+        flex-wrap: wrap;
+    }
+
+    .admin-fleet-result-count {
+        flex: 1 1 100%;
+        text-align: left;
+    }
+
+    .admin-fleet-form-sections {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-fleet-form-section--wide {
+        grid-column: auto;
+    }
+
+    .admin-fleet-form-section--wide .admin-fleet-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-fleet-media-field {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-fleet-media-preview {
+        width: min(100%, 220px);
+    }
+
+    .admin-fleet-form-actions {
+        position: sticky;
+        z-index: 4;
+        bottom: 0;
+        margin-inline: -13px;
+        border-top: 1px solid var(--fleet-border);
+        background: rgb(255 255 255 / 96%);
+        padding: 12px 13px max(12px, env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-fleet-filters {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-fleet-filters label,
+    .admin-fleet-search,
+    .admin-fleet-clear-filters {
+        grid-column: 1;
+    }
+
+    .admin-fleet-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-fleet-overview-actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-fleet-stat-strip {
+        gap: 8px;
+    }
+
+    .admin-fleet-stat-card {
+        gap: 8px;
+        padding: 11px;
+    }
+
+    .admin-fleet-stat-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .admin-fleet-stat-card strong {
+        font-size: 16px;
+    }
+
+    .admin-fleet-hero-actions > a {
+        flex: 1 1 auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-fleet *,
+    .admin-fleet-details *,
+    .admin-fleet-form-page * {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

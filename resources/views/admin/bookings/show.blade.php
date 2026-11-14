@@ -54,7 +54,7 @@
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 <span>Back to reservations</span>
             </a>
-            <div class="admin-booking-reference-card">
+            <div class="admin-booking-reference-card admin-section-card">
                 <div>
                     <p class="admin-bookings-eyebrow">Reservation reference</p>
                     <h2>{{ $booking->booking_reference }}</h2>
@@ -67,7 +67,7 @@
         </div>
 
         <div class="admin-booking-details-grid">
-            <section class="admin-booking-detail-card" aria-labelledby="booking-information-heading">
+            <section class="admin-booking-detail-card admin-section-card" aria-labelledby="booking-information-heading">
                 <div class="admin-booking-detail-heading">
                     <span class="admin-booking-detail-icon"><i class="bi bi-journal-check" aria-hidden="true"></i></span>
                     <div>
@@ -88,7 +88,7 @@
                 </dl>
             </section>
 
-            <section class="admin-booking-detail-card" aria-labelledby="customer-information-heading">
+            <section class="admin-booking-detail-card admin-section-card" aria-labelledby="customer-information-heading">
                 <div class="admin-booking-detail-heading">
                     <span class="admin-booking-detail-icon"><i class="bi bi-person-vcard" aria-hidden="true"></i></span>
                     <div>
@@ -103,7 +103,7 @@
                 </dl>
             </section>
 
-            <section class="admin-booking-detail-card" aria-labelledby="vehicle-information-heading">
+            <section class="admin-booking-detail-card admin-section-card" aria-labelledby="vehicle-information-heading">
                 <div class="admin-booking-detail-heading">
                     <span class="admin-booking-detail-icon"><i class="bi bi-car-front" aria-hidden="true"></i></span>
                     <div>
@@ -117,7 +117,7 @@
                 </dl>
             </section>
 
-            <section class="admin-booking-detail-card" aria-labelledby="rental-information-heading">
+            <section class="admin-booking-detail-card admin-section-card" aria-labelledby="rental-information-heading">
                 <div class="admin-booking-detail-heading">
                     <span class="admin-booking-detail-icon"><i class="bi bi-calendar-range" aria-hidden="true"></i></span>
                     <div>
@@ -136,7 +136,7 @@
                 </dl>
             </section>
 
-            <section class="admin-booking-detail-card admin-booking-detail-history" aria-labelledby="booking-history-heading">
+            <section class="admin-booking-detail-card admin-booking-detail-history admin-section-card" aria-labelledby="booking-history-heading">
                 <div class="admin-booking-detail-heading">
                     <span class="admin-booking-detail-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
                     <div>
@@ -173,7 +173,7 @@
                 @endforelse
             </section>
 
-            <section class="admin-booking-detail-card admin-booking-actions-card" aria-labelledby="reservation-actions-heading">
+            <section class="admin-booking-detail-card admin-booking-actions-card admin-section-card" aria-labelledby="reservation-actions-heading">
                 <div class="admin-booking-detail-heading">
                     <span class="admin-booking-detail-icon"><i class="bi bi-sliders" aria-hidden="true"></i></span>
                     <div>

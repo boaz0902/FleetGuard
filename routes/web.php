@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BookingCalendarController;
 use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FleetController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\VehicleAvailabilityController;
 use Illuminate\Support\Facades\Route;
@@ -51,4 +52,27 @@ Route::middleware(['auth', 'can:manage,App\\Models\\Vehicle'])->prefix('admin')-
         ->name('vehicle-unavailabilities.store');
     Route::delete('/vehicle-unavailabilities/{unavailability}', [BookingCalendarController::class, 'destroyUnavailability'])
         ->name('vehicle-unavailabilities.destroy');
+    Route::post('/fleet/maintenance', [BookingCalendarController::class, 'storeUnavailability'])
+        ->name('fleet.maintenance.store');
+    Route::delete('/fleet/maintenance/{unavailability}', [BookingCalendarController::class, 'destroyUnavailability'])
+        ->name('fleet.maintenance.destroy');
+});
+
+Route::middleware(['auth', 'can:viewAny,App\\Models\\Vehicle'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/fleet', [FleetController::class, 'index'])->name('fleet.index');
+    Route::get('/fleet/create', [FleetController::class, 'create'])
+        ->middleware('can:create,App\\Models\\Vehicle')
+        ->name('fleet.create');
+    Route::post('/fleet', [FleetController::class, 'store'])
+        ->middleware('can:create,App\\Models\\Vehicle')
+        ->name('fleet.store');
+    Route::get('/fleet/{vehicle}/edit', [FleetController::class, 'edit'])
+        ->middleware('can:update,vehicle')
+        ->name('fleet.edit');
+    Route::put('/fleet/{vehicle}', [FleetController::class, 'update'])
+        ->middleware('can:update,vehicle')
+        ->name('fleet.update');
+    Route::get('/fleet/{vehicle}', [FleetController::class, 'show'])
+        ->middleware('can:view,vehicle')
+        ->name('fleet.show');
 });

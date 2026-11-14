@@ -8,6 +8,7 @@ use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Services\VehicleAvailabilityService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,16 +48,89 @@ class BookingManagementController extends Controller
         $searchCustomerPhone = $request->user()->can('review', Booking::class);
 
         if ($search !== '') {
-            $bookingsQuery->where(function (Builder $query) use ($search, $searchCustomerPhone): void {
+            $searchPattern = "%{$search}%";
+            $durationSearch = preg_replace('/\s+days?$/i', '', $search) ?: $search;
+            $totalSearch = str_replace(['₱', ',', ' '], '', $search);
+
+            if (str_contains($totalSearch, '.')) {
+                $totalSearch = rtrim(rtrim($totalSearch, '0'), '.');
+            }
+
+            $dateSearch = $this->parseSearchDate($search);
+            $monthDaySearch = $this->parseSearchMonthDay($search);
+            $monthSearch = $this->parseSearchMonth($search);
+            $timeSearches = $this->parseSearchTime($search);
+
+            $bookingsQuery->where(function (Builder $query) use (
+                $search,
+                $searchPattern,
+                $durationSearch,
+                $totalSearch,
+                $dateSearch,
+                $monthDaySearch,
+                $monthSearch,
+                $timeSearches,
+                $searchCustomerPhone,
+            ): void {
                 $query
-                    ->where('booking_reference', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function (Builder $customerQuery) use ($search, $searchCustomerPhone): void {
-                        $customerQuery->where('full_name', 'like', "%{$search}%");
+                    ->where('booking_reference', 'like', $searchPattern)
+                    ->orWhereHas('customer', function (Builder $customerQuery) use ($searchPattern, $searchCustomerPhone): void {
+                        $customerQuery->where('full_name', 'like', $searchPattern);
 
                         if ($searchCustomerPhone) {
-                            $customerQuery->orWhere('mobile_number', 'like', "%{$search}%");
+                            $customerQuery->orWhere('mobile_number', 'like', $searchPattern);
                         }
+                    })
+                    ->orWhereHas('vehicle', fn (Builder $vehicleQuery) => $vehicleQuery
+                        ->where('name', 'like', $searchPattern)
+                        ->orWhere('category', 'like', $searchPattern))
+                    ->orWhere('pickup_datetime', 'like', $searchPattern)
+                    ->orWhere('return_datetime', 'like', $searchPattern)
+                    ->orWhere('rental_duration_days', 'like', "%{$durationSearch}%")
+                    ->orWhere('estimated_total', 'like', "%{$totalSearch}%")
+                    ->orWhere('status', 'like', $searchPattern)
+                    ->orWhere('created_at', 'like', $searchPattern);
+
+                if ($dateSearch !== null) {
+                    $query
+                        ->orWhereDate('pickup_datetime', $dateSearch)
+                        ->orWhereDate('return_datetime', $dateSearch)
+                        ->orWhereDate('created_at', $dateSearch);
+                }
+
+                if ($monthDaySearch !== null) {
+                    $month = $monthDaySearch['month'];
+                    $day = $monthDaySearch['day'];
+                    $query->orWhere(function (Builder $dateQuery) use ($month, $day): void {
+                        $dateQuery
+                            ->where(fn (Builder $fieldQuery) => $fieldQuery
+                                ->whereMonth('pickup_datetime', $month)
+                                ->whereDay('pickup_datetime', $day))
+                            ->orWhere(fn (Builder $fieldQuery) => $fieldQuery
+                                ->whereMonth('return_datetime', $month)
+                                ->whereDay('return_datetime', $day))
+                            ->orWhere(fn (Builder $fieldQuery) => $fieldQuery
+                                ->whereMonth('created_at', $month)
+                                ->whereDay('created_at', $day));
                     });
+                }
+
+                if ($monthSearch !== null) {
+                    $query->orWhere(function (Builder $dateQuery) use ($monthSearch): void {
+                        $dateQuery
+                            ->whereMonth('pickup_datetime', $monthSearch)
+                            ->orWhereMonth('return_datetime', $monthSearch)
+                            ->orWhereMonth('created_at', $monthSearch);
+                    });
+                }
+
+                foreach ($timeSearches ?? [] as $timeSearch) {
+                    $timePattern = "%{$timeSearch}%";
+                    $query
+                        ->orWhere('pickup_datetime', 'like', $timePattern)
+                        ->orWhere('return_datetime', 'like', $timePattern)
+                        ->orWhere('created_at', 'like', $timePattern);
+                }
             });
         }
 
@@ -72,7 +146,6 @@ class BookingManagementController extends Controller
                 ->orderByDesc('id')
                 ->paginate(25)
                 ->withQueryString(),
-            'vehicles' => Vehicle::query()->orderBy('name')->get(['id', 'name', 'category']),
             'metrics' => [
                 'total' => $statusCounts->sum(),
                 'pending' => $statusCounts->get(Booking::STATUS_PENDING, 0),
@@ -82,6 +155,98 @@ class BookingManagementController extends Controller
             ],
             'filters' => $validated,
         ]);
+    }
+
+    private function parseSearchDate(string $search): ?string
+    {
+        foreach (['Y-m-d', 'M d, Y'] as $format) {
+            if (Carbon::hasFormat($search, $format)) {
+                $date = Carbon::createFromFormat($format, $search);
+
+                if ($date !== false) {
+                    return $date->toDateString();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function parseSearchMonthDay(string $search): ?array
+    {
+        foreach (['M d', 'M j'] as $format) {
+            if (Carbon::hasFormat($search, $format)) {
+                $date = Carbon::createFromFormat($format, $search);
+
+                if ($date !== false) {
+                    return ['month' => $date->month, 'day' => $date->day];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function parseSearchMonth(string $search): ?int
+    {
+        return [
+            'jan' => 1,
+            'january' => 1,
+            'feb' => 2,
+            'february' => 2,
+            'mar' => 3,
+            'march' => 3,
+            'apr' => 4,
+            'april' => 4,
+            'may' => 5,
+            'jun' => 6,
+            'june' => 6,
+            'jul' => 7,
+            'july' => 7,
+            'aug' => 8,
+            'august' => 8,
+            'sep' => 9,
+            'september' => 9,
+            'oct' => 10,
+            'october' => 10,
+            'nov' => 11,
+            'november' => 11,
+            'dec' => 12,
+            'december' => 12,
+        ][strtolower($search)] ?? null;
+    }
+
+    private function parseSearchTime(string $search): ?array
+    {
+        foreach (['g:i A', 'h:i A'] as $format) {
+            if (Carbon::hasFormat($search, $format)) {
+                $time = Carbon::createFromFormat($format, $search);
+
+                if ($time !== false) {
+                    return [$time->format('H:i')];
+                }
+            }
+        }
+
+        foreach (['G:i', 'H:i', 'H:i:s'] as $format) {
+            if (Carbon::hasFormat($search, $format)) {
+                $time = Carbon::createFromFormat($format, $search);
+
+                if ($time !== false) {
+                    $times = [$time->format('H:i')];
+
+                    if ($time->hour > 0 && $time->hour < 12) {
+                        $times[] = $time->copy()->addHours(12)->format('H:i');
+                    } elseif ($time->hour === 12) {
+                        $times[] = $time->copy()->subHours(12)->format('H:i');
+                    }
+
+                    return $times;
+                }
+            }
+        }
+
+        return null;
     }
 
     public function show(Booking $booking)

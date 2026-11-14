@@ -54,6 +54,22 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
+## FleetGuard backend foundation
+
+This project now includes the backend foundation for FleetGuard's rental booking workflow:
+
+- Vehicle, customer, booking, and audit log models with Laravel migrations.
+- Secure admin authentication using Laravel's session guard with role checks.
+- Booking request validation and conflict prevention for overlapping vehicle reservations.
+- Booking status workflow that keeps requests in pending state until an authorized admin approves or rejects the request.
+- Backend-calculated rental totals and daily-rate snapshots to protect pricing integrity.
+
+Booking submissions are rate-limited and protected by Laravel CSRF and session security defaults. Authenticated administrators and managers can review the two-week vehicle calendar; only administrators can create or remove vehicle maintenance periods.
+
+The public `GET /vehicle-availability` endpoint returns current database vehicle rates for a requested date/time range. Only active vehicles are listed. Approved and ongoing bookings and overlapping maintenance periods make a vehicle unavailable; pending, rejected, cancelled, and completed bookings do not. Return time is the exclusive end boundary, and business times use Asia/Manila. Booking submission and approval recheck availability inside a transaction while holding the vehicle row lock. Admin and manager booking status changes, and administrator maintenance changes, are audited. Customer booking submissions do not overwrite existing customer contact records.
+
+Role assignment is backend-controlled; user registration, role management, and full vehicle CRUD are not included. Staff are denied booking and calendar access until assigned-booking authorization exists. Seed an admin only by setting `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD` in the environment before running the seeder; the seeder creates no default admin credentials.
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
