@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FleetController;
 use App\Http\Controllers\Admin\RentalController;
+use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\VehicleAvailabilityController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +52,11 @@ Route::middleware(['auth', 'can:review,App\\Models\\Booking'])->prefix('admin')-
     Route::post('/rentals/{booking}/checkin', [RentalController::class, 'checkIn'])->name('rentals.checkin');
     Route::get('/calendar', [BookingCalendarController::class, 'index'])->name('calendar.index');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
+
+Route::middleware(['auth', 'can:viewAny,App\\Models\\AuditLog'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export', [ReportsController::class, 'export'])->name('reports.export');
 });
 
 Route::middleware(['auth', 'can:manage,App\\Models\\Vehicle'])->prefix('admin')->name('admin.')->group(function () {
