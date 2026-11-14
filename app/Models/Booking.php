@@ -32,6 +32,8 @@ class Booking extends Model
     protected $casts = [
         'pickup_datetime' => 'datetime',
         'return_datetime' => 'datetime',
+        'checked_out_at' => 'datetime',
+        'checked_in_at' => 'datetime',
         'daily_rate_snapshot' => 'decimal:2',
         'estimated_total' => 'decimal:2',
     ];

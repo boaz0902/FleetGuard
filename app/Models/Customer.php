@@ -11,6 +11,10 @@ class Customer extends Model
 {
     use HasFactory;
 
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_BLOCKED = 'blocked';
+
     protected $fillable = [
         'user_id',
         'full_name',
@@ -26,6 +30,11 @@ class Customer extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(CustomerNote::class);
     }
 
     public function initials(): string

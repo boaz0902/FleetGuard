@@ -18,6 +18,9 @@
         ];
         $actionLabels = [
             'customer_updated' => 'Customer profile updated',
+            'customer_note_added' => 'Internal note added',
+            'customer_blocked' => 'Customer blocked',
+            'customer_unblocked' => 'Customer unblocked',
             'booking_submitted' => 'Reservation submitted',
             'booking_approved' => 'Reservation approved',
             'booking_rejected' => 'Reservation rejected',
@@ -35,6 +38,12 @@
                 <span>{{ session('status') }}</span>
             </div>
         @endif
+        @if ($errors->any())
+            <div class="admin-customers-alert" role="alert">
+                <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                <span>{{ $errors->first() }}</span>
+            </div>
+        @endif
 
         <div class="admin-customer-details-header">
             <a class="admin-customer-back" href="{{ route('admin.customers.index') }}">
@@ -45,15 +54,41 @@
                 <div class="admin-customer-profile-heading">
                     <p class="admin-customers-eyebrow">Customer #{{ $customer->id }}</p>
                     <h2>{{ $customer->full_name }}</h2>
+                    <span class="admin-customer-status admin-customer-status--{{ $customer->status }}">
+                        <i class="bi bi-{{ $customer->status === \App\Models\Customer::STATUS_BLOCKED ? 'slash-circle' : 'check-circle' }}" aria-hidden="true"></i>
+                        {{ ucfirst($customer->status) }}
+                    </span>
                     <span>Record created {{ $customer->created_at?->timezone('Asia/Manila')->format('M d, Y') }}</span>
                 </div>
-                @if ($canEdit)
-                    <a class="admin-customer-primary-link admin-customer-banner-action" href="{{ route('admin.customers.edit', $customer) }}">
-                        <i class="bi bi-pencil" aria-hidden="true"></i><span>Edit customer</span>
-                    </a>
-                @endif
+                <div class="admin-customer-banner-actions">
+                    @if ($canEdit)
+                        <a class="admin-customer-primary-link admin-customer-banner-action" href="{{ route('admin.customers.edit', $customer) }}">
+                            <i class="bi bi-pencil" aria-hidden="true"></i><span>Edit customer</span>
+                        </a>
+                    @endif
+                    @if ($canManageStatus && $customer->status === \App\Models\Customer::STATUS_ACTIVE)
+                        <button class="admin-customer-block-button" type="button" data-customer-dialog-open="customer-block-dialog">
+                            <i class="bi bi-slash-circle" aria-hidden="true"></i><span>Block customer</span>
+                        </button>
+                    @elseif ($canManageStatus)
+                        <button class="admin-customer-unblock-button" type="button" data-customer-dialog-open="customer-unblock-dialog">
+                            <i class="bi bi-unlock" aria-hidden="true"></i><span>Unblock customer</span>
+                        </button>
+                    @endif
+                </div>
             </section>
         </div>
+
+        @if ($details['blocked_event'])
+            <section class="admin-customer-blocked-banner" aria-label="Customer blocking details">
+                <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+                <div>
+                <strong>This customer is blocked from new bookings.</strong>
+                <span>Reason: {{ $details['blocked_event']->changes['reason'] ?? 'No reason recorded' }}</span>
+                <small>By {{ $details['blocked_event']->user?->name ?? 'Former administrator' }} · {{ $details['blocked_event']->created_at?->timezone('Asia/Manila')->format('M d, Y · g:i A') }}</small>
+                </div>
+            </section>
+        @endif
 
         @if ($canReviewBookings)
             <section class="admin-customer-lifetime-metrics" aria-label="Customer booking summary">
@@ -182,10 +217,59 @@
             </div>
 
             <div id="customer-panel-notes" role="tabpanel" aria-labelledby="customer-tab-notes" data-fleet-tab-panel="notes" @if ($activeTab !== 'notes') hidden @endif>
-                <div class="admin-customer-tab-empty admin-customer-notes-deferred">
-                    <i class="bi bi-sticky" aria-hidden="true"></i>
-                    <strong>Internal notes are deferred</strong>
-                    <span>No notes are stored for customer records. A dedicated notes table and its author/timestamp fields require a separate approved migration.</span>
+                <div class="admin-customer-notes-layout">
+                    <section class="admin-customer-notes-section" aria-labelledby="customer-notes-heading">
+                        <div class="admin-customer-bookings-heading">
+                            <div><p class="admin-customers-eyebrow">Internal record</p><h3 id="customer-notes-heading">Customer notes</h3></div>
+                            <span>Newest first · available to authorized customer viewers</span>
+                        </div>
+                        @if ($details['notes']->isEmpty())
+                            <div class="admin-customer-tab-empty admin-customer-notes-empty">
+                                <span class="admin-customer-notes-empty-icon"><i class="bi bi-sticky" aria-hidden="true"></i></span>
+                                <strong>No internal notes yet</strong>
+                                <span>Admins can record useful customer-service context. Notes are private and cannot be edited or deleted.</span>
+                            </div>
+                        @else
+                            <ol class="admin-customer-notes-timeline">
+                                @foreach ($details['notes'] as $note)
+                                    @php
+                                        $authorParts = preg_split('/\s+/', trim($note->author?->name ?? 'Former user')) ?: [];
+                                        $authorInitials = collect($authorParts)->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
+                                    @endphp
+                                    <li class="admin-customer-note">
+                                        <span class="admin-customer-note-avatar" aria-hidden="true">{{ $authorInitials ?: '?' }}</span>
+                                        <article>
+                                            <header>
+                                                <strong>{{ $note->author?->name ?? 'Former user' }}</strong>
+                                                <time datetime="{{ $note->created_at?->toIso8601String() }}" title="{{ $note->created_at?->timezone('Asia/Manila')->format('M d, Y · g:i A') }}">{{ $note->created_at?->diffForHumans() }}</time>
+                                            </header>
+                                            <p>{{ $note->body }}</p>
+                                        </article>
+                                    </li>
+                                @endforeach
+                            </ol>
+                        @endif
+                    </section>
+
+                    @if ($canAddNotes)
+                        <section class="admin-customer-note-form-card" aria-labelledby="add-customer-note-heading">
+                            <div class="admin-customer-detail-heading">
+                                <span class="admin-customer-detail-icon"><i class="bi bi-pencil-square" aria-hidden="true"></i></span>
+                                <div><p class="admin-customers-eyebrow">Admin only</p><h3 id="add-customer-note-heading">Add an internal note</h3></div>
+                            </div>
+                            <p>Never visible in customer-facing pages. Notes are append-only.</p>
+                            <form method="POST" action="{{ route('admin.customers.notes.store', $customer) }}" data-admin-disable-submit>
+                                @csrf
+                                <label for="customer-note-body">Note</label>
+                                <textarea id="customer-note-body" name="body" rows="5" maxlength="5000" required data-customer-note-input>{{ old('body') }}</textarea>
+                                @error('body')<small class="admin-customer-field-error">{{ $message }}</small>@enderror
+                                <div class="admin-customer-note-form-footer">
+                                    <small><span data-customer-note-count>0</span> / 5000 characters</small>
+                                    <button class="admin-customer-primary-link" type="submit"><i class="bi bi-plus-lg" aria-hidden="true"></i><span>Add note</span></button>
+                                </div>
+                            </form>
+                        </section>
+                    @endif
                 </div>
             </div>
 
@@ -224,6 +308,42 @@
                 <a class="admin-customer-secondary-link" href="{{ route('admin.customers.index') }}">Back</a>
                 <a class="admin-customer-primary-link" href="{{ route('admin.customers.edit', $customer) }}"><i class="bi bi-pencil" aria-hidden="true"></i><span>Edit customer</span></a>
             </div>
+        @endif
+        @if ($canManageStatus)
+            <dialog class="admin-customer-status-dialog" id="customer-block-dialog" aria-labelledby="customer-block-title" @if ($errors->has('reason')) data-dialog-open-on-load @endif>
+                <div class="admin-customer-status-dialog-heading">
+                    <span class="admin-customer-status-dialog-icon admin-customer-status-dialog-icon--danger"><i class="bi bi-shield-lock" aria-hidden="true"></i></span>
+                    <button class="admin-customer-dialog-close" type="button" data-customer-dialog-close aria-label="Close block confirmation"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                </div>
+                <h2 id="customer-block-title">Block this customer?</h2>
+                <p>Blocking only prevents new submissions that match this customer's registered email. Existing pending, approved, ongoing, and completed bookings are untouched; check-out and check-in remain available.</p>
+                <form method="POST" action="{{ route('admin.customers.block', $customer) }}" data-admin-disable-submit>
+                    @csrf
+                    <label for="customer-block-reason">Reason for blocking</label>
+                    <textarea id="customer-block-reason" name="reason" rows="4" maxlength="1000" required>{{ old('reason') }}</textarea>
+                    @error('reason')<small class="admin-customer-field-error">{{ $message }}</small>@enderror
+                    <div class="admin-customer-status-dialog-actions">
+                        <button class="admin-customer-secondary-link" type="button" data-customer-dialog-close>Cancel</button>
+                        <button class="admin-customer-danger-button" type="submit">Block customer</button>
+                    </div>
+                </form>
+            </dialog>
+
+            <dialog class="admin-customer-status-dialog" id="customer-unblock-dialog" aria-labelledby="customer-unblock-title">
+                <div class="admin-customer-status-dialog-heading">
+                    <span class="admin-customer-status-dialog-icon"><i class="bi bi-unlock" aria-hidden="true"></i></span>
+                    <button class="admin-customer-dialog-close" type="button" data-customer-dialog-close aria-label="Close unblock confirmation"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                </div>
+                <h2 id="customer-unblock-title">Unblock this customer?</h2>
+                <p>New booking submissions matching this customer's registered email will be allowed again. Existing bookings remain unchanged.</p>
+                <form method="POST" action="{{ route('admin.customers.unblock', $customer) }}" data-admin-disable-submit>
+                    @csrf
+                    <div class="admin-customer-status-dialog-actions">
+                        <button class="admin-customer-secondary-link" type="button" data-customer-dialog-close>Cancel</button>
+                        <button class="admin-customer-primary-link" type="submit"><i class="bi bi-unlock" aria-hidden="true"></i><span>Unblock customer</span></button>
+                    </div>
+                </form>
+            </dialog>
         @endif
     </main>
 @endsection

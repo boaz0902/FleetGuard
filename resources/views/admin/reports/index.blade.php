@@ -882,13 +882,13 @@
                     <span class="admin-report-operation-icon admin-report-operation-icon--slate"><i class="bi bi-stopwatch" aria-hidden="true"></i></span>
                     <span class="admin-report-operation-label">Average actual rental length</span>
                     <strong>{{ $operations['average_actual_rental_days'] === null ? 'Not available' : number_format($operations['average_actual_rental_days'], 2).' days' }}</strong>
-                    <div class="admin-report-progress-track admin-report-progress-track--slate" role="img" aria-label="{{ number_format($operations['paired_audit_rentals']) }} of {{ number_format($operations['completed_rentals']) }} completed rentals have paired audit timestamps">
+                    <div class="admin-report-progress-track admin-report-progress-track--slate" role="img" aria-label="{{ number_format($operations['paired_audit_rentals']) }} of {{ number_format($operations['completed_rentals']) }} completed rentals have paired check-out and check-in timestamps">
                         <span class="admin-report-progress-fill" style="width: {{ $auditCoverageWidth }}%"></span>
                     </div>
-                    <small>{{ number_format($operations['paired_audit_rentals']) }} completed rentals with paired audit times</small>
+                    <small>{{ number_format($operations['paired_audit_rentals']) }} completed rentals with paired timestamps</small>
                 </article>
             </div>
-            <p class="admin-report-footnote">Actual rental length uses the existing check-out/check-in audit timestamps only when both events exist. Older completed bookings without a reliable pair are excluded; no timestamp columns were added.</p>
+            <p class="admin-report-footnote">Actual rental length prefers the recorded check-out/check-in timestamps and falls back to legacy audit events. Completed rentals without both timestamps are excluded.</p>
         </section>
 
         <footer class="admin-page-footer">FleetGuard Reports · Read-only data · Generated {{ $now->timezone('Asia/Manila')->format('M j, Y g:i A') }} Manila time</footer>

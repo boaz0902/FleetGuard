@@ -45,6 +45,11 @@ class User extends Authenticatable
         return $this->hasMany(AuditLog::class);
     }
 
+    public function customerNotes(): HasMany
+    {
+        return $this->hasMany(CustomerNote::class, 'author_id');
+    }
+
     public function hasRole(string $role): bool
     {
         return $this->role === $role;

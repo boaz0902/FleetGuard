@@ -86,8 +86,8 @@
         <section class="admin-rental-stat-strip" aria-label="Rental summary">
             <article><span>Total</span><strong>₱{{ number_format((float) $booking->estimated_total, 2) }}</strong><small>Stored booking snapshot</small></article>
             <article><span>Daily rate</span><strong>₱{{ number_format((float) $booking->daily_rate_snapshot, 2) }}</strong><small>{{ $booking->rental_duration_days }} rental days</small></article>
-            <article><span>Checked out</span><strong>{{ $checkedOut?->created_at?->timezone('Asia/Manila')->format('M d, g:i A') ?? 'Not yet' }}</strong><small>{{ $checkedOut?->user?->name ?? 'Awaiting release' }}</small></article>
-            <article><span>Checked in</span><strong>{{ $checkedIn?->created_at?->timezone('Asia/Manila')->format('M d, g:i A') ?? 'Not yet' }}</strong><small>{{ $checkedIn?->user?->name ?? 'Awaiting return' }}</small></article>
+            <article><span>Checked out</span><strong>{{ $checked_out_at?->timezone('Asia/Manila')->format('M d, g:i A') ?? 'Not yet' }}</strong><small>{{ $checkedOut?->user?->name ?? ($checked_out_at ? 'Recorded' : 'Awaiting release') }}</small></article>
+            <article><span>Checked in</span><strong>{{ $checked_in_at?->timezone('Asia/Manila')->format('M d, g:i A') ?? 'Not yet' }}</strong><small>{{ $checkedIn?->user?->name ?? ($checked_in_at ? 'Recorded' : 'Awaiting return') }}</small></article>
         </section>
 
         <section class="admin-rental-content" aria-label="Rental information">
@@ -122,6 +122,7 @@
                             </span>
                         </p>
                         <p>Booking dates and rate snapshots remain unchanged during check-out and check-in.</p>
+                        <p class="admin-rental-return-comparison"><strong>Actual vs. scheduled:</strong> {{ $return_comparison ?? 'Awaiting vehicle return' }}</p>
                         @if ($rental_status === 'overdue')
                             <p class="admin-rental-overdue-message"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> The scheduled exclusive return time has passed.</p>
                         @elseif ($late_return)
@@ -138,7 +139,7 @@
                     <ol class="admin-rental-timeline">
                         @forelse ($timeline as $entry)
                             <li>
-                                <span class="admin-rental-timeline-marker" aria-hidden="true"></span>
+                                <span class="admin-rental-timeline-marker" aria-hidden="true"><i class="bi bi-{{ $entry['icon'] ?? 'circle' }}"></i></span>
                                 <div>
                                     <strong>{{ $entry['label'] }}</strong>
                                     <time datetime="{{ $entry['created_at']?->toIso8601String() }}">{{ $entry['created_at']?->timezone('Asia/Manila')->format('M d, Y · g:i A') }}</time>

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BlockCustomerRequest;
+use App\Http\Requests\StoreCustomerNoteRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Models\AuditLog;
 use App\Models\Booking;
@@ -22,6 +24,7 @@ class CustomerController extends Controller
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'activity' => ['nullable', Rule::in(['none', 'pending', 'upcoming', 'ongoing', 'completed'])],
+            'status' => ['nullable', Rule::in([Customer::STATUS_ACTIVE, Customer::STATUS_BLOCKED])],
             'joined' => ['nullable', Rule::in(['month'])],
             'sort' => ['nullable', Rule::in([
                 'full_name',
@@ -68,14 +71,59 @@ class CustomerController extends Controller
                 Carbon::now('Asia/Manila'),
                 $includeAudit,
                 $canReviewBookings,
+                $user->isAdmin(),
             ),
             'displayEmail' => $customers->emailForDisplay($customer, $user->isAdmin()),
             'displayPhone' => $customers->phoneForDisplay($customer, $user->isAdmin()),
             'canEdit' => $user->can('update', $customer),
             'canReviewBookings' => $canReviewBookings,
             'canViewAudit' => $includeAudit,
+            'canAddNotes' => $user->can('addNote', $customer),
+            'canManageStatus' => $user->can('manageStatus', $customer),
             'activeTab' => $activeTab,
         ]);
+    }
+
+    public function storeNote(
+        StoreCustomerNoteRequest $request,
+        Customer $customer,
+        CustomerManagementService $customers,
+    ) {
+        $customers->addNote($customer, $request->validated('body'), $request->user());
+
+        return redirect()
+            ->route('admin.customers.show', [$customer, 'tab' => 'notes'])
+            ->with('status', 'Internal note added.');
+    }
+
+    public function block(
+        BlockCustomerRequest $request,
+        Customer $customer,
+        CustomerManagementService $customers,
+    ) {
+        $changed = $customers->setStatus(
+            $customer,
+            Customer::STATUS_BLOCKED,
+            $request->validated('reason'),
+            $request->user(),
+        );
+
+        return redirect()
+            ->route('admin.customers.show', $customer)
+            ->with('status', $changed ? 'Customer blocked. Existing bookings were not changed.' : 'Customer is already blocked.');
+    }
+
+    public function unblock(
+        Request $request,
+        Customer $customer,
+        CustomerManagementService $customers,
+    ) {
+        $this->authorize('manageStatus', $customer);
+        $changed = $customers->setStatus($customer, Customer::STATUS_ACTIVE, null, $request->user());
+
+        return redirect()
+            ->route('admin.customers.show', $customer)
+            ->with('status', $changed ? 'Customer unblocked.' : 'Customer is already active.');
     }
 
     public function edit(Customer $customer): View

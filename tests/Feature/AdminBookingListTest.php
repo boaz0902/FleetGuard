@@ -166,6 +166,11 @@ class AdminBookingListTest extends TestCase
             ->get(route('admin.bookings.index'))
             ->assertOk()
             ->assertSee('aria-label="Admin navigation"', false)
+            ->assertSee('data-admin-sidebar-toggle', false)
+            ->assertSee('data-admin-mobile-menu-toggle', false)
+            ->assertSee('aria-controls="admin-sidebar"', false)
+            ->assertSee('bi-chevron-left', false)
+            ->assertSee('bi-chevron-right', false)
             ->assertSee('aria-current="page"', false);
 
         $calendarResponse = $this->get(route('admin.calendar.index'))

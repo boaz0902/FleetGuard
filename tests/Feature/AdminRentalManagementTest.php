@@ -7,10 +7,13 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleUnavailability;
+use App\Services\BookingStatusTransitionService;
 use App\Services\CustomerManagementService;
 use App\Services\VehicleAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Tests\TestCase;
 
 class AdminRentalManagementTest extends TestCase
@@ -207,10 +210,15 @@ class AdminRentalManagementTest extends TestCase
 
         $this->actingAs($admin)
             ->from(route('admin.rentals.show', $booking))
-            ->post(route('admin.rentals.checkout', $booking))
+            ->post(route('admin.rentals.checkout', $booking), [
+                'checked_out_at' => '2000-01-01 00:00:00',
+                'checked_in_at' => '2000-01-02 00:00:00',
+            ])
             ->assertRedirect(route('admin.rentals.show', $booking));
 
         $this->assertSame(Booking::STATUS_ONGOING, $booking->fresh()->status);
+        $this->assertSame('2026-12-01 10:00:00', $booking->fresh()->checked_out_at->toDateTimeString());
+        $this->assertNull($booking->fresh()->checked_in_at);
         $this->assertSame($original, $this->bookingSnapshot($booking->fresh()));
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $admin->id,
@@ -250,6 +258,7 @@ class AdminRentalManagementTest extends TestCase
             ->assertRedirect(route('admin.rentals.show', $booking));
 
         $this->assertSame(Booking::STATUS_COMPLETED, $booking->fresh()->status);
+        $this->assertSame('2026-12-01 10:00:00', $booking->fresh()->checked_in_at->toDateTimeString());
         $this->assertSame($original, $this->bookingSnapshot($booking->fresh()));
         $this->assertSame($customer, $booking->customer->fresh()->only(array_keys($customer)));
         $log = $booking->auditLogs()->where('action', 'rental_checked_in')->firstOrFail();
@@ -257,6 +266,8 @@ class AdminRentalManagementTest extends TestCase
         $this->assertSame('completed', $log->changes['to']);
         $this->assertFalse($log->changes['overdue']);
         $this->assertArrayHasKey('checked_in_at', $log->changes);
+        $booking->fill(['checked_in_at' => '2000-01-01 00:00:00'])->save();
+        $this->assertSame('2026-12-01 10:00:00', $booking->fresh()->checked_in_at->toDateTimeString());
 
         $this->assertTrue(app(VehicleAvailabilityService::class)->isAvailable(
             $booking->vehicle,
@@ -292,6 +303,127 @@ class AdminRentalManagementTest extends TestCase
         $this->assertSame($originalPickup, $booking->pickup_datetime->toDateTimeString());
         $this->assertSame($originalReturn, $booking->return_datetime->toDateTimeString());
         $this->assertTrue($booking->auditLogs()->where('action', 'rental_checked_in')->firstOrFail()->changes['overdue']);
+        $this->assertSame('2026-12-01 10:00:00', $booking->checked_in_at->toDateTimeString());
+    }
+
+    public function test_rental_timestamps_and_status_changes_roll_back_together(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $approved = $this->booking([
+            'status' => Booking::STATUS_APPROVED,
+            'pickup' => '2026-12-01 09:00:00',
+        ]);
+        $transitions = app(BookingStatusTransitionService::class);
+
+        try {
+            DB::transaction(function () use ($approved, $admin, $transitions): void {
+                $transitions->transition($approved, Booking::STATUS_ONGOING, $admin);
+                throw new RuntimeException('Rollback checkout test transaction.');
+            });
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Rollback checkout test transaction.', $exception->getMessage());
+        }
+
+        $approved->refresh();
+        $this->assertSame(Booking::STATUS_APPROVED, $approved->status);
+        $this->assertNull($approved->checked_out_at);
+        $this->assertDatabaseMissing('audit_logs', [
+            'action' => 'rental_checked_out',
+            'subject_id' => $approved->id,
+        ]);
+
+        $ongoing = $this->booking([
+            'status' => Booking::STATUS_ONGOING,
+            'reference' => 'FG-ROLLBACK-CHECKIN',
+        ]);
+        try {
+            DB::transaction(function () use ($ongoing, $admin, $transitions): void {
+                $transitions->transition($ongoing, Booking::STATUS_COMPLETED, $admin);
+                throw new RuntimeException('Rollback check-in test transaction.');
+            });
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Rollback check-in test transaction.', $exception->getMessage());
+        }
+
+        $ongoing->refresh();
+        $this->assertSame(Booking::STATUS_ONGOING, $ongoing->status);
+        $this->assertNull($ongoing->checked_in_at);
+        $this->assertDatabaseMissing('audit_logs', [
+            'action' => 'rental_checked_in',
+            'subject_id' => $ongoing->id,
+        ]);
+    }
+
+    public function test_rental_details_and_directory_prefer_columns_and_keep_audit_fallback(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $booking = $this->booking([
+            'status' => Booking::STATUS_COMPLETED,
+            'pickup' => '2026-11-30 09:00:00',
+            'returned' => '2026-12-01 09:00:00',
+        ]);
+        $booking->forceFill([
+            'checked_out_at' => '2026-11-30 09:30:00',
+            'checked_in_at' => '2026-12-01 11:00:00',
+        ])->save();
+        $booking->auditLogs()->createMany([
+            [
+                'action' => 'rental_checked_out',
+                'changes' => [],
+                'created_at' => Carbon::parse('2026-11-30 08:00:00', 'Asia/Manila'),
+            ],
+            [
+                'action' => 'rental_checked_in',
+                'changes' => ['overdue' => false],
+                'created_at' => Carbon::parse('2026-12-01 08:00:00', 'Asia/Manila'),
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.rentals.show', $booking))
+            ->assertOk()
+            ->assertSee('Returned 2 hours late')
+            ->assertViewHas('checked_out_at', fn ($time) => $time->toDateTimeString() === '2026-11-30 09:30:00')
+            ->assertViewHas('checked_in_at', fn ($time) => $time->toDateTimeString() === '2026-12-01 11:00:00');
+
+        $directory = app(\App\Services\RentalManagementService::class)->directory([], now('Asia/Manila'));
+        $listed = $directory->getCollection()->firstWhere('id', $booking->id);
+        $this->assertSame('2026-11-30 09:30:00', $listed->effective_checked_out_at->toDateTimeString());
+        $this->assertSame('2026-12-01 11:00:00', $listed->effective_checked_in_at->toDateTimeString());
+
+        $fallback = $this->booking([
+            'status' => Booking::STATUS_COMPLETED,
+            'reference' => 'FG-AUDIT-FALLBACK',
+            'returned' => '2026-12-01 11:00:00',
+        ]);
+        $fallback->auditLogs()->createMany([
+            [
+                'action' => 'booking_marked_ongoing',
+                'changes' => [],
+                'created_at' => Carbon::parse('2026-12-01 08:30:00', 'Asia/Manila'),
+            ],
+            [
+                'action' => 'booking_marked_completed',
+                'changes' => [],
+                'created_at' => Carbon::parse('2026-12-01 12:00:00', 'Asia/Manila'),
+            ],
+        ]);
+        $fallbackDetails = app(\App\Services\RentalManagementService::class)->details($fallback, now('Asia/Manila'), true);
+        $this->assertSame('2026-12-01 08:30:00', $fallbackDetails['checked_out_at']->toDateTimeString());
+        $this->assertSame('2026-12-01 12:00:00', $fallbackDetails['checked_in_at']->toDateTimeString());
+        $this->assertTrue($fallbackDetails['late_return']);
+        $this->assertSame('Returned 1 hour late', $fallbackDetails['return_comparison']);
+        $this->assertTrue($fallbackDetails['timeline']->firstWhere('label', 'Rental marked completed')['changes']['overdue']);
+        $this->actingAs($admin)
+            ->get(route('admin.rentals.show', $fallback))
+            ->assertOk()
+            ->assertSee('Returned late')
+            ->assertSee('Returned 1 hour late');
+        $fallbackListed = app(\App\Services\RentalManagementService::class)
+            ->directory([], now('Asia/Manila'))
+            ->getCollection()
+            ->firstWhere('id', $fallback->id);
+        $this->assertTrue($fallbackListed->late_return);
     }
 
     public function test_check_out_blocks_invalid_statuses_future_pickup_and_direct_reservation_transitions(): void

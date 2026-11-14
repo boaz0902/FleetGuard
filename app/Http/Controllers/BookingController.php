@@ -43,7 +43,15 @@ class BookingController extends Controller
                 ]);
             }
 
-            $customer = Customer::query()->where('email', $email)->first();
+            $customer = Customer::query()
+                ->whereRaw('LOWER(TRIM(email)) = ?', [$email])
+                ->first();
+
+            if ($customer?->status === Customer::STATUS_BLOCKED) {
+                throw ValidationException::withMessages([
+                    'email' => ['This booking request could not be accepted. Please contact FleetGuard support.'],
+                ]);
+            }
 
             if (! $customer) {
                 $customer = Customer::query()->create([

@@ -61,11 +61,16 @@ class BookingStatusTransitionService
             }
 
             $previousStatus = $lockedBooking->status;
-            $updates = ['status' => $status];
+            $lockedBooking->status = $status;
             if ($reason !== '') {
-                $updates['admin_remarks'] = $reason;
+                $lockedBooking->admin_remarks = $reason;
             }
-            $lockedBooking->update($updates);
+            if ($status === Booking::STATUS_ONGOING) {
+                $lockedBooking->checked_out_at = $now;
+            } elseif ($status === Booking::STATUS_COMPLETED) {
+                $lockedBooking->checked_in_at = $now;
+            }
+            $lockedBooking->save();
             $action = match ($status) {
                 Booking::STATUS_APPROVED => 'booking_approved',
                 Booking::STATUS_REJECTED => 'booking_rejected',

@@ -733,6 +733,17 @@
     margin: 14px 0;
 }
 
+.admin-rental-return-comparison {
+    padding: 10px 11px;
+    border: 1px solid #e3eaf0;
+    border-radius: 9px;
+    background: #f7fafc;
+}
+
+.admin-rental-return-comparison strong {
+    color: #344452;
+}
+
 .admin-rental-detail-card .admin-rental-secondary {
     margin-top: 6px;
 }
@@ -755,9 +766,9 @@
 
 .admin-rental-timeline li:not(:last-child)::after {
     position: absolute;
-    top: 14px;
+    top: 25px;
     bottom: 0;
-    left: 5px;
+    left: 11px;
     width: 1px;
     background: #dce5eb;
     content: '';
@@ -765,13 +776,17 @@
 
 .admin-rental-timeline-marker {
     z-index: 1;
-    width: 11px;
-    height: 11px;
+    display: grid;
+    width: 24px;
+    height: 24px;
     flex: 0 0 auto;
-    margin-top: 4px;
-    border: 2px solid #3988d6;
+    place-items: center;
+    margin-top: 0;
+    border: 1px solid #cfe0ed;
     border-radius: 50%;
     background: #fff;
+    color: #3988d6;
+    font-size: 11px;
 }
 
 .admin-rental-timeline li > div {

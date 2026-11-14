@@ -9,6 +9,8 @@ use App\Models\Vehicle;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class RentalManagementService
 {
@@ -42,12 +44,22 @@ class RentalManagementService
 
         $monthStart = $now->copy()->startOfMonth();
         $monthEnd = $now->copy()->endOfMonth();
-        $completedThisMonth = AuditLog::query()
+        $checkInLogs = AuditLog::query()
             ->where('subject_type', Booking::class)
             ->whereIn('action', ['rental_checked_in', 'booking_marked_completed'])
-            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->select('subject_id')
+            ->selectRaw('MIN(created_at) AS audit_checked_in_at')
+            ->groupBy('subject_id');
+        $completedThisMonth = Booking::query()
+            ->leftJoinSub($checkInLogs, 'checkin_audit', fn ($join) => $join
+                ->on('checkin_audit.subject_id', '=', 'bookings.id'))
+            ->where('bookings.status', Booking::STATUS_COMPLETED)
+            ->whereBetween(
+                DB::raw('COALESCE(bookings.checked_in_at, checkin_audit.audit_checked_in_at)'),
+                [$monthStart->toDateTimeString(), $monthEnd->toDateTimeString()],
+            )
             ->distinct()
-            ->count('subject_id');
+            ->count('bookings.id');
 
         return [
             'ready' => (int) $counts->ready,
@@ -163,9 +175,12 @@ class RentalManagementService
                     ['rental_checked_in', 'booking_marked_completed'],
                     true,
                 ));
-                $booking->setAttribute('checked_out_at', $checkedOut?->created_at);
-                $booking->setAttribute('checked_in_at', $checkedIn?->created_at);
-                $booking->setAttribute('late_return', (bool) ($checkedIn?->changes['overdue'] ?? false));
+                $checkedOutAt = $booking->checked_out_at ?? $checkedOut?->created_at;
+                $checkedInAt = $booking->checked_in_at ?? $checkedIn?->created_at;
+                $lateReturn = $checkedInAt?->greaterThan($booking->return_datetime) ?? false;
+                $booking->setAttribute('effective_checked_out_at', $checkedOutAt);
+                $booking->setAttribute('effective_checked_in_at', $checkedInAt);
+                $booking->setAttribute('late_return', $lateReturn);
 
                 return $booking;
             });
@@ -199,7 +214,21 @@ class RentalManagementService
             );
         }
 
-        $timeline = $booking->auditLogs->map(function (AuditLog $log): array {
+        $checkedOut = $booking->auditLogs->first(fn (AuditLog $log) => in_array(
+            $log->action,
+            ['rental_checked_out', 'booking_marked_ongoing'],
+            true,
+        ));
+        $checkedIn = $booking->auditLogs->first(fn (AuditLog $log) => in_array(
+            $log->action,
+            ['rental_checked_in', 'booking_marked_completed'],
+            true,
+        ));
+        $checkedOutAt = $booking->checked_out_at ?? $checkedOut?->created_at;
+        $checkedInAt = $booking->checked_in_at ?? $checkedIn?->created_at;
+        $lateReturn = $checkedInAt?->greaterThan($booking->return_datetime) ?? false;
+
+        $timeline = $booking->auditLogs->map(function (AuditLog $log) use ($booking): array {
             $labels = [
                 'booking_submitted' => 'Reservation requested',
                 'booking_approved' => 'Reservation approved',
@@ -208,14 +237,48 @@ class RentalManagementService
                 'booking_marked_ongoing' => 'Rental marked ongoing',
                 'booking_marked_completed' => 'Rental marked completed',
             ];
+            $isCheckOut = in_array($log->action, ['rental_checked_out', 'booking_marked_ongoing'], true);
+            $isCheckIn = in_array($log->action, ['rental_checked_in', 'booking_marked_completed'], true);
+            $createdAt = $isCheckOut
+                ? ($booking->checked_out_at ?? $log->created_at)
+                : ($isCheckIn ? ($booking->checked_in_at ?? $log->created_at) : $log->created_at);
+            $changes = $log->changes ?? [];
+
+            if ($isCheckIn) {
+                $changes['overdue'] = ($booking->checked_in_at ?? $log->created_at)
+                    ->greaterThan($booking->return_datetime);
+            }
 
             return [
                 'label' => $labels[$log->action] ?? ucfirst(str_replace('_', ' ', $log->action)),
                 'actor' => $log->user?->name ?? ($log->action === 'booking_submitted' ? 'Customer / guest' : 'System'),
-                'created_at' => $log->created_at,
-                'changes' => $log->changes ?? [],
+                'created_at' => $createdAt,
+                'changes' => $changes,
+                'icon' => $isCheckOut ? 'key' : ($isCheckIn ? 'box-arrow-in-left' : 'circle'),
             ];
-        });
+        })->values();
+
+        if ($checkedOutAt !== null && $checkedOut === null) {
+            $timeline->push([
+                'label' => 'Vehicle checked out',
+                'actor' => 'Rental record',
+                'created_at' => $checkedOutAt,
+                'changes' => [],
+                'icon' => 'key',
+            ]);
+        }
+
+        if ($checkedInAt !== null && $checkedIn === null) {
+            $timeline->push([
+                'label' => 'Vehicle checked in',
+                'actor' => 'Rental record',
+                'created_at' => $checkedInAt,
+                'changes' => ['overdue' => $lateReturn],
+                'icon' => 'box-arrow-in-left',
+            ]);
+        }
+
+        $timeline = $timeline->sortBy(fn (array $entry) => $entry['created_at']?->getTimestamp())->values();
 
         $now = $now->copy();
 
@@ -224,10 +287,42 @@ class RentalManagementService
             'rental_status' => $this->statusFor($booking, $now),
             'checkout_block_reason' => $this->checkOutBlockReason($booking, $now),
             'timeline' => $timeline,
-            'late_return' => (bool) ($booking->auditLogs
-                ->first(fn (AuditLog $log) => $log->action === 'rental_checked_in')
-                ?->changes['overdue'] ?? false),
+            'checked_out_at' => $checkedOutAt,
+            'checked_in_at' => $checkedInAt,
+            'late_return' => $lateReturn,
+            'return_comparison' => $this->returnComparison($checkedInAt, $booking->return_datetime),
         ];
+    }
+
+    private function returnComparison(?CarbonInterface $checkedInAt, CarbonInterface $scheduledReturn): ?string
+    {
+        if ($checkedInAt === null) {
+            return null;
+        }
+
+        $difference = $checkedInAt->getTimestamp() - $scheduledReturn->getTimestamp();
+
+        if ($difference === 0) {
+            return 'Returned on schedule';
+        }
+
+        $seconds = abs($difference);
+        $parts = [];
+
+        foreach ([86400 => 'day', 3600 => 'hour', 60 => 'minute', 1 => 'second'] as $unitSeconds => $unit) {
+            $quantity = intdiv($seconds, $unitSeconds);
+
+            if ($quantity > 0) {
+                $parts[] = number_format($quantity).' '.Str::plural($unit, $quantity);
+                $seconds %= $unitSeconds;
+            }
+
+            if (count($parts) === 2) {
+                break;
+            }
+        }
+
+        return 'Returned '.implode(' ', $parts).($difference > 0 ? ' late' : ' early');
     }
 
     public function checkOutBlockReason(Booking $booking, CarbonInterface $now): ?string

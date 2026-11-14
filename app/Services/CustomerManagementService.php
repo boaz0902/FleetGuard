@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\CustomerNote;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -34,6 +35,7 @@ class CustomerManagementService
 
         return [
             'total' => Customer::query()->count(),
+            'blocked' => Customer::query()->where('status', Customer::STATUS_BLOCKED)->count(),
             'pending' => (int) $bookingMetrics->with_pending,
             'upcoming' => (int) $bookingMetrics->with_upcoming,
             'ongoing' => (int) $bookingMetrics->with_ongoing,
@@ -89,6 +91,9 @@ class CustomerManagementService
             });
         }
 
+        $query->when($filters['status'] ?? null, fn (Builder $customers, string $status) => $customers
+            ->where('customers.status', $status));
+
         match ($filters['activity'] ?? null) {
             'none' => $query->doesntHave('bookings'),
             'pending' => $query->whereHas('bookings', fn (Builder $bookings) => $bookings
@@ -139,6 +144,7 @@ class CustomerManagementService
         CarbonInterface $now,
         bool $includeAudit,
         bool $includeBookings,
+        bool $includeBlockedDetails,
     ): array {
         $bookingDetails = ['booking_count' => 0, 'lifetime_total' => 0.0, 'current_and_upcoming' => collect(), 'bookings' => null];
 
@@ -198,11 +204,100 @@ class CustomerManagementService
                 ->limit(10)
                 ->get()
             : new Collection;
+        $notes = $customer->notes()
+            ->with('author:id,name')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+        $blockedEvent = $includeBlockedDetails && $customer->status === Customer::STATUS_BLOCKED
+            ? AuditLog::query()
+                ->with('user:id,name')
+                ->where('subject_type', Customer::class)
+                ->where('subject_id', (string) $customer->getKey())
+                ->where('action', 'customer_blocked')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->first()
+            : null;
 
         return [
             ...$bookingDetails,
             'activity' => $activity,
+            'notes' => $notes,
+            'blocked_event' => $blockedEvent,
         ];
+    }
+
+    public function addNote(Customer $customer, string $body, User $actor): CustomerNote
+    {
+        return DB::transaction(function () use ($customer, $body, $actor): CustomerNote {
+            $record = Customer::query()
+                ->whereKey($customer->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+            $note = $record->notes()->create([
+                'author_id' => $actor->getKey(),
+                'body' => trim($body),
+            ]);
+
+            AuditLog::query()->create([
+                'user_id' => $actor->getKey(),
+                'action' => 'customer_note_added',
+                'subject_type' => Customer::class,
+                'subject_id' => (string) $record->getKey(),
+                'changes' => ['note_id' => $note->getKey()],
+                'created_at' => now(),
+            ]);
+
+            return $note;
+        });
+    }
+
+    public function setStatus(Customer $customer, string $status, ?string $reason, User $actor): bool
+    {
+        return DB::transaction(function () use ($customer, $status, $reason, $actor): bool {
+            $record = Customer::query()
+                ->whereKey($customer->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($record->status === $status) {
+                return false;
+            }
+
+            $previousStatus = $record->status;
+            $record->status = $status;
+            $record->save();
+
+            $changes = [
+                'from' => $previousStatus,
+                'to' => $status,
+            ];
+
+            if ($status === Customer::STATUS_BLOCKED) {
+                $changes['reason'] = trim((string) $reason);
+            } else {
+                $previousBlock = AuditLog::query()
+                    ->where('subject_type', Customer::class)
+                    ->where('subject_id', (string) $record->getKey())
+                    ->where('action', 'customer_blocked')
+                    ->orderByDesc('created_at')
+                    ->orderByDesc('id')
+                    ->first();
+                $changes['reason'] = $previousBlock?->changes['reason'] ?? null;
+            }
+
+            AuditLog::query()->create([
+                'user_id' => $actor->getKey(),
+                'action' => $status === Customer::STATUS_BLOCKED ? 'customer_blocked' : 'customer_unblocked',
+                'subject_type' => Customer::class,
+                'subject_id' => (string) $record->getKey(),
+                'changes' => $changes,
+                'created_at' => now(),
+            ]);
+
+            return true;
+        });
     }
 
     public function updateProfile(Customer $customer, array $attributes, User $actor): bool

@@ -14,6 +14,7 @@
             ['key' => 'upcoming', 'label' => 'With approved / upcoming bookings', 'description' => 'Confirmed rentals', 'icon' => 'calendar-check', 'query' => ['activity' => 'upcoming']],
             ['key' => 'ongoing', 'label' => 'With ongoing rentals', 'description' => 'Currently renting', 'icon' => 'key', 'query' => ['activity' => 'ongoing']],
             ['key' => 'completed', 'label' => 'With completed rental history', 'description' => 'At least one completed rental', 'icon' => 'check2-circle', 'query' => ['activity' => 'completed']],
+            ['key' => 'blocked', 'label' => 'Blocked customers', 'description' => 'Cannot submit new bookings', 'icon' => 'slash-circle', 'query' => ['status' => 'blocked']],
             ['key' => 'new_this_month', 'label' => 'New customers', 'description' => 'Records created this month', 'icon' => 'person-plus', 'query' => ['joined' => 'month']],
         ];
         $activityLabels = [
@@ -26,6 +27,7 @@
         $filterLabels = [
             'search' => isset($filters['search']) && $filters['search'] !== '' ? 'Search: '.$filters['search'] : null,
             'activity' => isset($filters['activity']) ? 'Activity: '.($activityLabels[$filters['activity']] ?? ucfirst($filters['activity'])) : null,
+            'status' => isset($filters['status']) ? 'Status: '.ucfirst($filters['status']) : null,
             'joined' => ($filters['joined'] ?? null) === 'month' ? 'Created: This month' : null,
             'sort' => isset($filters['sort']) && $filters['sort'] !== 'created_at' ? 'Sort: '.ucfirst(str_replace('_', ' ', $filters['sort'])) : null,
             'direction' => isset($filters['direction']) && $filters['direction'] !== 'desc' ? 'Order: '.($filters['direction'] === 'asc' ? 'Oldest / A–Z' : 'Newest / Z–A') : null,
@@ -124,6 +126,14 @@
                     </select>
                 </label>
                 <label>
+                    <span>Customer status</span>
+                    <select name="status" aria-label="Filter by customer status" data-admin-submit-on-change>
+                        <option value="">All statuses</option>
+                        <option value="active" @selected(($filters['status'] ?? '') === 'active')>Active</option>
+                        <option value="blocked" @selected(($filters['status'] ?? '') === 'blocked')>Blocked</option>
+                    </select>
+                </label>
+                <label>
                     <span>Record date</span>
                     <select name="joined" aria-label="Filter by record creation date" data-admin-submit-on-change>
                         <option value="">Any time</option>
@@ -178,6 +188,7 @@
                     <thead>
                         <tr>
                             <th scope="col">Customer</th>
+                            <th scope="col">Status</th>
                             <th scope="col">Email</th>
                             <th scope="col">Phone</th>
                             <th scope="col">Bookings</th>
@@ -194,6 +205,12 @@
                                         <span class="admin-customer-avatar" aria-hidden="true">{{ $customer->initials() }}</span>
                                         <span><strong>{{ $customer->full_name }}</strong><small>Customer #{{ $customer->id }}</small></span>
                                     </a>
+                                </td>
+                                <td data-label="Status">
+                                    <span class="admin-customer-status admin-customer-status--{{ $customer->status }}">
+                                        <i class="bi bi-{{ $customer->status === \App\Models\Customer::STATUS_BLOCKED ? 'slash-circle' : 'check-circle' }}" aria-hidden="true"></i>
+                                        {{ ucfirst($customer->status) }}
+                                    </span>
                                 </td>
                                 <td data-label="Email">{{ $customer->display_email }}</td>
                                 <td data-label="Phone">{{ $customer->display_phone }}</td>
@@ -222,7 +239,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td class="admin-customers-empty" colspan="7">
+                                <td class="admin-customers-empty" colspan="8">
                                     <i class="bi bi-people" aria-hidden="true"></i>
                                     <strong>{{ request()->filled('search') ? 'No matching customers' : 'No customer records found' }}</strong>
                                     <span>{{ request()->filled('search') || $filters !== [] ? 'Clear filters or try a different search.' : 'Customer records will appear here after a booking is submitted.' }}</span>
@@ -250,6 +267,7 @@
                             <strong class="admin-customer-booking-count">{{ number_format($customer->total_bookings) }} <small>bookings</small></strong>
                         </div>
                         <dl>
+                            <div><dt>Status</dt><dd><span class="admin-customer-status admin-customer-status--{{ $customer->status }}">{{ ucfirst($customer->status) }}</span></dd></div>
                             <div><dt>Email</dt><dd>{{ $customer->display_email }}</dd></div>
                             <div><dt>Phone</dt><dd>{{ $customer->display_phone }}</dd></div>
                             <div>

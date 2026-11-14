@@ -92,6 +92,15 @@ Route::middleware(['auth', 'can:viewAny,App\\Models\\Vehicle'])->prefix('admin')
 Route::middleware(['auth', 'can:viewAny,App\\Models\\Customer'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+    Route::post('/customers/{customer}/notes', [CustomerController::class, 'storeNote'])
+        ->middleware('can:addNote,customer')
+        ->name('customers.notes.store');
+    Route::post('/customers/{customer}/block', [CustomerController::class, 'block'])
+        ->middleware('can:manageStatus,customer')
+        ->name('customers.block');
+    Route::post('/customers/{customer}/unblock', [CustomerController::class, 'unblock'])
+        ->middleware('can:manageStatus,customer')
+        ->name('customers.unblock');
     Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])
         ->middleware('can:update,customer')
         ->name('customers.edit');

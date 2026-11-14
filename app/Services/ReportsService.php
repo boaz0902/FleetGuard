@@ -187,7 +187,7 @@ class ReportsService
 
         yield ['Rental operations', 'Completed rentals', '', '', $report['operations']['completed_rentals'], '', '', 'Completed status; counted by pickup date'];
         yield ['Rental operations', 'Overdue returns', '', '', $report['operations']['overdue_returns'], '', '', 'Ongoing bookings with scheduled return before export time'];
-        yield ['Rental operations', 'Average actual rental length', '', '', $report['operations']['paired_audit_rentals'], $report['operations']['average_actual_rental_days'], '', 'Only completed rentals with paired check-out and check-in audit events'];
+        yield ['Rental operations', 'Average actual rental length', '', '', $report['operations']['paired_audit_rentals'], $report['operations']['average_actual_rental_days'], '', 'Only completed rentals with paired check-out and check-in timestamps'];
     }
 
     public static function safeCsvCell(mixed $value): string
@@ -576,11 +576,16 @@ class ReportsService
                 $checkInActions,
             )
             ->groupBy('subject_id');
+        $completedIntervals = (clone $completedBookingIds)
+            ->leftJoinSub($pairedLogs, 'rental_audit_pairs', fn ($join) => $join
+                ->on('rental_audit_pairs.subject_id', '=', 'bookings.id'))
+            ->selectRaw('COALESCE(bookings.checked_out_at, rental_audit_pairs.checked_out_at) AS checked_out_at')
+            ->selectRaw('COALESCE(bookings.checked_in_at, rental_audit_pairs.checked_in_at) AS checked_in_at');
         $durationExpression = DB::connection()->getDriverName() === 'sqlite'
             ? '(julianday(checked_in_at) - julianday(checked_out_at))'
             : '(TIMESTAMPDIFF(SECOND, checked_out_at, checked_in_at) / 86400.0)';
         $actualDuration = DB::query()
-            ->fromSub($pairedLogs, 'rental_audit_pairs')
+            ->fromSub($completedIntervals, 'completed_intervals')
             ->whereNotNull('checked_out_at')
             ->whereNotNull('checked_in_at')
             ->whereColumn('checked_in_at', '>=', 'checked_out_at')

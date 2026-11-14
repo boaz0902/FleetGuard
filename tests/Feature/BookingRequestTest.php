@@ -105,6 +105,45 @@ class BookingRequestTest extends TestCase
         $this->assertSame('09171234567', $customer->fresh()->mobile_number);
     }
 
+    public function test_blocked_customer_cannot_submit_a_booking_until_unblocked(): void
+    {
+        $customer = Customer::query()->forceCreate([
+            'full_name' => 'Blocked Booking Customer',
+            'email' => 'jane@example.com',
+            'mobile_number' => '09171234567',
+            'status' => Customer::STATUS_BLOCKED,
+        ]);
+        $admin = $this->userWithRole('admin');
+
+        $this->postJson('/bookings', $this->bookingPayload([
+            'full_name' => 'Changed Name',
+            'email' => 'JANE@example.com',
+            'mobile_number' => '09991234567',
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('email')
+            ->assertJsonPath('errors.email.0', 'This booking request could not be accepted. Please contact FleetGuard support.');
+
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertDatabaseCount('customers', 1);
+        $this->assertSame('Blocked Booking Customer', $customer->fresh()->full_name);
+
+        $this->actingAs($admin)
+            ->post(route('admin.customers.unblock', $customer))
+            ->assertRedirect(route('admin.customers.show', $customer));
+
+        $this->postJson('/bookings', $this->bookingPayload([
+            'full_name' => 'Changed Name',
+            'email' => 'JANE@example.com',
+            'mobile_number' => '09991234567',
+        ]))->assertCreated();
+
+        $this->assertDatabaseCount('bookings', 1);
+        $this->assertDatabaseCount('customers', 1);
+        $this->assertSame('Blocked Booking Customer', $customer->fresh()->full_name);
+        $this->assertSame(Customer::STATUS_ACTIVE, $customer->fresh()->status);
+    }
+
     public function test_booking_submission_rejects_an_invalid_vehicle_and_non_increasing_dates(): void
     {
         $this->from('/')->post('/bookings', $this->bookingPayload([

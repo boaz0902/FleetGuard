@@ -192,8 +192,8 @@
                                                 <small class="admin-rental-late-note">Returned late</small>
                                             @endif
                                         </td>
-                                        <td data-label="Checked out">{{ $booking->checked_out_at?->timezone('Asia/Manila')->format('M d, g:i A') ?? '—' }}</td>
-                                        <td data-label="Checked in">{{ $booking->checked_in_at?->timezone('Asia/Manila')->format('M d, g:i A') ?? '—' }}</td>
+                                        <td data-label="Checked out">{{ $booking->effective_checked_out_at?->timezone('Asia/Manila')->format('M d, g:i A') ?? '—' }}</td>
+                                        <td data-label="Checked in">{{ $booking->effective_checked_in_at?->timezone('Asia/Manila')->format('M d, g:i A') ?? '—' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

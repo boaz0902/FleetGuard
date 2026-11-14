@@ -189,9 +189,163 @@ class AdminCustomerManagementTest extends TestCase
                 && $metrics['upcoming'] === 1
                 && $metrics['ongoing'] === 1
                 && $metrics['completed'] === 1
+                && $metrics['blocked'] === 0
                 && $metrics['without_bookings'] === 0
                 && array_sum($metrics['booking_summary']) === 6;
         });
+    }
+
+    public function test_admin_can_add_append_only_internal_notes_with_audited_note_ids(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $manager = $this->userWithRole('manager');
+        $staff = $this->userWithRole('staff');
+        $customer = $this->customer();
+
+        $this->actingAs($admin)
+            ->post(route('admin.customers.notes.store', $customer), ['body' => "  <script>private note</script>\n"])
+            ->assertRedirect(route('admin.customers.show', [$customer, 'tab' => 'notes']));
+        $firstNote = $customer->notes()->firstOrFail();
+        $this->assertSame('<script>private note</script>', $firstNote->body);
+        $this->assertSame($admin->id, $firstNote->author_id);
+
+        $this->actingAs($admin)
+            ->post(route('admin.customers.notes.store', $customer), ['body' => 'Second internal note'])
+            ->assertRedirect(route('admin.customers.show', [$customer, 'tab' => 'notes']));
+
+        $this->actingAs($admin)
+            ->get(route('admin.customers.show', $customer).'?tab=notes')
+            ->assertOk()
+            ->assertSeeInOrder(['Second internal note', '&lt;script&gt;private note&lt;/script&gt;'], false)
+            ->assertDontSee('<script>private note</script>', false);
+
+        foreach ([$manager, $staff] as $viewer) {
+            $this->actingAs($viewer)
+                ->get(route('admin.customers.show', $customer).'?tab=notes')
+                ->assertOk()
+                ->assertSee('Second internal note');
+
+            $this->post(route('admin.customers.notes.store', $customer), ['body' => 'Not authorized'])
+                ->assertForbidden();
+        }
+
+        $this->actingAs($admin)
+            ->from(route('admin.customers.show', [$customer, 'tab' => 'notes']))
+            ->post(route('admin.customers.notes.store', $customer), ['body' => " \n\t "])
+            ->assertSessionHasErrors('body');
+
+        $logs = AuditLog::query()
+            ->where('action', 'customer_note_added')
+            ->where('subject_type', Customer::class)
+            ->where('subject_id', (string) $customer->id)
+            ->orderBy('id')
+            ->get();
+        $this->assertCount(2, $logs);
+        $this->assertSame(['note_id' => $firstNote->id], $logs[0]->changes);
+        $this->assertSame($admin->id, $logs[0]->user_id);
+        $this->assertStringNotContainsString('private note', json_encode($logs[0]->changes));
+        $this->assertSame(2, $customer->notes()->count());
+    }
+
+    public function test_customer_blocking_is_admin_only_audited_and_does_not_change_existing_bookings(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $manager = $this->userWithRole('manager');
+        $staff = $this->userWithRole('staff');
+        $customer = $this->customer(['full_name' => 'Blocked Example']);
+        $bookingStatuses = [
+            Booking::STATUS_PENDING,
+            Booking::STATUS_APPROVED,
+            Booking::STATUS_ONGOING,
+            Booking::STATUS_COMPLETED,
+        ];
+        $bookings = collect($bookingStatuses)
+            ->map(fn (string $status) => $this->booking($customer, ['status' => $status]));
+        $before = $bookings->map(fn (Booking $booking) => [
+            'id' => $booking->id,
+            'status' => $booking->status,
+            'pickup_datetime' => $booking->pickup_datetime->toDateTimeString(),
+            'return_datetime' => $booking->return_datetime->toDateTimeString(),
+            'daily_rate_snapshot' => $booking->daily_rate_snapshot,
+            'estimated_total' => $booking->estimated_total,
+        ])->all();
+
+        $this->actingAs($manager)
+            ->post(route('admin.customers.block', $customer), ['reason' => 'Not authorized'])
+            ->assertForbidden();
+        $this->actingAs($staff)
+            ->post(route('admin.customers.unblock', $customer))
+            ->assertForbidden();
+
+        $this->actingAs($admin)
+            ->from(route('admin.customers.show', $customer))
+            ->post(route('admin.customers.block', $customer), ['reason' => ''])
+            ->assertSessionHasErrors('reason');
+        $this->assertSame(Customer::STATUS_ACTIVE, $customer->fresh()->status);
+        $this->assertDatabaseMissing('audit_logs', ['action' => 'customer_blocked']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.customers.block', $customer), ['reason' => 'Repeated abusive requests'])
+            ->assertRedirect(route('admin.customers.show', $customer));
+        $this->assertSame(Customer::STATUS_BLOCKED, $customer->fresh()->status);
+        $this->assertSame(1, Customer::query()->where('status', Customer::STATUS_BLOCKED)->count());
+
+        $blockedLog = AuditLog::query()
+            ->where('action', 'customer_blocked')
+            ->where('subject_id', (string) $customer->id)
+            ->firstOrFail();
+        $this->assertSame($admin->id, $blockedLog->user_id);
+        $this->assertSame([
+            'from' => Customer::STATUS_ACTIVE,
+            'to' => Customer::STATUS_BLOCKED,
+            'reason' => 'Repeated abusive requests',
+        ], $blockedLog->changes);
+
+        $this->actingAs($admin)
+            ->get(route('admin.customers.index', ['status' => 'blocked']))
+            ->assertOk()
+            ->assertSee('Blocked Example')
+            ->assertSee('Status: Blocked')
+            ->assertSee('Blocked customers');
+
+        $this->actingAs($admin)
+            ->get(route('admin.customers.show', $customer))
+            ->assertOk()
+            ->assertSee('Repeated abusive requests')
+            ->assertSee($admin->name);
+
+        $this->actingAs($manager)
+            ->get(route('admin.customers.show', $customer))
+            ->assertOk()
+            ->assertSee('Blocked')
+            ->assertDontSee('Repeated abusive requests')
+            ->assertDontSee('Block customer');
+
+        $after = $customer->bookings()->orderBy('id')->get()->map(fn (Booking $booking) => [
+            'id' => $booking->id,
+            'status' => $booking->status,
+            'pickup_datetime' => $booking->pickup_datetime->toDateTimeString(),
+            'return_datetime' => $booking->return_datetime->toDateTimeString(),
+            'daily_rate_snapshot' => $booking->daily_rate_snapshot,
+            'estimated_total' => $booking->estimated_total,
+        ])->all();
+        $this->assertSame($before, $after);
+
+        $this->actingAs($admin)
+            ->post(route('admin.customers.unblock', $customer))
+            ->assertRedirect(route('admin.customers.show', $customer));
+        $this->assertSame(Customer::STATUS_ACTIVE, $customer->fresh()->status);
+
+        $unblockedLog = AuditLog::query()
+            ->where('action', 'customer_unblocked')
+            ->where('subject_id', (string) $customer->id)
+            ->firstOrFail();
+        $this->assertSame($admin->id, $unblockedLog->user_id);
+        $this->assertSame([
+            'from' => Customer::STATUS_BLOCKED,
+            'to' => Customer::STATUS_ACTIVE,
+            'reason' => 'Repeated abusive requests',
+        ], $unblockedLog->changes);
     }
 
     public function test_customer_details_show_booking_snapshots_and_authorized_activity(): void

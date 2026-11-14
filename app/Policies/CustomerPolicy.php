@@ -21,4 +21,14 @@ class CustomerPolicy
     {
         return $user->isAdmin();
     }
+
+    public function addNote(User $user, Customer $customer): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function manageStatus(User $user, Customer $customer): bool
+    {
+        return $user->isAdmin();
+    }
 }

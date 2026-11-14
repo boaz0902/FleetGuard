@@ -288,7 +288,7 @@ class AdminReportsTest extends TestCase
             ->assertSee('aria-label="Completed-only estimated revenue', false);
     }
 
-    public function test_actual_rental_length_uses_only_paired_audit_timestamps(): void
+    public function test_actual_rental_length_falls_back_to_paired_audit_timestamps(): void
     {
         $manager = $this->userWithRole('manager');
         $vehicle = $this->vehicle('audit-time-car', 'sedan');
@@ -322,6 +322,46 @@ class AdminReportsTest extends TestCase
             ->assertOk()
             ->assertViewHas('operations', fn (array $operations): bool => $operations['paired_audit_rentals'] === 1
                 && abs($operations['average_actual_rental_days'] - 1.5) < 0.001);
+    }
+
+    public function test_actual_rental_length_prefers_booking_timestamps_over_audit_events(): void
+    {
+        $manager = $this->userWithRole('manager');
+        $vehicle = $this->vehicle('column-time-car', 'sedan');
+        $customer = $this->customer('Column Time Customer', 'column-time@example.test');
+        $completed = $this->booking($vehicle, $customer, Booking::STATUS_COMPLETED, [
+            'booking_reference' => 'FG-COLUMN-TIME',
+            'pickup_datetime' => '2026-11-10 09:00:00',
+            'return_datetime' => '2026-11-12 09:00:00',
+        ]);
+        $completed->forceFill([
+            'checked_out_at' => '2026-11-10 09:00:00',
+            'checked_in_at' => '2026-11-11 09:00:00',
+        ])->save();
+        $completed->auditLogs()->createMany([
+            [
+                'user_id' => $manager->id,
+                'action' => 'rental_checked_out',
+                'changes' => [],
+                'created_at' => Carbon::parse('2026-11-10 09:00:00', 'Asia/Manila'),
+            ],
+            [
+                'user_id' => $manager->id,
+                'action' => 'rental_checked_in',
+                'changes' => [],
+                'created_at' => Carbon::parse('2026-11-11 21:00:00', 'Asia/Manila'),
+            ],
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('admin.reports.index', [
+                'range' => 'custom',
+                'start_date' => '2026-11-01',
+                'end_date' => '2026-11-30',
+            ]))
+            ->assertOk()
+            ->assertViewHas('operations', fn (array $operations): bool => $operations['paired_audit_rentals'] === 1
+                && abs($operations['average_actual_rental_days'] - 1.0) < 0.001);
     }
 
     public function test_customer_popularity_maintenance_and_rental_sections_use_filtered_data(): void
