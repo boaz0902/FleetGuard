@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BookingCalendarController;
 use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\CustomerController;
@@ -55,6 +56,7 @@ Route::middleware(['auth', 'can:review,App\\Models\\Booking'])->prefix('admin')-
 });
 
 Route::middleware(['auth', 'can:viewAny,App\\Models\\AuditLog'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
     Route::get('/reports/export', [ReportsController::class, 'export'])->name('reports.export');
 });

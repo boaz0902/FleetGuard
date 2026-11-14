@@ -71,10 +71,15 @@
                     <span class="admin-nav-label">Reports</span>
                 </a>
             @endcan
-            <div class="admin-nav-item is-disabled" aria-disabled="true" title="Audit logs — upcoming">
-                <i class="bi bi-clipboard-data" aria-hidden="true"></i>
-                <span class="admin-nav-label">Audit Logs <small>Upcoming</small></span>
-            </div>
+            @can('viewAny', \App\Models\AuditLog::class)
+                <a class="admin-nav-item {{ request()->routeIs('admin.audit-logs.*') ? 'is-active' : '' }}"
+                   href="{{ route('admin.audit-logs.index') }}"
+                   @if (request()->routeIs('admin.audit-logs.*')) aria-current="page" @endif
+                   title="Audit logs">
+                    <i class="bi bi-clipboard-data" aria-hidden="true"></i>
+                    <span class="admin-nav-label">Audit Logs</span>
+                </a>
+            @endcan
         </div>
     </nav>
 
