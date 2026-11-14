@@ -27,4 +27,13 @@ class Customer extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    public function initials(): string
+    {
+        return collect(preg_split('/\s+/', trim($this->full_name)) ?: [])
+            ->filter()
+            ->take(2)
+            ->map(fn (string $part) => mb_strtoupper(mb_substr($part, 0, 1)))
+            ->implode('');
+    }
 }

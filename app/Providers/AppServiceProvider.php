@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Policies\AuditLogPolicy;
 use App\Policies\BookingPolicy;
+use App\Policies\CustomerPolicy;
 use App\Policies\VehiclePolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(\App\Models\Vehicle::class, VehiclePolicy::class);
         Gate::policy(\App\Models\Booking::class, BookingPolicy::class);
+        Gate::policy(\App\Models\Customer::class, CustomerPolicy::class);
         Gate::policy(\App\Models\AuditLog::class, AuditLogPolicy::class);
 
         Gate::before(function ($user, $ability) {
