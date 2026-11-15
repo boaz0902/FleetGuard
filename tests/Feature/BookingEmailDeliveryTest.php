@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -315,6 +316,7 @@ class BookingEmailDeliveryTest extends TestCase
     public function test_mail_test_command_requires_an_address_and_sends_a_branded_message(): void
     {
         Mail::fake();
+        config(['queue.default' => 'sync']);
 
         $this->artisan('fleetguard:mail-test', ['email' => 'not-an-email'])
             ->assertExitCode(2);
@@ -324,6 +326,50 @@ class BookingEmailDeliveryTest extends TestCase
 
         Mail::assertSent(FleetGuardMessageMail::class, fn (FleetGuardMessageMail $mail): bool => $mail->hasTo('sandbox@example.test')
             && $mail->subjectLine === 'FleetGuard test email');
+    }
+
+    public function test_mail_test_warns_when_an_async_queue_has_no_worker(): void
+    {
+        Mail::fake();
+        Process::fake(['*' => Process::result('0 ')])->preventStrayProcesses();
+        config(['queue.default' => 'database']);
+
+        $this->artisan('fleetguard:mail-test', ['email' => 'sandbox@example.test'])
+            ->expectsOutputToContain('A queue worker must be running for queued email delivery')
+            ->expectsOutputToContain('No queue worker process was detected.')
+            ->expectsOutput('Test email sent successfully.')
+            ->assertSuccessful();
+
+        Mail::assertSent(FleetGuardMessageMail::class, fn (FleetGuardMessageMail $mail): bool => $mail->hasTo('sandbox@example.test'));
+    }
+
+    public function test_registration_verification_email_is_processed_by_the_queue_worker(): void
+    {
+        config([
+            'app.env' => 'testing',
+            'mail.default' => 'array',
+            'queue.default' => 'database',
+        ]);
+
+        $this->post(route('register.submit'), [
+            'name' => 'Queue E2E Test Customer',
+            'email' => 'queue-e2e@example.test',
+            'password' => 'FleetGuard9!',
+            'password_confirmation' => 'FleetGuard9!',
+        ])->assertRedirect(route('verification.notice'));
+
+        $this->assertDatabaseCount('jobs', 1);
+        $this->artisan('queue:work --stop-when-empty --tries=1')
+            ->assertSuccessful();
+
+        $messages = Mail::mailer()->getSymfonyTransport()->messages();
+        $this->assertCount(1, $messages);
+        $this->assertSame(
+            'queue-e2e@example.test',
+            $messages->first()->getEnvelope()->getRecipients()[0]->getAddress(),
+        );
+        $this->assertDatabaseCount('jobs', 0);
+        $this->assertDatabaseCount('failed_jobs', 0);
     }
 
     public function test_mail_test_command_requires_an_explicit_address(): void

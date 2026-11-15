@@ -49,6 +49,12 @@ class CustomerAuthController extends Controller
 
         $request->session()->regenerate();
 
+        if (! $user->hasVerifiedEmail()) {
+            return redirect()
+                ->route('verification.notice')
+                ->with('status', 'You are signed in, but your email address still needs verification.');
+        }
+
         return redirect()->intended(route('account'));
     }
 

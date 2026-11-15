@@ -78,7 +78,28 @@ class CustomerAuthTest extends TestCase
             ['user_id' => $user->id, 'role' => 'customer'],
             AuditLog::query()->where('action', 'customer_account_registered')->firstOrFail()->changes,
         );
-        Notification::assertSentTo($user, VerifyCustomerEmail::class);
+        Notification::assertSentToTimes($user, VerifyCustomerEmail::class, 1);
+    }
+
+    public function test_local_registration_sends_verification_without_a_queue_worker(): void
+    {
+        Notification::shouldReceive('sendNow')
+            ->once()
+            ->with(\Mockery::type(User::class), \Mockery::type(VerifyCustomerEmail::class));
+        Notification::shouldNotReceive('send');
+        config([
+            'app.env' => 'local',
+            'queue.default' => 'database',
+        ]);
+
+        $response = $this->post(route('register.submit'), [
+            'name' => 'Local Mail Customer',
+            'email' => 'local.mail.customer@example.test',
+            'password' => 'FleetGuard9!',
+            'password_confirmation' => 'FleetGuard9!',
+        ]);
+
+        $response->assertRedirect(route('verification.notice'));
     }
 
     public function test_verified_registration_links_one_matching_guest_record_without_overwriting_its_profile(): void
@@ -171,7 +192,7 @@ class CustomerAuthTest extends TestCase
 
     public function test_public_login_accepts_only_customer_accounts_and_prefills_the_booking_email(): void
     {
-        $customer = $this->customerAccount('customer@example.com');
+        $customer = $this->customerAccount('customer@example.com', 'customer', true);
 
         $this->post(route('login.submit'), [
             'email' => ' CUSTOMER@example.com ',
@@ -198,6 +219,24 @@ class CustomerAuthTest extends TestCase
 
             $this->assertGuest();
         }
+    }
+
+    public function test_unverified_customer_login_redirects_to_verification_notice_with_account_option(): void
+    {
+        $customer = $this->customerAccount('unverified-login@example.com');
+
+        $this->post(route('login.submit'), [
+            'email' => $customer->email,
+            'password' => 'password',
+        ])->assertRedirect(route('verification.notice'));
+
+        $this->assertAuthenticatedAs($customer);
+        $this->get(route('verification.notice'))
+            ->assertOk()
+            ->assertSee('still needs verification')
+            ->assertSee('Send a new verification link')
+            ->assertSee('Continue to your account')
+            ->assertSee(route('account'), false);
     }
 
     public function test_customer_logout_invalidates_the_session(): void

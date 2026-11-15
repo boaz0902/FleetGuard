@@ -21,6 +21,12 @@ class SafeMailDeliveryService
     public function notify(User $user, Notification $notification): void
     {
         try {
+            if (config('app.env') === 'local' || config('queue.default') === 'sync') {
+                NotificationFacade::sendNow($user, $notification);
+
+                return;
+            }
+
             NotificationFacade::send($user, $notification);
         } catch (Throwable $exception) {
             $this->logFailure($exception, $user->email, 'account_notification');
