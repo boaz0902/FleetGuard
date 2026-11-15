@@ -26,11 +26,26 @@
                 @csrf
                 <div class="customer-field">
                     <label for="email">Email address</label>
-                    <input id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" maxlength="255" required autofocus>
+                    <div class="customer-input-wrap">
+                        <i class="bi bi-envelope customer-input-icon" aria-hidden="true"></i>
+                        <input id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" maxlength="255" required autofocus>
+                    </div>
                 </div>
                 <div class="customer-field">
                     <label for="password">Password</label>
-                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                    <div class="customer-input-wrap customer-input-wrap--password">
+                        <i class="bi bi-lock customer-input-icon" aria-hidden="true"></i>
+                        <input id="password" name="password" type="password" autocomplete="current-password" required>
+                        <button
+                            class="customer-password-toggle"
+                            type="button"
+                            aria-controls="password"
+                            aria-label="Show password"
+                            aria-pressed="false"
+                            data-password-toggle
+                            data-password-toggle-label="password"
+                        ><i class="bi bi-eye" aria-hidden="true"></i></button>
+                    </div>
                 </div>
                 <button class="customer-submit" type="submit">Sign in <i class="bi bi-arrow-up-right" aria-hidden="true"></i></button>
             </form>

@@ -189,7 +189,8 @@
 .booking-review-block-heading button {
     display: inline-flex;
     align-items: center;
-    gap: 9px;
+    justify-content: center;
+    gap: 8px;
     padding: 0 0 4px;
     border: 0;
     border-bottom: 1px solid rgb(255 255 255 / 34%);
@@ -345,7 +346,7 @@
     min-height: 44px;
     align-items: center;
     justify-content: center;
-    gap: 17px;
+    gap: 8px;
     padding: 0 15px;
     border: 1px solid transparent;
     cursor: pointer;
@@ -622,7 +623,7 @@
 
 .booking-confirm-button {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
 }
 
 .booking-confirmation {

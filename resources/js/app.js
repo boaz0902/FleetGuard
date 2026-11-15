@@ -26,6 +26,27 @@ const bookingFields = bookingForm
 const scrollRevealItems = document.querySelectorAll('[data-scroll-reveal]');
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+    const inputId = toggle.getAttribute('aria-controls');
+    const input = inputId ? document.getElementById(inputId) : null;
+    const icon = toggle.querySelector('.bi');
+    const passwordLabel = toggle.getAttribute('data-password-toggle-label');
+
+    if (!(input instanceof HTMLInputElement) || !icon || !passwordLabel) {
+        return;
+    }
+
+    toggle.addEventListener('click', () => {
+        const showPassword = input.type === 'password';
+
+        input.type = showPassword ? 'text' : 'password';
+        toggle.setAttribute('aria-pressed', String(showPassword));
+        toggle.setAttribute('aria-label', `${showPassword ? 'Hide' : 'Show'} ${passwordLabel}`);
+        icon.classList.toggle('bi-eye', !showPassword);
+        icon.classList.toggle('bi-eye-slash', showPassword);
+    });
+});
+
 const getLocalDate = () => {
     const dateParts = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Manila',

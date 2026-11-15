@@ -26,7 +26,10 @@
                 @csrf
                 <div class="customer-field">
                     <label for="email">Email address</label>
-                    <input id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" maxlength="255" required autofocus>
+                    <div class="customer-input-wrap">
+                        <i class="bi bi-envelope customer-input-icon" aria-hidden="true"></i>
+                        <input id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" maxlength="255" required autofocus>
+                    </div>
                 </div>
                 <button class="customer-submit" type="submit">Send reset link <i class="bi bi-arrow-up-right" aria-hidden="true"></i></button>
             </form>

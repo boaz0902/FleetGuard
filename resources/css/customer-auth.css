@@ -22,29 +22,33 @@
 }
 
 .customer-page {
+    --customer-header-height: 88px;
+
     display: grid;
-    min-height: 100svh;
+    min-height: calc(100svh - var(--customer-header-height));
     place-items: center;
-    padding: 120px 24px 64px;
+    margin-top: var(--customer-header-height);
+    padding: 32px 24px;
     background:
         radial-gradient(ellipse at 50% 35%, rgb(57 136 214 / 9%), transparent 50%),
         #101820;
 }
 
 .customer-card {
-    width: min(100%, 520px);
-    padding: clamp(26px, 5vw, 44px);
+    width: min(100%, 480px);
+    padding: clamp(24px, 2.2vw, 32px);
     border: 1px solid rgb(244 246 248 / 10%);
     border-radius: 16px;
     background: #171c23;
     box-shadow: 0 24px 70px rgb(0 0 0 / 24%);
+    text-align: left;
 }
 
 .customer-eyebrow {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 0 0 16px;
+    margin: 0 0 12px;
     color: #aab4bf;
     font-size: 10px;
     font-weight: 600;
@@ -62,14 +66,14 @@
     margin: 0;
     color: #f4f6f8;
     font-family: var(--font-display);
-    font-size: clamp(30px, 6vw, 42px);
+    font-size: clamp(30px, 5vw, 38px);
     font-weight: 500;
     letter-spacing: -0.055em;
     line-height: 1.1;
 }
 
 .customer-card-intro {
-    margin: 14px 0 26px;
+    margin: 12px 0 22px;
     color: #aab4bf;
     font-size: 13px;
     line-height: 1.7;
@@ -77,7 +81,7 @@
 
 .customer-form {
     display: grid;
-    gap: 18px;
+    gap: 16px;
 }
 
 .customer-field {
@@ -102,6 +106,57 @@
     font-size: 13px;
 }
 
+.customer-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.customer-input-wrap input {
+    padding-left: 42px;
+}
+
+.customer-input-wrap--password input {
+    padding-right: 50px;
+}
+
+.customer-input-wrap input::-ms-reveal {
+    display: none;
+}
+
+.customer-input-icon {
+    position: absolute;
+    left: 14px;
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    align-items: center;
+    justify-content: center;
+    color: #89939f;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.customer-password-toggle {
+    position: absolute;
+    right: 3px;
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #aab4bf;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.customer-password-toggle:hover {
+    color: #8fc5fa;
+}
+
 .customer-field input[readonly] {
     border-color: rgb(57 136 214 / 45%);
     color: #c5ced8;
@@ -117,8 +172,8 @@
     display: inline-flex;
     min-height: 48px;
     align-items: center;
-    justify-content: space-between;
-    gap: 18px;
+    justify-content: center;
+    gap: 8px;
     padding: 0 16px;
     border: 1px solid #3988d6;
     border-radius: 6px;
@@ -132,9 +187,17 @@
     transition: background-color 180ms ease, border-color 180ms ease;
 }
 
+.customer-submit > .bi-arrow-up-right {
+    transition: transform 180ms ease;
+}
+
 .customer-submit:hover {
     border-color: #55a0ec;
     background: #55a0ec;
+}
+
+.customer-submit:hover > .bi-arrow-up-right {
+    transform: translate(3px, -1px);
 }
 
 .customer-status,
@@ -170,10 +233,10 @@
 
 .verification-icon {
     display: grid;
-    width: 58px;
-    height: 58px;
+    width: 48px;
+    height: 48px;
     place-items: center;
-    margin-bottom: 24px;
+    margin: 0 auto 16px;
     border: 1px solid rgb(143 197 250 / 35%);
     border-radius: 16px;
     background: linear-gradient(145deg, rgb(57 136 214 / 28%), rgb(57 136 214 / 10%));
@@ -185,8 +248,8 @@
 .verification-address {
     display: grid;
     gap: 7px;
-    margin: 0 0 22px;
-    padding: 14px 16px;
+    margin: 0 0 16px;
+    padding: 12px 14px;
     border: 1px solid rgb(143 197 250 / 17%);
     border-radius: 8px;
     background: rgb(9 17 26 / 35%);
@@ -209,8 +272,8 @@
 
 .verification-steps {
     display: grid;
-    gap: 12px;
-    margin: 0 0 22px;
+    gap: 8px;
+    margin: 0 0 14px;
     padding: 0;
     list-style: none;
 }
@@ -242,7 +305,7 @@
 }
 
 .verification-card .customer-status {
-    margin-top: 0;
+    margin: 0 0 10px;
 }
 
 .verification-continue {
@@ -250,8 +313,8 @@
     min-height: 48px;
     align-items: center;
     justify-content: center;
-    gap: 9px;
-    margin-top: 12px;
+    gap: 8px;
+    margin-top: 8px;
     border: 1px solid rgb(143 197 250 / 26%);
     border-radius: 6px;
     color: #b7d8f8;
@@ -268,7 +331,7 @@
 .verification-signout {
     display: flex;
     justify-content: center;
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .verification-signout button {
@@ -293,8 +356,8 @@
 
 .customer-card-links {
     display: grid;
-    gap: 14px;
-    margin-top: 24px;
+    gap: 12px;
+    margin-top: 20px;
     color: #aab4bf;
     font-size: 12px;
 }
@@ -453,7 +516,9 @@
     }
 
     .customer-page {
-        padding: 100px 16px 40px;
+        --customer-header-height: 72px;
+
+        padding: 24px 16px;
     }
 
     .customer-page-account {
@@ -461,7 +526,7 @@
     }
 
     .customer-card {
-        padding: 26px 20px;
+        padding: 24px 20px;
     }
 
     .customer-verification-callout {
@@ -472,6 +537,7 @@
 @media (prefers-reduced-motion: reduce) {
     .nav-logout,
     .customer-submit,
+    .customer-submit > .bi-arrow-up-right,
     .verification-continue {
         transition: none;
     }
