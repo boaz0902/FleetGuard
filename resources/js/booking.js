@@ -69,11 +69,11 @@ if (experience) {
             return 1;
         }
 
-        const pickup = new Date(`${state.pickupDate}T00:00:00Z`);
-        const returned = new Date(`${state.returnDate}T00:00:00Z`);
+        const pickup = new Date(`${state.pickupDate}T${state.pickupTime || '00:00'}:00Z`);
+        const returned = new Date(`${state.returnDate}T${state.returnTime || '00:00'}:00Z`);
         const dayDifference = Math.ceil((returned - pickup) / 86_400_000);
 
-        return Math.max(1, dayDifference);
+        return Number.isFinite(dayDifference) ? Math.max(1, dayDifference) : 1;
     };
 
     const estimate = () => {
@@ -452,6 +452,22 @@ if (experience) {
         if (detailsLink instanceof HTMLAnchorElement && typeof booking.details_url === 'string') {
             detailsLink.href = booking.details_url;
             detailsLink.hidden = false;
+        } else if (experience.dataset.customerAccountState === 'guest') {
+            const guestPrompt = experience.querySelector('[data-confirmation-guest-prompt]');
+            const createAccountLink = experience.querySelector('[data-confirmation-create-account]');
+
+            if (guestPrompt instanceof HTMLElement && createAccountLink instanceof HTMLAnchorElement) {
+                const registrationUrl = new URL(experience.dataset.registerUrl, window.location.origin);
+                registrationUrl.searchParams.set('email', state.email);
+                createAccountLink.href = registrationUrl.toString();
+                guestPrompt.hidden = false;
+            }
+        } else if (experience.dataset.customerAccountState === 'unverified') {
+            const verifyPrompt = experience.querySelector('[data-confirmation-verify-prompt]');
+
+            if (verifyPrompt instanceof HTMLElement) {
+                verifyPrompt.hidden = false;
+            }
         }
     };
 

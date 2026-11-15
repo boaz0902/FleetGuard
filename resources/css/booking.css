@@ -685,6 +685,34 @@
     font-size: 8px;
 }
 
+.booking-confirmation-prompt {
+    max-width: 440px;
+    margin: 22px auto 0;
+    padding: 20px;
+    border: 1px solid rgb(57 136 214 / 45%);
+    background: rgb(57 136 214 / 8%);
+    text-align: left;
+}
+
+.booking-confirmation-prompt[hidden] {
+    display: none;
+}
+
+.booking-confirmation-prompt h4 {
+    margin: 0;
+    color: #f4f6f8;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.booking-confirmation-prompt p {
+    margin: 8px 0 15px;
+    color: #aab4bf;
+    font-size: 10px;
+    line-height: 1.7;
+}
+
 .booking-confirmation-actions {
     display: flex;
     flex-wrap: wrap;

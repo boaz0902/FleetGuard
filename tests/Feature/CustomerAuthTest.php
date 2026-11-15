@@ -7,9 +7,9 @@ use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Notifications\ResetCustomerPassword;
+use App\Notifications\VerifyCustomerEmail;
 use Carbon\Carbon;
-use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -78,7 +78,7 @@ class CustomerAuthTest extends TestCase
             ['user_id' => $user->id, 'role' => 'customer'],
             AuditLog::query()->where('action', 'customer_account_registered')->firstOrFail()->changes,
         );
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, VerifyCustomerEmail::class);
     }
 
     public function test_verified_registration_links_one_matching_guest_record_without_overwriting_its_profile(): void
@@ -240,7 +240,7 @@ class CustomerAuthTest extends TestCase
 
         $this->post(route('password.email'), ['email' => $user->email])
             ->assertSessionHas('status');
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, ResetCustomerPassword::class);
 
         $token = Password::broker()->createToken($user);
         $this->post(route('password.update'), [

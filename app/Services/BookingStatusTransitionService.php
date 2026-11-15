@@ -12,7 +12,10 @@ use Illuminate\Validation\ValidationException;
 
 class BookingStatusTransitionService
 {
-    public function __construct(private readonly VehicleAvailabilityService $availability) {}
+    public function __construct(
+        private readonly VehicleAvailabilityService $availability,
+        private readonly SafeMailDeliveryService $mail,
+    ) {}
 
     public function transition(
         Booking $booking,
@@ -22,7 +25,16 @@ class BookingStatusTransitionService
         ?string $auditAction = null,
         array $auditContext = [],
     ): Booking {
-        return DB::transaction(function () use ($booking, $status, $actor, $reason, $auditAction, $auditContext): Booking {
+        $previousStatus = null;
+        $transitionedBooking = DB::transaction(function () use (
+            $booking,
+            $status,
+            $actor,
+            $reason,
+            $auditAction,
+            $auditContext,
+            &$previousStatus,
+        ): Booking {
             $vehicle = Vehicle::query()
                 ->whereKey($booking->vehicle_id)
                 ->lockForUpdate()
@@ -129,6 +141,19 @@ class BookingStatusTransitionService
 
             return $lockedBooking;
         });
+
+        $emailEvent = match ($status) {
+            Booking::STATUS_APPROVED => 'approved',
+            Booking::STATUS_REJECTED => 'rejected',
+            Booking::STATUS_CANCELLED => $auditAction === 'booking_cancelled_by_customer' ? 'cancelled' : null,
+            default => null,
+        };
+
+        if ($previousStatus === Booking::STATUS_PENDING && $emailEvent !== null) {
+            $this->mail->sendBookingNotification($transitionedBooking, $emailEvent);
+        }
+
+        return $transitionedBooking;
     }
 
     private function assertCanCheckOut(Booking $booking, Vehicle $vehicle, Carbon $now): void

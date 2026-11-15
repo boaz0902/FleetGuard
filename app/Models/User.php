@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetCustomerPassword;
+use App\Notifications\VerifyCustomerEmail;
+use App\Services\SafeMailDeliveryService;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -69,6 +71,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isStaff(): bool
     {
         return $this->hasRole('staff');
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        app(SafeMailDeliveryService::class)->notify($this, new VerifyCustomerEmail);
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        app(SafeMailDeliveryService::class)->notify($this, new ResetCustomerPassword($token));
     }
 
     public function isCustomer(): bool

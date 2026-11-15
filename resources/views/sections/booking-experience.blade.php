@@ -1,5 +1,5 @@
-<section class="booking-experience" id="booking" aria-labelledby="booking-experience-title" data-booking-experience data-booking-url="{{ route('bookings.store') }}" data-availability-url="{{ route('vehicles.availability') }}">
-    @php($bookingCustomer = auth()->user()?->isCustomer() ? auth()->user() : null)
+@php($bookingCustomer = auth()->user()?->isCustomer() ? auth()->user() : null)
+<section class="booking-experience" id="booking" aria-labelledby="booking-experience-title" data-booking-experience data-booking-url="{{ route('bookings.store') }}" data-availability-url="{{ route('vehicles.availability') }}" data-register-url="{{ route('register') }}" data-customer-account-state="{{ $bookingCustomer ? ($bookingCustomer->hasVerifiedEmail() ? 'verified' : 'unverified') : 'guest' }}">
     <div class="booking-experience-shell">
         <div class="booking-experience-intro">
             <p class="fleet-eyebrow homepage-section-label"><span><strong>03</strong> / Booking request</span></p>
@@ -238,6 +238,22 @@
                 <small data-confirmation-duration></small>
                 <span data-confirmation-status>Pending approval</span>
             </div>
+            <section class="booking-confirmation-prompt" aria-labelledby="guest-account-prompt-title" hidden data-confirmation-guest-prompt>
+                <h4 id="guest-account-prompt-title">Want to track or cancel this request?</h4>
+                <p>Create an account with the same email address. Your request will be linked after you verify that email.</p>
+                <a class="booking-action-button is-primary" href="{{ route('register') }}" data-confirmation-create-account>
+                    Create account <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                </a>
+            </section>
+            @if ($bookingCustomer && ! $bookingCustomer->hasVerifiedEmail())
+                <section class="booking-confirmation-prompt" aria-labelledby="verify-booking-email-title" hidden data-confirmation-verify-prompt>
+                    <h4 id="verify-booking-email-title">Verify your email to track this request.</h4>
+                    <p>Your booking can be linked to My Bookings after your account email is verified.</p>
+                    <a class="booking-action-button is-primary" href="{{ route('verification.notice') }}">
+                        Verify email address <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                    </a>
+                </section>
+            @endif
             <div class="booking-confirmation-actions">
                 <a class="booking-action-button is-primary" href="" hidden data-confirmation-details>
                     View booking details <i class="bi bi-arrow-up-right" aria-hidden="true"></i>

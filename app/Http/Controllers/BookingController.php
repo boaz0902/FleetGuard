@@ -8,6 +8,7 @@ use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Services\CustomerAccountService;
+use App\Services\SafeMailDeliveryService;
 use App\Services\VehicleAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class BookingController extends Controller
         StoreBookingRequest $request,
         VehicleAvailabilityService $availability,
         CustomerAccountService $accounts,
+        SafeMailDeliveryService $mail,
     ) {
         $validated = $request->validated();
         $pickupDateTime = Carbon::createFromFormat('Y-m-d H:i', "{$validated['pickup_date']} {$validated['pickup_time']}", 'Asia/Manila');
@@ -103,6 +105,8 @@ class BookingController extends Controller
                 'email' => ['This booking request could not be accepted. Please contact FleetGuard support.'],
             ]);
         }
+
+        $mail->sendBookingNotification($booking, 'received');
 
         if ($request->expectsJson()) {
             $bookingDetails = $booking->only([

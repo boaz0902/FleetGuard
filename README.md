@@ -70,7 +70,13 @@ The public `GET /vehicle-availability` endpoint returns current database vehicle
 
 Role assignment is backend-controlled; customer self-registration never accepts a role, and role management is not included. Customer sign-in is at `/login`; administrator sign-in remains at `/admin/login`. Customer accounts use email verification, password reset, and verified-email-only linking to a matching existing guest customer record. Verified customers can review their booking history and cancel pending requests. Staff are denied booking and calendar access until assigned-booking authorization exists. Seed an admin only by setting `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD` in the environment before running the seeder; the seeder creates no default admin credentials.
 
-For local development, the `log` mailer writes verification and password-reset messages (including their links) to `storage/logs/mail.log`, not the application log. Do not use the log mailer in production; configure a delivery provider through `MAIL_MAILER` and its credentials instead.
+## Email delivery
+
+Mail delivery is configured through the existing `MAIL_*` environment variables. The default `MAIL_MAILER=log` keeps local development safe; it writes rendered messages to `storage/logs/mail.log` (including verification and password-reset links). Keep that log private and do not use the log mailer in production. Booking, verification, and password-reset messages are queued after the database transaction commits, so run `php artisan queue:work` during local testing and in production.
+
+For safe delivery testing, use a sandbox SMTP inbox and only its test recipients. Set `MAIL_MAILER=smtp`, the sandbox's `MAIL_HOST` and `MAIL_PORT`, `MAIL_SCHEME` (`smtp` for the provider's STARTTLS setup or `smtps` for implicit TLS), `MAIL_USERNAME`, `MAIL_PASSWORD`, and a sandbox `MAIL_FROM_ADDRESS`. `MAIL_FROM_NAME` defaults to FleetGuard. Run `php artisan fleetguard:mail-test sandbox-recipient@example.test` to send a branded test message directly through the configured mail transport. The address argument is required.
+
+For production, use a transactional email service, set the SMTP credentials only in the deployment environment, use a from-address on the business domain, and configure SPF, DKIM, and DMARC for that domain. Do not commit credentials or use a real customer's address for a test send. Delivery failures are logged without exception messages, credentials, full recipient addresses, or message URLs and do not roll back a booking or status transition.
 
 ## Public website configuration
 

@@ -58,7 +58,13 @@ class CustomerAuthController extends Controller
             return $this->redirectAuthenticatedUser($request->user());
         }
 
-        return view('customer-auth.register');
+        $email = $request->query('email');
+
+        return view('customer-auth.register', [
+            'prefillEmail' => is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL)
+                ? strtolower(trim($email))
+                : null,
+        ]);
     }
 
     public function register(

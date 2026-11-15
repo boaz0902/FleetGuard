@@ -11,6 +11,9 @@
             <p class="customer-eyebrow"><span aria-hidden="true"></span> Start with FleetGuard</p>
             <h1 id="customer-auth-title">Create your account.</h1>
             <p class="customer-card-intro">Verify your email to safely connect any existing guest customer record.</p>
+            @if ($prefillEmail)
+                <p class="customer-card-intro">Your booking request will link to this account after you verify this email address.</p>
+            @endif
 
             @if ($errors->any())
                 <div class="customer-errors" role="alert">
@@ -26,7 +29,16 @@
                 </div>
                 <div class="customer-field">
                     <label for="email">Email address</label>
-                    <input id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" maxlength="255" required>
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value="{{ old('email', $prefillEmail) }}"
+                        autocomplete="email"
+                        maxlength="255"
+                        @readonly($prefillEmail !== null)
+                        required
+                    >
                 </div>
                 <div class="customer-field">
                     <label for="password">Password</label>
