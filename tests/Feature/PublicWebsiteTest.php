@@ -92,6 +92,8 @@ class PublicWebsiteTest extends TestCase
             'fleetguard.social.facebook' => null,
             'fleetguard.social.instagram' => null,
             'fleetguard.social.tiktok' => null,
+            'fleetguard.social.x' => null,
+            'fleetguard.social.youtube' => null,
         ]);
 
         $placeholderResponse = $this->get(route('home'))->assertOk();
@@ -126,6 +128,83 @@ class PublicWebsiteTest extends TestCase
         $unsafeMapResponse = $this->get(route('home'))->assertOk();
         $unsafeMapResponse->assertDontSee('javascript:alert(2)');
         $unsafeMapResponse->assertDontSee('Open in Maps');
+
+        config(['fleetguard.maps_url' => 'https://maps.app.goo.gl/previewShortLink']);
+        $shortMapResponse = $this->get(route('home'))->assertOk();
+        $shortMapResponse->assertSee('Open in Maps')
+            ->assertDontSee('title="FleetGuard location map"', false)
+            ->assertDontSee('does not support an embedded preview')
+            ->assertDontSee('Add a full Google Maps link to show a live map.');
+    }
+
+    public function test_social_links_use_the_shared_component_for_all_five_platforms(): void
+    {
+        config([
+            'fleetguard.social.facebook' => '@FleetGuard',
+            'fleetguard.social.instagram' => '@fleetguardlonghandle123456789',
+            'fleetguard.social.tiktok' => '@fleetguardvisualqa',
+            'fleetguard.social.x' => '@FleetGuardQA',
+            'fleetguard.social.youtube' => '@FleetGuardPreviewChannel123456',
+        ]);
+
+        $response = $this->get(route('home'))->assertOk();
+        $content = $response->getContent();
+
+        foreach (['facebook', 'instagram', 'tiktok', 'twitter-x', 'youtube'] as $icon) {
+            $response->assertSee('bi-'.$icon, false);
+        }
+
+        $response->assertSee('public-social-links--footer', false)
+            ->assertSee('public-social-links--card', false)
+            ->assertSee('FleetGuard on Facebook, @FleetGuard')
+            ->assertSee('FleetGuard on Instagram, @fleetguardlonghandle123456789')
+            ->assertSee('FleetGuard on TikTok, @fleetguardvisualqa')
+            ->assertSee('FleetGuard on X, @FleetGuardQA')
+            ->assertSee('FleetGuard on YouTube, @FleetGuardPreviewChannel123456')
+            ->assertSee('target="_blank" rel="noopener noreferrer"', false);
+
+        $this->assertSame(10, substr_count($content, 'class="public-social-link"'));
+    }
+
+    public function test_social_registry_extension_renders_without_partial_markup_changes(): void
+    {
+        config([
+            'fleetguard.social_platforms.linkedin' => [
+                'name' => 'LinkedIn',
+                'icon' => 'linkedin',
+                'hosts' => ['linkedin.com', 'www.linkedin.com'],
+                'base' => 'https://www.linkedin.com/in/',
+                'label' => 'LinkedIn profile',
+                'pattern' => '/^[A-Za-z0-9-]{3,30}$/',
+            ],
+            'fleetguard.social.linkedin' => '@FleetGuardQA',
+        ]);
+
+        $response = $this->get(route('home'))->assertOk();
+
+        $response->assertSee('bi-linkedin', false)
+            ->assertSee('FleetGuard on LinkedIn, @FleetGuardQA')
+            ->assertSee('href="https://www.linkedin.com/in/FleetGuardQA"', false);
+    }
+
+    public function test_empty_social_links_partial_renders_no_container(): void
+    {
+        $this->view('partials.social-links', [
+            'profiles' => [],
+            'variant' => 'footer',
+        ])->assertDontSee('public-social-links');
+    }
+
+    public function test_business_hours_trim_outer_whitespace_and_preserve_line_breaks(): void
+    {
+        config(['fleetguard.business_hours' => " \nMonday to Friday: 8:00 AM - 5:00 PM\nSaturday: 9:00 AM - 1:00 PM \n"]);
+
+        $response = $this->get(route('home'))->assertOk();
+
+        $this->assertMatchesRegularExpression(
+            '/<dd class="public-business-hours">\s*<span class="public-business-hours-value">Monday to Friday: 8:00 AM - 5:00 PM\nSaturday: 9:00 AM - 1:00 PM<\/span>/',
+            $response->getContent(),
+        );
     }
 
     public function test_public_error_pages_are_branded_and_admin_login_remains_available(): void

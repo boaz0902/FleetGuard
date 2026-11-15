@@ -11,6 +11,7 @@
     $configuredMapUrl = config('fleetguard.maps_url');
     $mapLink = app(\App\Services\MapLink::class)->parse(is_string($configuredMapUrl) ? $configuredMapUrl : null, $contactAddress);
     $socialParser = app(\App\Services\SocialProfile::class);
+    $socialVariant = ($socialVariant ?? 'card') === 'footer' ? 'footer' : 'card';
     $socialProfiles = [];
     foreach (\App\Services\SocialProfile::platforms() as $platform => $definition) {
         $profileUrl = config('fleetguard.social.'.$platform);
@@ -56,7 +57,7 @@
         <dt><i class="bi bi-clock" aria-hidden="true"></i> Business hours</dt>
         <dd class="public-business-hours">
             @if ($businessHours)
-                {{ $businessHours }}
+                <span class="public-business-hours-value">{{ $businessHours }}</span>
             @else
                 <span class="public-placeholder"><i class="bi bi-info-circle" aria-hidden="true"></i> To be added</span>
             @endif
@@ -74,13 +75,4 @@
     </div>
 </dl>
 
-@if ($socialProfiles)
-    <div class="public-social-links" aria-label="FleetGuard social media">
-        @foreach ($socialProfiles as $profile)
-            <a href="{{ $profile['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="FleetGuard on {{ $profile['name'] }}{{ $profile['username'] ? ', @'.$profile['username'] : '' }}" title="{{ $profile['name'] }}">
-                <i class="bi bi-{{ $profile['icon'] }}" aria-hidden="true"></i>
-                <span>{{ $profile['username'] ? '@'.$profile['username'] : $profile['label'] }}</span>
-            </a>
-        @endforeach
-    </div>
-@endif
+@include('partials.social-links', ['profiles' => $socialProfiles, 'variant' => $socialVariant])

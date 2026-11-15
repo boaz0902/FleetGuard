@@ -402,7 +402,7 @@ if (settingsForm) {
         } else if (map.embed_url) {
             setDetection('maps_url', 'Map embed ready.');
         } else if (map.open_url) {
-            setDetection('maps_url', 'Open in Maps link ready; this link cannot be embedded.');
+            setDetection('maps_url', 'Add a full Google Maps link to show a live map.');
         } else {
             setDetection('maps_url', 'Enter an address to create a map preview.');
         }
@@ -414,31 +414,40 @@ if (settingsForm) {
             return;
         }
 
-        preview.replaceChildren();
+        preview.querySelector('.public-social-links')?.remove();
+        const emptyLabel = preview.querySelector('[data-settings-social-empty]');
         const activeProfiles = Object.values(profiles).filter((profile) => profile.valid && profile.url);
         preview.classList.toggle('is-placeholder', activeProfiles.length === 0);
         if (activeProfiles.length === 0) {
-            preview.textContent = 'To be added';
+            if (!emptyLabel) {
+                const placeholder = document.createElement('span');
+                placeholder.dataset.settingsSocialEmpty = '';
+                placeholder.textContent = 'To be added';
+                preview.append(placeholder);
+            }
             return;
         }
 
-        activeProfiles.forEach((profile, index) => {
-            if (index > 0) {
-                preview.append(document.createTextNode(' · '));
-            }
-            const link = document.createElement('a');
+        emptyLabel?.remove();
+        const linksTemplate = preview.querySelector('template[data-social-links-template]');
+        const linkTemplate = preview.querySelector('template[data-social-link-template]');
+        if (!linksTemplate || !linkTemplate) {
+            preview.textContent = 'Social links preview is unavailable.';
+            preview.classList.add('is-placeholder');
+            return;
+        }
+
+        const links = linksTemplate.content.firstElementChild.cloneNode(true);
+        activeProfiles.forEach((profile) => {
+            const link = linkTemplate.content.firstElementChild.cloneNode(true);
             link.href = profile.url;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
             link.setAttribute('aria-label', `FleetGuard on ${profile.name}${profile.username ? `, @${profile.username}` : ''}`);
-            const icon = document.createElement('i');
-            icon.className = `bi bi-${profile.icon}`;
-            icon.setAttribute('aria-hidden', 'true');
-            const label = document.createElement('span');
-            label.textContent = profile.username ? `@${profile.username}` : profile.label;
-            link.append(icon, document.createTextNode(' '), label);
-            preview.append(link);
+            link.title = profile.name;
+            link.querySelector('.public-social-link-icon').className = `public-social-link-icon bi bi-${profile.icon}`;
+            link.querySelector('.public-social-link-label').textContent = profile.username ? `@${profile.username}` : profile.label;
+            links.append(link);
         });
+        preview.append(links);
     };
 
     const requestSettingsPreview = async () => {

@@ -997,20 +997,131 @@
 }
 
 .admin-message-detail-nav {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: "previous back next";
     gap: 12px;
-    margin-top: 2px;
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid #e2e8ed;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(16 24 32 / 6%);
 }
 
-.admin-message-detail-nav a {
-    color: #5d7081;
+.admin-message-detail-nav-control {
+    display: flex;
+    min-width: 0;
+    min-height: 68px;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    padding: 9px 12px;
+    border: 1px solid #dce2e7;
+    border-radius: 10px;
+    background: #fff;
+    color: #101820;
     font-size: 10px;
     font-weight: 650;
+    text-align: center;
+    text-decoration: none;
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
-.admin-message-detail-nav a:hover {
-    color: #2879bd;
+.admin-message-detail-nav-control:hover {
+    border-color: #b7d3ec;
+    background: #f3f8fd;
+    color: #245f92;
+}
+
+.admin-message-detail-nav-control:focus-visible {
+    outline: 3px solid rgb(57 136 214 / 58%);
+    outline-offset: 2px;
+}
+
+.admin-message-detail-nav-control:active {
+    transform: translateY(1px);
+}
+
+.admin-message-detail-nav-control--previous {
+    grid-area: previous;
+}
+
+.admin-message-detail-nav-control--back {
+    grid-area: back;
+    flex-direction: row;
+    gap: 8px;
+    border-color: #3988d6;
+    color: #286ba9;
+    font-weight: 700;
+}
+
+.admin-message-detail-nav-control--next {
+    grid-area: next;
+}
+
+.admin-message-detail-nav-control--disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+}
+
+.admin-message-detail-nav-control--disabled:hover,
+.admin-message-detail-nav-control--disabled:active {
+    border-color: #dce2e7;
+    background: #fff;
+    color: #101820;
+    transform: none;
+}
+
+.admin-message-detail-nav-heading,
+.admin-message-detail-nav-sender {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-message-detail-nav-heading {
+    font-family: var(--font-display);
+}
+
+.admin-message-detail-nav-sender {
+    color: #89939f;
+    font-size: 9px;
+    font-weight: 500;
+}
+
+.admin-message-detail-nav-person {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-message-detail-nav-status-dot {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: #89939f;
+}
+
+.admin-message-detail-nav-status-dot--new {
+    background: #3988d6;
+}
+
+.admin-message-detail-nav-status-dot--read {
+    background: #89939f;
+}
+
+.admin-message-detail-nav-status-dot--replied {
+    background: #26865f;
+}
+
+.admin-message-detail-nav-status-dot--archived {
+    background: #a9afb5;
 }
 
 .admin-settings-grid {
@@ -1316,14 +1427,9 @@
 }
 
 .contact-section .public-contact-details dt .bi {
-    display: inline-grid;
-    width: 30px;
-    height: 30px;
-    place-items: center;
-    border-radius: 9px;
+    border-color: rgb(120 184 243 / 26%);
     background: rgb(57 136 214 / 16%);
     color: #78baff;
-    font-size: 13px;
 }
 
 .contact-section .public-contact-details dd {
@@ -1696,7 +1802,12 @@
     }
 
     .admin-message-detail-nav {
-        flex-direction: column;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "back back"
+            "previous next";
+        gap: 8px;
+        padding: 10px;
     }
 
     .contact-section .contact-form-grid {
@@ -1723,7 +1834,7 @@
     .contact-section .contact-form-grid select,
     .contact-section .contact-form-grid textarea,
     .contact-section .contact-request-button,
-    .contact-section .public-social-links a {
+    .contact-section .public-social-link {
         transition: none;
     }
 }
@@ -1925,15 +2036,15 @@
 }
 
 .admin-settings-preview-list dd[data-settings-preview="social"] {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    display: block;
+    min-width: 0;
 }
 
-.admin-settings-preview-list dd[data-settings-preview="social"] a {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+.admin-settings-preview-list dd[data-settings-preview="social"] .public-social-links {
+    margin-top: 0;
+}
+
+.admin-settings-preview-list dd[data-settings-preview="social"] .public-social-link {
     color: #315f85;
     text-decoration: none;
 }
@@ -1965,26 +2076,18 @@
     overflow-wrap: anywhere;
 }
 
-.contact-section .public-social-links {
-    flex-wrap: wrap;
+.contact-section .contact-information-card > .public-icon-tile {
+    border-radius: 8px;
 }
 
-.contact-section .public-social-links a {
-    display: inline-flex;
-    width: auto;
-    min-width: 44px;
-    min-height: 44px;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    border-radius: 999px;
-    padding: 0 11px;
+.contact-section .public-social-links--card .public-social-link {
+    border-color: rgb(244 246 248 / 18%);
+    background: transparent;
     color: #dceeff;
-    font-size: 10px;
-    text-decoration: none;
 }
 
-.contact-section .public-social-links a:hover {
+.contact-section .public-social-links--card .public-social-link:hover {
+    border-color: rgb(57 136 214 / 70%);
     background: rgb(57 136 214 / 18%);
     color: #fff;
 }
@@ -2051,7 +2154,7 @@
 @media (prefers-reduced-motion: reduce) {
     .admin-reply-menu-toggle,
     .contact-section .contact-send-another,
-    .contact-section .public-social-links a {
+    .contact-section .public-social-link {
         transition: none;
     }
 }

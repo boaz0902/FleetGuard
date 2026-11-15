@@ -150,6 +150,12 @@ class ContactAndSettingsTest extends TestCase
             ->assertSee('FleetGuard on Instagram, @fleet.guard')
             ->assertSee('FleetGuard on X, @fleet_guard')
             ->assertSee('@FleetGuard');
+
+        $this->get(route('admin.settings.index'))->assertOk()
+            ->assertSee('data-settings-preview="social"', false)
+            ->assertSee('public-social-links--card', false)
+            ->assertSee('FleetGuard on Instagram, @fleet.guard')
+            ->assertSee('target="_blank" rel="noopener noreferrer"', false);
     }
 
     public function test_settings_invalid_values_redirect_with_inline_errors_instead_of_500s(): void
@@ -234,6 +240,25 @@ class ContactAndSettingsTest extends TestCase
         ])->assertUnprocessable()
             ->assertJsonPath('errors.maps_url.0', "This doesn't look like a Google Maps link.")
             ->assertJsonFragment(['social.x' => ['Enter a valid x profile URL or @handle.']]);
+    }
+
+    public function test_short_map_link_guidance_is_shown_in_settings_only(): void
+    {
+        config(['fleetguard.maps_url' => 'https://maps.app.goo.gl/previewShortLink']);
+        $admin = $this->userWithRole('admin');
+
+        $this->actingAs($admin)->get(route('admin.settings.index'))
+            ->assertOk()
+            ->assertSee('Add a full Google Maps link to show a live map.');
+
+        $manager = $this->userWithRole('manager');
+        $this->actingAs($manager)->get(route('admin.settings.index'))
+            ->assertOk()
+            ->assertDontSee('Add a full Google Maps link to show a live map.')
+            ->assertSee('Open in Maps link ready; a live map is unavailable for this link.');
+
+        $this->get(route('home'))->assertOk()
+            ->assertDontSee('Add a full Google Maps link to show a live map.');
     }
 
     public function test_settings_preview_route_is_throttled(): void
@@ -415,6 +440,51 @@ class ContactAndSettingsTest extends TestCase
             ->assertSee('Second line.')
             ->assertSee('Previous message')
             ->assertSee(route('admin.messages.show', $newerMessage));
+    }
+
+    public function test_message_navigation_keeps_all_controls_and_disables_missing_neighbors(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $messages = [];
+
+        foreach ([
+            ['Oldest sender', ContactMessage::STATUS_READ, 30],
+            ['Middle sender with a very long name for truncation checks', ContactMessage::STATUS_REPLIED, 20],
+            ['Newest sender', ContactMessage::STATUS_ARCHIVED, 10],
+        ] as [$name, $status, $minutesAgo]) {
+            $message = ContactMessage::query()->create([
+                'reference' => ContactMessage::newReference(),
+                'name' => $name,
+                'email' => strtolower(str_replace(' ', '.', $name)).'@example.test',
+                'subject' => 'General question',
+                'message' => 'A navigation test message.',
+                'status' => $status,
+            ]);
+            $message->forceFill([
+                'created_at' => now()->subMinutes($minutesAgo),
+                'updated_at' => now()->subMinutes($minutesAgo),
+            ])->save();
+            $messages[] = $message;
+        }
+
+        [$oldest, $middle, $newest] = $messages;
+
+        $oldestResponse = $this->actingAs($admin)->get(route('admin.messages.show', $oldest))->assertOk();
+        $oldestResponse->assertSee('aria-label="Previous message: '.$middle->name.', Replied"', false)
+            ->assertSee('admin-message-detail-nav-status-dot--replied', false)
+            ->assertSee('aria-label="No next message"', false)
+            ->assertSee('class="admin-message-detail-nav-control admin-message-detail-nav-control--back" href="'.route('admin.messages.index').'"', false)
+            ->assertSee('href="'.route('admin.messages.show', $middle).'"', false);
+
+        $middleResponse = $this->get(route('admin.messages.show', $middle))->assertOk();
+        $middleResponse->assertSee('aria-label="Previous message: '.$newest->name.', Archived"', false)
+            ->assertSee('aria-label="Next message: '.$oldest->name.', Read"', false)
+            ->assertSee('bi-inbox', false);
+
+        $newestResponse = $this->get(route('admin.messages.show', $newest))->assertOk();
+        $newestResponse->assertSee('aria-label="No previous message"', false)
+            ->assertSee('aria-label="Next message: '.$middle->name.', Replied"', false)
+            ->assertSee('href="'.route('admin.messages.show', $middle).'"', false);
     }
 
     private function userWithRole(string $role): User

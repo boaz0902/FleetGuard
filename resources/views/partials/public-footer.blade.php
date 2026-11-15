@@ -51,7 +51,7 @@
 
         <div class="public-footer-contact">
             <h2>Get in touch</h2>
-            @include('partials.public-contact-details')
+            @include('partials.public-contact-details', ['socialVariant' => 'footer'])
         </div>
     </div>
 

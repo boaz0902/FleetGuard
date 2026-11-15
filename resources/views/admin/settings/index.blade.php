@@ -131,7 +131,7 @@
                                     <input type="text" name="maps_url" value="{{ old('maps_url', $values['maps_url'] ?? '') }}" placeholder="Paste a Google Maps link or iframe" data-settings-preview-input="maps_url" aria-invalid="{{ $errors->has('maps_url') ? 'true' : 'false' }}" aria-describedby="maps-url-help{{ $errors->has('maps_url') ? ' maps-url-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
                                 </span>
                                 <small id="maps-url-help">In Google Maps, choose Share → Embed a map → Copy HTML. We extract only the map source; short links work as an Open in Maps link without an embed.</small>
-                                <small class="admin-settings-detection" data-settings-detection="maps_url" aria-live="polite">{{ $mapPreview['valid'] ? ($mapPreview['embed_url'] ? 'Map embed ready.' : ($mapPreview['open_url'] ? 'Open in Maps link ready; this link cannot be embedded.' : 'Enter an address to create a map preview.')) : $mapPreview['error'] }}</small>
+                                <small class="admin-settings-detection" data-settings-detection="maps_url" aria-live="polite">{{ $mapPreview['valid'] ? ($mapPreview['embed_url'] ? 'Map embed ready.' : ($mapPreview['open_url'] ? ($canManageSettings ? 'Add a full Google Maps link to show a live map.' : 'Open in Maps link ready; a live map is unavailable for this link.') : 'Enter an address to create a map preview.')) : $mapPreview['error'] }}</small>
                                 @error('maps_url')<small class="admin-settings-error" id="maps-url-error">{{ $message }}</small>@enderror
                             </label>
                         </div>
@@ -215,15 +215,11 @@
                         </div>
                         <div>
                             <dt><i class="bi bi-link-45deg" aria-hidden="true"></i></dt>
-                            <dd data-settings-preview="social" class="{{ collect($socialPreview)->filter(fn ($profile) => $profile['url'])->isEmpty() ? 'is-placeholder' : '' }}">
-                                @foreach ($socialPreview as $profile)
-                                    @if ($profile['url'])
-                                        <a href="{{ $profile['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="FleetGuard on {{ $profile['name'] }}{{ $profile['username'] ? ', @'.$profile['username'] : '' }}"><i class="bi bi-{{ $profile['icon'] }}" aria-hidden="true"></i> {{ $profile['label'] }}</a>
-                                    @endif
-                                @endforeach
-                                @if (collect($socialPreview)->filter(fn ($profile) => $profile['url'])->isEmpty())
-                                    To be added
+                            <dd data-settings-preview="social" class="{{ collect($socialPreview)->filter(fn ($profile) => $profile['valid'] && $profile['url'])->isEmpty() ? 'is-placeholder' : '' }}">
+                                @if (collect($socialPreview)->filter(fn ($profile) => $profile['valid'] && $profile['url'])->isEmpty())
+                                    <span data-settings-social-empty>To be added</span>
                                 @endif
+                                @include('partials.social-links', ['profiles' => $socialPreview, 'variant' => 'card', 'includeTemplates' => true])
                             </dd>
                         </div>
                     </dl>

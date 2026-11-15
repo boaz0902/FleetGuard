@@ -168,17 +168,39 @@
         </div>
 
         <nav class="admin-message-detail-nav" aria-label="Message navigation">
-            <div>
-                @if ($previousMessage)
-                    <a href="{{ route('admin.messages.show', $previousMessage) }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Previous message</a>
-                @endif
-            </div>
-            <a href="{{ route('admin.messages.index') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to inbox</a>
-            <div>
-                @if ($nextMessage)
-                    <a href="{{ route('admin.messages.show', $nextMessage) }}">Next message <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-                @endif
-            </div>
+            @if ($previousMessage)
+                <a class="admin-message-detail-nav-control admin-message-detail-nav-control--previous" href="{{ route('admin.messages.show', $previousMessage) }}" aria-label="Previous message: {{ $previousMessage->name }}, {{ ucfirst($previousMessage->status) }}">
+                    <span class="admin-message-detail-nav-heading"><i class="bi bi-chevron-left" aria-hidden="true"></i> Previous</span>
+                    <span class="admin-message-detail-nav-sender">
+                        <span class="admin-message-detail-nav-status-dot admin-message-detail-nav-status-dot--{{ $previousMessage->status }}" aria-hidden="true"></span>
+                        <span class="admin-message-detail-nav-person">{{ $previousMessage->name }}</span>
+                        <span class="visually-hidden">{{ ucfirst($previousMessage->status) }}</span>
+                    </span>
+                </a>
+            @else
+                <span class="admin-message-detail-nav-control admin-message-detail-nav-control--previous admin-message-detail-nav-control--disabled" aria-disabled="true" aria-label="No previous message">
+                    <span class="admin-message-detail-nav-heading"><i class="bi bi-chevron-left" aria-hidden="true"></i> Previous</span>
+                </span>
+            @endif
+
+            <a class="admin-message-detail-nav-control admin-message-detail-nav-control--back" href="{{ route('admin.messages.index') }}">
+                <i class="bi bi-inbox" aria-hidden="true"></i> Back to inbox
+            </a>
+
+            @if ($nextMessage)
+                <a class="admin-message-detail-nav-control admin-message-detail-nav-control--next" href="{{ route('admin.messages.show', $nextMessage) }}" aria-label="Next message: {{ $nextMessage->name }}, {{ ucfirst($nextMessage->status) }}">
+                    <span class="admin-message-detail-nav-heading">Next <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+                    <span class="admin-message-detail-nav-sender">
+                        <span class="admin-message-detail-nav-status-dot admin-message-detail-nav-status-dot--{{ $nextMessage->status }}" aria-hidden="true"></span>
+                        <span class="admin-message-detail-nav-person">{{ $nextMessage->name }}</span>
+                        <span class="visually-hidden">{{ ucfirst($nextMessage->status) }}</span>
+                    </span>
+                </a>
+            @else
+                <span class="admin-message-detail-nav-control admin-message-detail-nav-control--next admin-message-detail-nav-control--disabled" aria-disabled="true" aria-label="No next message">
+                    <span class="admin-message-detail-nav-heading">Next <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+                </span>
+            @endif
         </nav>
     </main>
 @endsection

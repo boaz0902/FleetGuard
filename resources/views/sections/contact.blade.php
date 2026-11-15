@@ -108,10 +108,6 @@
                 @elseif ($contactMap['valid'] && $contactMap['open_url'])
                     <p class="contact-overline">Find us</p>
                     <h3>{{ is_string($contactAddress) && trim($contactAddress) !== '' ? $contactAddress : 'FleetGuard location' }}</h3>
-                    <div class="contact-location-note">
-                        <i class="bi bi-info-circle" aria-hidden="true"></i>
-                        <span>This Google Maps short link can be opened in Maps but does not support an embedded preview.</span>
-                    </div>
                     <a class="button button-primary contact-map-link" href="{{ $contactMap['open_url'] }}" target="_blank" rel="noopener noreferrer">
                         <i class="bi bi-geo-alt" aria-hidden="true"></i> Open in Maps
                     </a>

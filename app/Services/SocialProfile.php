@@ -49,12 +49,16 @@ class SocialProfile
 
     public static function platforms(): array
     {
-        return self::PLATFORMS;
+        $additionalPlatforms = config('fleetguard.social_platforms', []);
+
+        return is_array($additionalPlatforms)
+            ? array_replace(self::PLATFORMS, $additionalPlatforms)
+            : self::PLATFORMS;
     }
 
     public function parse(string $platform, ?string $value): array
     {
-        $definition = self::PLATFORMS[$platform] ?? null;
+        $definition = self::platforms()[$platform] ?? null;
 
         if ($definition === null) {
             return $this->invalidResult($platform);
