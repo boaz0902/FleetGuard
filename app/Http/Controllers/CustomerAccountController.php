@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CustomerEmailVerificationRequest;
 use App\Models\User;
+use App\Services\CustomerBookingService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CustomerAccountController extends Controller
 {
-    public function show(Request $request): View
+    public function show(Request $request, CustomerBookingService $bookings): View
     {
         $user = $request->user();
         abort_unless($user instanceof User && $user->isCustomer(), 403);
@@ -25,6 +27,7 @@ class CustomerAccountController extends Controller
         return view('customer.account', [
             'user' => $user,
             'initials' => $initials,
+            'bookingSummary' => $bookings->summary($user, Carbon::now(config('app.timezone'))),
         ]);
     }
 

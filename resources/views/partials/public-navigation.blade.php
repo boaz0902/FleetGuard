@@ -27,6 +27,9 @@
             @auth
                 @if (auth()->user()->isCustomer())
                     <a href="{{ route('account') }}">My account</a>
+                    @if (auth()->user()->hasVerifiedEmail())
+                        <a href="{{ route('account.bookings') }}">My Bookings</a>
+                    @endif
                     <form class="public-logout-form" method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button class="public-logout" type="submit">Sign out</button>

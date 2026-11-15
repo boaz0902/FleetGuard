@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CustomerAccountController;
 use App\Http\Controllers\CustomerAuthController;
+use App\Http\Controllers\CustomerBookingsController;
 use App\Http\Controllers\CustomerPasswordController;
 use App\Http\Controllers\VehicleAvailabilityController;
 use Illuminate\Support\Facades\Route;
@@ -62,6 +63,11 @@ Route::post('/reset-password', [CustomerPasswordController::class, 'reset'])
 
 Route::middleware(['auth', 'customer'])->group(function () {
     Route::get('/account', [CustomerAccountController::class, 'show'])->name('account');
+    Route::get('/account/bookings', [CustomerBookingsController::class, 'index'])
+        ->name('account.bookings');
+    Route::post('/account/bookings/{booking}/cancel', [CustomerBookingsController::class, 'cancel'])
+        ->middleware('throttle:customer-booking-cancel')
+        ->name('account.bookings.cancel');
     Route::get('/email/verify', [CustomerAccountController::class, 'verificationNotice'])
         ->name('verification.notice');
     Route::get('/email/verify/{id}/{hash}', [CustomerAccountController::class, 'verify'])

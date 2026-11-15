@@ -105,20 +105,30 @@ class BookingController extends Controller
         }
 
         if ($request->expectsJson()) {
+            $bookingDetails = $booking->only([
+                'booking_reference',
+                'vehicle_id',
+                'pickup_location',
+                'pickup_datetime',
+                'return_location',
+                'return_datetime',
+                'rental_duration_days',
+                'daily_rate_snapshot',
+                'estimated_total',
+                'status',
+            ]);
+
+            if (
+                $user?->isCustomer()
+                && $user->hasVerifiedEmail()
+                && $booking->customer()->where('user_id', $user->id)->exists()
+            ) {
+                $bookingDetails['details_url'] = route('bookings.show', $booking);
+            }
+
             return response()->json([
                 'message' => 'Booking request received and is awaiting admin approval.',
-                'booking' => $booking->only([
-                    'booking_reference',
-                    'vehicle_id',
-                    'pickup_location',
-                    'pickup_datetime',
-                    'return_location',
-                    'return_datetime',
-                    'rental_duration_days',
-                    'daily_rate_snapshot',
-                    'estimated_total',
-                    'status',
-                ]),
+                'booking' => $bookingDetails,
             ], 201);
         }
 
@@ -129,10 +139,132 @@ class BookingController extends Controller
     {
         $this->authorize('view', $booking);
 
+        if ($request->user()->isCustomer()) {
+            $booking->load([
+                'vehicle',
+                'auditLogs' => fn ($query) => $query
+                    ->whereIn('action', [
+                        'booking_approved',
+                        'booking_rejected',
+                        'booking_cancelled',
+                        'booking_cancelled_by_customer',
+                        'rental_checked_out',
+                        'booking_marked_ongoing',
+                        'rental_checked_in',
+                        'booking_marked_completed',
+                    ])
+                    ->orderBy('created_at')
+                    ->orderBy('id'),
+            ]);
+
+            return view('bookings.show', [
+                'booking' => $booking,
+                'customerView' => true,
+                'statusDescription' => $this->customerStatusDescription($booking->status),
+                'timeline' => $this->customerTimeline($booking),
+            ]);
+        }
+
         if ($request->expectsJson()) {
             return response()->json($booking->load(['customer', 'vehicle']));
         }
 
         return view('bookings.show', ['booking' => $booking->load(['customer', 'vehicle'])]);
+    }
+
+    private function customerStatusDescription(string $status): string
+    {
+        return match ($status) {
+            Booking::STATUS_PENDING => 'Your request is waiting for FleetGuard to review it.',
+            Booking::STATUS_APPROVED => 'Your request is approved. Your vehicle is reserved for the scheduled dates.',
+            Booking::STATUS_ONGOING => 'Your rental is currently in progress.',
+            Booking::STATUS_COMPLETED => 'Your rental is complete.',
+            Booking::STATUS_REJECTED => 'FleetGuard could not approve this request.',
+            Booking::STATUS_CANCELLED => 'This booking request has been cancelled.',
+            default => 'Your booking status is being reviewed.',
+        };
+    }
+
+    private function customerTimeline(Booking $booking): array
+    {
+        $logs = $booking->auditLogs;
+        $approved = $logs->firstWhere('action', 'booking_approved');
+        $checkedOut = $logs->first(
+            fn (AuditLog $log): bool => in_array($log->action, ['rental_checked_out', 'booking_marked_ongoing'], true),
+        );
+        $checkedIn = $logs->first(
+            fn (AuditLog $log): bool => in_array($log->action, ['rental_checked_in', 'booking_marked_completed'], true),
+        );
+        $cancelled = $logs->first(
+            fn (AuditLog $log): bool => in_array($log->action, ['booking_cancelled', 'booking_cancelled_by_customer'], true),
+        );
+        $rejected = $logs->firstWhere('action', 'booking_rejected');
+        $timeline = [[
+            'label' => 'Request submitted',
+            'description' => 'Your booking request was received.',
+            'at' => $booking->created_at,
+            'complete' => true,
+            'reason' => null,
+        ]];
+
+        if ($approved || in_array($booking->status, [Booking::STATUS_ONGOING, Booking::STATUS_COMPLETED], true)) {
+            $timeline[] = [
+                'label' => 'Approved',
+                'description' => 'FleetGuard approved your booking request.',
+                'at' => $approved?->created_at,
+                'complete' => true,
+                'reason' => null,
+            ];
+        }
+
+        if ($booking->checked_out_at || $checkedOut) {
+            $timeline[] = [
+                'label' => 'Checked out',
+                'description' => 'Your rental began.',
+                'at' => $booking->checked_out_at ?? $checkedOut?->created_at,
+                'complete' => true,
+                'reason' => null,
+            ];
+        }
+
+        if ($booking->checked_in_at || $checkedIn) {
+            $timeline[] = [
+                'label' => 'Checked in',
+                'description' => 'The vehicle was returned.',
+                'at' => $booking->checked_in_at ?? $checkedIn?->created_at,
+                'complete' => true,
+                'reason' => null,
+            ];
+        }
+
+        if ($booking->status === Booking::STATUS_COMPLETED) {
+            $timeline[] = [
+                'label' => 'Completed',
+                'description' => 'Your rental is complete.',
+                'at' => $booking->checked_in_at ?? $checkedIn?->created_at,
+                'complete' => true,
+                'reason' => null,
+            ];
+        } elseif ($booking->status === Booking::STATUS_CANCELLED && $cancelled) {
+            $timeline[] = [
+                'label' => 'Cancelled',
+                'description' => 'This booking request was cancelled.',
+                'at' => $cancelled->created_at,
+                'complete' => true,
+                'reason' => $cancelled->action === 'booking_cancelled_by_customer'
+                    ? ($cancelled->changes['reason'] ?? null)
+                    : null,
+            ];
+        } elseif ($booking->status === Booking::STATUS_REJECTED && $rejected) {
+            $timeline[] = [
+                'label' => 'Not approved',
+                'description' => 'FleetGuard could not approve this request.',
+                'at' => $rejected->created_at,
+                'complete' => true,
+                'reason' => null,
+            ];
+        }
+
+        return $timeline;
     }
 }

@@ -75,6 +75,10 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('customer-booking-cancel', function (Request $request) {
+            return Limit::perMinute(5)->by($request->user()?->id.':'.$request->ip());
+        });
+
         RateLimiter::for('booking-submission', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
         });

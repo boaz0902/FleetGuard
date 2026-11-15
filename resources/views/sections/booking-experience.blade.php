@@ -239,6 +239,9 @@
                 <span data-confirmation-status>Pending approval</span>
             </div>
             <div class="booking-confirmation-actions">
+                <a class="booking-action-button is-primary" href="" hidden data-confirmation-details>
+                    View booking details <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                </a>
                 <button class="booking-action-button is-secondary" type="button" data-booking-back>Back to review</button>
                 <a class="booking-action-button is-primary" href="#fleet">Explore the fleet <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
             </div>

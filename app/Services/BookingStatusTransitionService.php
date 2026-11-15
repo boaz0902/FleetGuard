@@ -14,9 +14,15 @@ class BookingStatusTransitionService
 {
     public function __construct(private readonly VehicleAvailabilityService $availability) {}
 
-    public function transition(Booking $booking, string $status, User $actor, string $reason = ''): Booking
-    {
-        return DB::transaction(function () use ($booking, $status, $actor, $reason): Booking {
+    public function transition(
+        Booking $booking,
+        string $status,
+        User $actor,
+        string $reason = '',
+        ?string $auditAction = null,
+        array $auditContext = [],
+    ): Booking {
+        return DB::transaction(function () use ($booking, $status, $actor, $reason, $auditAction, $auditContext): Booking {
             $vehicle = Vehicle::query()
                 ->whereKey($booking->vehicle_id)
                 ->lockForUpdate()
@@ -28,6 +34,20 @@ class BookingStatusTransitionService
                 throw ValidationException::withMessages([
                     'status' => ['This status transition is not allowed.'],
                 ]);
+            }
+
+            if ($auditAction === 'booking_cancelled_by_customer') {
+                if (
+                    ! $actor->isCustomer()
+                    || ! $actor->hasVerifiedEmail()
+                    || $status !== Booking::STATUS_CANCELLED
+                    || $lockedBooking->status !== Booking::STATUS_PENDING
+                    || ! $lockedBooking->customer()->where('user_id', $actor->id)->exists()
+                ) {
+                    throw ValidationException::withMessages([
+                        'status' => ['Only your own pending booking requests can be cancelled.'],
+                    ]);
+                }
             }
 
             if (
@@ -71,7 +91,7 @@ class BookingStatusTransitionService
                 $lockedBooking->checked_in_at = $now;
             }
             $lockedBooking->save();
-            $action = match ($status) {
+            $action = $auditAction ?? match ($status) {
                 Booking::STATUS_APPROVED => 'booking_approved',
                 Booking::STATUS_REJECTED => 'booking_rejected',
                 Booking::STATUS_CANCELLED => 'booking_cancelled',
@@ -103,7 +123,7 @@ class BookingStatusTransitionService
                 'action' => $action,
                 'subject_type' => Booking::class,
                 'subject_id' => $lockedBooking->id,
-                'changes' => $changes,
+                'changes' => array_merge($changes, $auditContext),
                 'created_at' => $now,
             ]);
 

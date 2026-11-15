@@ -439,6 +439,13 @@ if (experience) {
         experience.querySelector('[data-confirmation-duration]').textContent =
             `${rentalDays} ${rentalDays === 1 ? 'rental day' : 'rental days'}`;
         experience.querySelector('[data-confirmation-status]').textContent = 'Status: Pending approval';
+
+        const detailsLink = experience.querySelector('[data-confirmation-details]');
+
+        if (detailsLink instanceof HTMLAnchorElement && typeof booking.details_url === 'string') {
+            detailsLink.href = booking.details_url;
+            detailsLink.hidden = false;
+        }
     };
 
     const showValidationErrors = (errors = {}) => {

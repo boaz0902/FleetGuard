@@ -24,6 +24,13 @@ class BookingPolicy
             && $booking->customer->user_id === $user->id;
     }
 
+    public function cancelByCustomer(User $user, Booking $booking): bool
+    {
+        return $user->isCustomer()
+            && $user->hasVerifiedEmail()
+            && $booking->customer()->where('user_id', $user->id)->exists();
+    }
+
     public function create(User $user): bool
     {
         return $user->isCustomer();

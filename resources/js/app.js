@@ -1,6 +1,7 @@
 import './bootstrap';
 import './fleet.js';
 import './booking.js';
+import './customer-bookings.js';
 import './admin-dashboard.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
