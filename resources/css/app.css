@@ -1222,13 +1222,6 @@ select:focus-visible {
     font-size: 11px;
 }
 
-.faq-payment-note {
-    margin: 15px 0 0;
-    color: #64707c;
-    font-size: 10px;
-    line-height: 1.6;
-}
-
 .contact-section {
     background: #fff;
     color: #101820;

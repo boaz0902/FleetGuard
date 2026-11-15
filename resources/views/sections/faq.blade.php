@@ -41,9 +41,8 @@
             </details>
             <details class="faq-item faq-item-placeholder" data-scroll-reveal>
                 <summary>How does payment work?</summary>
-                <p>To be confirmed by FleetGuard.</p>
+                <p>To be confirmed by FleetGuard. Submitting a booking request does not take payment.</p>
             </details>
         </div>
-        <p class="faq-payment-note">Submitting a booking request does not take payment.</p>
     </div>
 </section>
