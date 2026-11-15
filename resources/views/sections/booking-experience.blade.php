@@ -2,7 +2,7 @@
     @php($bookingCustomer = auth()->user()?->isCustomer() ? auth()->user() : null)
     <div class="booking-experience-shell">
         <div class="booking-experience-intro">
-            <p class="fleet-eyebrow"><span aria-hidden="true"></span>03 / Booking request</p>
+            <p class="fleet-eyebrow homepage-section-label"><span><strong>03</strong> / Booking request</span></p>
             <div class="booking-experience-heading">
                 <div>
                     <h2 id="booking-experience-title">Plan your next<br>great drive.</h2>

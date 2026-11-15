@@ -303,7 +303,14 @@ if (experience) {
         availabilityStatus.classList.remove('is-error', 'is-loading');
         availabilityStatus.textContent = 'Updating live availability…';
         availabilityStatus.classList.add('is-loading');
-        availabilityTimer = window.setTimeout(searchAvailability, 250);
+        const scheduledSequence = availabilitySequence + 1;
+        availabilityTimer = window.setTimeout(() => {
+            void searchAvailability().finally(() => {
+                if (scheduledSequence === availabilitySequence) {
+                    window.dispatchEvent(new Event('fleetguard:availability-search-settled'));
+                }
+            });
+        }, 250);
     };
 
     const updateStepper = (step) => {

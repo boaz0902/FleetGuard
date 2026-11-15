@@ -19,31 +19,55 @@
         </button>
 
         <nav class="primary-navigation" id="primary-navigation" aria-label="Main navigation" data-navigation>
-            <a href="{{ $onHomePage ? '#fleet' : route('home').'#fleet' }}" data-public-nav-link>Our Fleet</a>
-            <a href="{{ $onHomePage ? '#experience' : route('home').'#experience' }}" data-public-nav-link>How It Works</a>
-            <a href="{{ $onHomePage ? '#experience' : route('home').'#experience' }}" data-public-nav-link>About</a>
-            <a href="{{ $onHomePage ? '#experience' : route('home').'#experience' }}" data-public-nav-link>Contact</a>
+            <div class="nav-primary-links">
+                <a class="nav-link" href="{{ $onHomePage ? '#fleet' : route('home').'#fleet' }}" data-public-nav-link>
+                    <i class="nav-icon bi bi-car-front" aria-hidden="true"></i><span>Our Fleet</span>
+                </a>
+                <a class="nav-link" href="{{ $onHomePage ? '#experience' : route('home').'#experience' }}" data-public-nav-link>
+                    <i class="nav-icon bi bi-signpost-split" aria-hidden="true"></i><span>How It Works</span>
+                </a>
+                <a class="nav-link" href="{{ $onHomePage ? '#experience' : route('home').'#experience' }}" data-public-nav-link>
+                    <i class="nav-icon bi bi-shield-check" aria-hidden="true"></i><span>About</span>
+                </a>
+                <a class="nav-link" href="{{ $onHomePage ? '#experience' : route('home').'#experience' }}" data-public-nav-link>
+                    <i class="nav-icon bi bi-telephone" aria-hidden="true"></i><span>Contact</span>
+                </a>
+            </div>
 
-            @auth
-                @if (auth()->user()->isCustomer())
-                    <a href="{{ route('account') }}">My account</a>
-                    @if (auth()->user()->hasVerifiedEmail())
-                        <a href="{{ route('account.bookings') }}">My Bookings</a>
+            <div class="nav-account-links">
+                @auth
+                    @if (auth()->user()->isCustomer())
+                        <a class="nav-link" href="{{ route('account') }}">
+                            <i class="nav-icon bi bi-person-circle" aria-hidden="true"></i><span>My account</span>
+                        </a>
+                        @if (auth()->user()->hasVerifiedEmail())
+                            <a class="nav-link" href="{{ route('account.bookings') }}">
+                                <i class="nav-icon bi bi-calendar2-check" aria-hidden="true"></i><span>My Bookings</span>
+                            </a>
+                        @endif
+                        <form class="public-logout-form" method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button class="nav-logout" type="submit">
+                                <i class="nav-icon bi bi-box-arrow-right" aria-hidden="true"></i><span>Sign out</span>
+                            </button>
+                        </form>
+                    @elseif (auth()->user()->isAdmin() || auth()->user()->isManager())
+                        <a class="nav-link" href="{{ route('admin.dashboard') }}">
+                            <i class="nav-icon bi bi-person-circle" aria-hidden="true"></i><span>Admin portal</span>
+                        </a>
                     @endif
-                    <form class="public-logout-form" method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button class="public-logout" type="submit">Sign out</button>
-                    </form>
-                @elseif (auth()->user()->isAdmin() || auth()->user()->isManager())
-                    <a href="{{ route('admin.dashboard') }}">Admin portal</a>
-                @endif
-            @else
-                <a href="{{ route('login') }}">Sign in</a>
-                <a href="{{ route('register') }}">Create account</a>
-            @endauth
+                @else
+                    <a class="nav-link" href="{{ route('login') }}">
+                        <i class="nav-icon bi bi-box-arrow-in-right" aria-hidden="true"></i><span>Sign in</span>
+                    </a>
+                    <a class="nav-link" href="{{ route('register') }}">
+                        <i class="nav-icon bi bi-person-circle" aria-hidden="true"></i><span>Create account</span>
+                    </a>
+                @endauth
+            </div>
 
             <a class="nav-cta" href="{{ $onHomePage ? '#booking' : route('home').'#booking' }}" data-public-nav-link>
-                Book a Vehicle <i class="bi bi-arrow-up-right nav-arrow" aria-hidden="true"></i>
+                <span>Book a Vehicle</span><i class="bi bi-arrow-up-right nav-arrow" aria-hidden="true"></i>
             </a>
         </nav>
     </div>

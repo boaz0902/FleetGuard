@@ -3,7 +3,10 @@
     align-items: center;
 }
 
-.public-logout {
+.nav-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     padding: 10px 0;
     border: 0;
     background: transparent;
@@ -14,7 +17,7 @@
     transition: color 180ms ease;
 }
 
-.public-logout:hover {
+.nav-logout:hover {
     color: #fff;
 }
 
@@ -291,8 +294,8 @@
 }
 
 @media (max-width: 1100px) and (min-width: 761px) {
-    .primary-navigation > a:not(.nav-cta),
-    .public-logout {
+    .primary-navigation .nav-link,
+    .nav-logout {
         font-size: 10px;
     }
 
@@ -308,7 +311,7 @@
         border-bottom: 1px solid rgb(255 255 255 / 9%);
     }
 
-    .public-logout {
+    .nav-logout {
         width: 100%;
         min-height: 50px;
         padding: 15px 0;
@@ -335,7 +338,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .public-logout,
+    .nav-logout,
     .customer-submit {
         transition: none;
     }
