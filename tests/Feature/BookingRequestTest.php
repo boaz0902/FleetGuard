@@ -378,7 +378,7 @@ class BookingRequestTest extends TestCase
 
         $this->actingAs($staff)->get(route('admin.calendar.index'))->assertForbidden();
         $this->app['auth']->logout();
-        $this->get(route('admin.calendar.index'))->assertRedirect(route('login'));
+        $this->get(route('admin.calendar.index'))->assertRedirect(route('admin.login'));
     }
 
     public function test_only_administrators_can_manage_maintenance_periods(): void
@@ -487,7 +487,7 @@ class BookingRequestTest extends TestCase
         $this->actingAs($staff)->get(route('admin.bookings.index'))->assertForbidden();
         $this->actingAs($customer)->get(route('admin.dashboard'))->assertForbidden();
         $this->app['auth']->logout();
-        $this->get(route('admin.dashboard'))->assertRedirect(route('login'));
+        $this->get(route('admin.dashboard'))->assertRedirect(route('admin.login'));
 
         $booking = $this->createBooking();
         $this->actingAs($staff)->get(route('bookings.show', $booking))->assertForbidden();

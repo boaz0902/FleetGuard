@@ -2,16 +2,21 @@
 
 namespace App\Providers;
 
+use App\Listeners\LinkCustomerAfterVerification;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\User;
 use App\Models\Vehicle;
 use App\Policies\AuditLogPolicy;
 use App\Policies\BookingPolicy;
+use App\Policies\CustomerAccountPolicy;
 use App\Policies\CustomerPolicy;
 use App\Policies\VehiclePolicy;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -34,9 +39,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Vehicle::class, VehiclePolicy::class);
         Gate::policy(Booking::class, BookingPolicy::class);
         Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(User::class, CustomerAccountPolicy::class);
         Gate::policy(AuditLog::class, AuditLogPolicy::class);
 
         Gate::before(function ($user, $ability) {
+            if ($ability === 'viewCustomerAccount') {
+                return null;
+            }
+
             if ($user && $user->isAdmin()) {
                 return true;
             }
@@ -51,6 +61,20 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('register', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by($request->ip()),
+                Limit::perHour(20)->by($request->ip()),
+            ];
+        });
+
+        RateLimiter::for('password-reset', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by($request->ip().':'.($request->input('email') ?? 'guest')),
+                Limit::perMinute(20)->by($request->ip()),
+            ];
+        });
+
         RateLimiter::for('booking-submission', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
         });
@@ -58,5 +82,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('availability', function (Request $request) {
             return Limit::perMinute(30)->by($request->ip());
         });
+
+        Event::listen(Verified::class, LinkCustomerAfterVerification::class);
     }
 }

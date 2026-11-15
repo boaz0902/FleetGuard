@@ -9,6 +9,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleUnavailability;
 use App\Services\BookingStatusTransitionService;
 use App\Services\CustomerManagementService;
+use App\Services\RentalManagementService;
 use App\Services\VehicleAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -161,7 +162,7 @@ class AdminRentalManagementTest extends TestCase
         $this->actingAs($staff)->get(route('admin.rentals.show', $ready))->assertForbidden();
         $this->actingAs($customer)->get(route('admin.rentals.index'))->assertForbidden();
         $this->app['auth']->logout();
-        $this->get(route('admin.rentals.index'))->assertRedirect(route('login'));
+        $this->get(route('admin.rentals.index'))->assertRedirect(route('admin.login'));
     }
 
     public function test_rental_directory_paginates_and_searches_vehicle_and_reference(): void
@@ -386,7 +387,7 @@ class AdminRentalManagementTest extends TestCase
             ->assertViewHas('checked_out_at', fn ($time) => $time->toDateTimeString() === '2026-11-30 09:30:00')
             ->assertViewHas('checked_in_at', fn ($time) => $time->toDateTimeString() === '2026-12-01 11:00:00');
 
-        $directory = app(\App\Services\RentalManagementService::class)->directory([], now('Asia/Manila'));
+        $directory = app(RentalManagementService::class)->directory([], now('Asia/Manila'));
         $listed = $directory->getCollection()->firstWhere('id', $booking->id);
         $this->assertSame('2026-11-30 09:30:00', $listed->effective_checked_out_at->toDateTimeString());
         $this->assertSame('2026-12-01 11:00:00', $listed->effective_checked_in_at->toDateTimeString());
@@ -408,7 +409,7 @@ class AdminRentalManagementTest extends TestCase
                 'created_at' => Carbon::parse('2026-12-01 12:00:00', 'Asia/Manila'),
             ],
         ]);
-        $fallbackDetails = app(\App\Services\RentalManagementService::class)->details($fallback, now('Asia/Manila'), true);
+        $fallbackDetails = app(RentalManagementService::class)->details($fallback, now('Asia/Manila'), true);
         $this->assertSame('2026-12-01 08:30:00', $fallbackDetails['checked_out_at']->toDateTimeString());
         $this->assertSame('2026-12-01 12:00:00', $fallbackDetails['checked_in_at']->toDateTimeString());
         $this->assertTrue($fallbackDetails['late_return']);
@@ -419,7 +420,7 @@ class AdminRentalManagementTest extends TestCase
             ->assertOk()
             ->assertSee('Returned late')
             ->assertSee('Returned 1 hour late');
-        $fallbackListed = app(\App\Services\RentalManagementService::class)
+        $fallbackListed = app(RentalManagementService::class)
             ->directory([], now('Asia/Manila'))
             ->getCollection()
             ->firstWhere('id', $fallback->id);

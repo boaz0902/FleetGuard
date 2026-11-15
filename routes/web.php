@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BookingCalendarController;
 use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\CustomerController;
@@ -10,6 +10,9 @@ use App\Http\Controllers\Admin\FleetController;
 use App\Http\Controllers\Admin\RentalController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CustomerAccountController;
+use App\Http\Controllers\CustomerAuthController;
+use App\Http\Controllers\CustomerPasswordController;
 use App\Http\Controllers\VehicleAvailabilityController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,9 +28,50 @@ Route::get('/vehicle-availability', VehicleAvailabilityController::class)
     ->middleware('throttle:availability')
     ->name('vehicles.availability');
 
-Route::get('/login', [AuthController::class, 'showLoginForm'])
+Route::get('/login', [CustomerAuthController::class, 'showLoginForm'])
     ->middleware('guest')
     ->name('login');
+
+Route::post('/login', [CustomerAuthController::class, 'login'])
+    ->middleware(['guest', 'throttle:login'])
+    ->name('login.submit');
+
+Route::get('/register', [CustomerAuthController::class, 'showRegistrationForm'])
+    ->middleware('guest')
+    ->name('register');
+
+Route::post('/register', [CustomerAuthController::class, 'register'])
+    ->middleware(['guest', 'throttle:register'])
+    ->name('register.submit');
+
+Route::get('/forgot-password', [CustomerPasswordController::class, 'showRequestForm'])
+    ->middleware('guest')
+    ->name('password.request');
+
+Route::post('/forgot-password', [CustomerPasswordController::class, 'sendResetLink'])
+    ->middleware(['guest', 'throttle:password-reset'])
+    ->name('password.email');
+
+Route::get('/reset-password/{token}', [CustomerPasswordController::class, 'showResetForm'])
+    ->middleware('guest')
+    ->name('password.reset');
+
+Route::post('/reset-password', [CustomerPasswordController::class, 'reset'])
+    ->middleware(['guest', 'throttle:password-reset'])
+    ->name('password.update');
+
+Route::middleware(['auth', 'customer'])->group(function () {
+    Route::get('/account', [CustomerAccountController::class, 'show'])->name('account');
+    Route::get('/email/verify', [CustomerAccountController::class, 'verificationNotice'])
+        ->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', [CustomerAccountController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+    Route::post('/email/verification-notification', [CustomerAccountController::class, 'resendVerification'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+    Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])

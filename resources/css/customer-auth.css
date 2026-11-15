@@ -1,0 +1,342 @@
+.public-logout-form {
+    display: flex;
+    align-items: center;
+}
+
+.public-logout {
+    padding: 10px 0;
+    border: 0;
+    background: transparent;
+    color: rgb(244 246 248 / 80%);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: color 180ms ease;
+}
+
+.public-logout:hover {
+    color: #fff;
+}
+
+.customer-page {
+    display: grid;
+    min-height: 100svh;
+    place-items: center;
+    padding: 120px 24px 64px;
+    background:
+        radial-gradient(ellipse at 50% 35%, rgb(57 136 214 / 9%), transparent 50%),
+        #101820;
+}
+
+.customer-card {
+    width: min(100%, 520px);
+    padding: clamp(26px, 5vw, 44px);
+    border: 1px solid rgb(244 246 248 / 10%);
+    border-radius: 16px;
+    background: #171c23;
+    box-shadow: 0 24px 70px rgb(0 0 0 / 24%);
+}
+
+.customer-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 16px;
+    color: #aab4bf;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.customer-eyebrow span {
+    width: 22px;
+    height: 1px;
+    background: #3988d6;
+}
+
+.customer-card h1 {
+    margin: 0;
+    color: #f4f6f8;
+    font-family: var(--font-display);
+    font-size: clamp(30px, 6vw, 42px);
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 1.1;
+}
+
+.customer-card-intro {
+    margin: 14px 0 26px;
+    color: #aab4bf;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.customer-form {
+    display: grid;
+    gap: 18px;
+}
+
+.customer-field {
+    display: grid;
+    gap: 8px;
+}
+
+.customer-field label {
+    color: #d7dce2;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.customer-field input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px;
+    border: 1px solid rgb(244 246 248 / 17%);
+    border-radius: 6px;
+    background: #101820;
+    color: #f4f6f8;
+    font-size: 13px;
+}
+
+.customer-field input[readonly] {
+    border-color: rgb(57 136 214 / 45%);
+    color: #c5ced8;
+}
+
+.customer-field small {
+    color: #89939f;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.customer-submit {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 0 16px;
+    border: 1px solid #3988d6;
+    border-radius: 6px;
+    background: #3988d6;
+    color: #fff;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.customer-submit:hover {
+    border-color: #55a0ec;
+    background: #55a0ec;
+}
+
+.customer-status,
+.customer-errors {
+    margin: 0 0 20px;
+    padding: 12px 14px;
+    border: 1px solid rgb(57 136 214 / 34%);
+    border-radius: 6px;
+    background: rgb(57 136 214 / 10%);
+    color: #c5e1fc;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.customer-errors {
+    border-color: rgb(244 246 248 / 18%);
+    background: rgb(244 246 248 / 5%);
+    color: #f4f6f8;
+}
+
+.customer-errors p {
+    margin: 0;
+}
+
+.customer-card-links {
+    display: grid;
+    gap: 14px;
+    margin-top: 24px;
+    color: #aab4bf;
+    font-size: 12px;
+}
+
+.customer-card-links p {
+    margin: 0;
+}
+
+.customer-card-links a,
+.customer-verification-callout a {
+    color: #8fc5fa;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.customer-card-links a:hover,
+.customer-verification-callout a:hover {
+    color: #c5e1fc;
+}
+
+.customer-page-account {
+    place-items: start center;
+    padding-top: 150px;
+}
+
+.customer-account-card {
+    width: min(100%, 720px);
+}
+
+.customer-account-heading {
+    display: flex;
+    align-items: center;
+    gap: 17px;
+    margin: 10px 0 28px;
+}
+
+.customer-avatar {
+    display: grid;
+    width: 54px;
+    height: 54px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid rgb(57 136 214 / 45%);
+    border-radius: 50%;
+    background: rgb(57 136 214 / 12%);
+    color: #b7d8f8;
+    font-family: var(--font-display);
+    font-size: 17px;
+}
+
+.customer-account-heading h1 {
+    font-size: clamp(24px, 5vw, 34px);
+}
+
+.customer-account-heading p {
+    margin: 6px 0 0;
+    color: #aab4bf;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.customer-verification-callout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid rgb(57 136 214 / 30%);
+    border-radius: 8px;
+    background: rgb(57 136 214 / 8%);
+    color: #c5ced8;
+}
+
+.customer-verification-callout > .bi {
+    margin-top: 2px;
+    color: #8fc5fa;
+    font-size: 18px;
+}
+
+.customer-verification-callout strong {
+    color: #f4f6f8;
+    font-size: 12px;
+}
+
+.customer-verification-callout p {
+    margin: 6px 0 0;
+    color: #aab4bf;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.customer-verification-callout a {
+    grid-column: 2;
+    justify-self: start;
+    font-size: 11px;
+}
+
+.customer-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: #b7d8f8;
+    font-size: 12px;
+}
+
+.customer-account-actions {
+    display: grid;
+    gap: 12px;
+    justify-items: start;
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid rgb(244 246 248 / 10%);
+}
+
+.customer-account-actions p {
+    margin: 0;
+    color: #89939f;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.booking-account-note {
+    display: block;
+    margin-top: 6px;
+    color: #aab4bf;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+@media (max-width: 1100px) and (min-width: 761px) {
+    .primary-navigation > a:not(.nav-cta),
+    .public-logout {
+        font-size: 10px;
+    }
+
+    .nav-cta {
+        gap: 8px;
+        padding-inline: 11px;
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 760px) {
+    .public-logout-form {
+        border-bottom: 1px solid rgb(255 255 255 / 9%);
+    }
+
+    .public-logout {
+        width: 100%;
+        min-height: 50px;
+        padding: 15px 0;
+        color: #f4f6f8;
+        font-size: 13px;
+        text-align: left;
+    }
+
+    .customer-page {
+        padding: 100px 16px 40px;
+    }
+
+    .customer-page-account {
+        padding-top: 112px;
+    }
+
+    .customer-card {
+        padding: 26px 20px;
+    }
+
+    .customer-verification-callout {
+        padding: 13px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .public-logout,
+    .customer-submit {
+        transition: none;
+    }
+}

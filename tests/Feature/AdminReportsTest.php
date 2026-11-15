@@ -49,7 +49,7 @@ class AdminReportsTest extends TestCase
         $this->actingAs($staff)->get(route('admin.reports.export'))->assertForbidden();
         $this->actingAs($customer)->get(route('admin.reports.index'))->assertForbidden();
         $this->app['auth']->logout();
-        $this->get(route('admin.reports.index'))->assertRedirect(route('login'));
+        $this->get(route('admin.reports.index'))->assertRedirect(route('admin.login'));
     }
 
     public function test_overview_uses_booking_snapshots_and_excludes_pending_from_confirmed_values(): void

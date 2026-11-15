@@ -39,7 +39,7 @@ class AdminFleetManagementTest extends TestCase
         $this->actingAs($staff)->get(route('admin.fleet.index'))->assertOk();
         $this->actingAs($customer)->get(route('admin.fleet.index'))->assertForbidden();
         $this->app['auth']->logout();
-        $this->get(route('admin.fleet.index'))->assertRedirect(route('login'));
+        $this->get(route('admin.fleet.index'))->assertRedirect(route('admin.login'));
 
         $this->actingAs($manager)
             ->get(route('admin.fleet.create'))

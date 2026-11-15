@@ -1,4 +1,5 @@
 <section class="booking-experience" id="booking-experience" aria-labelledby="booking-experience-title" data-booking-experience data-booking-url="{{ route('bookings.store') }}" data-availability-url="{{ route('vehicles.availability') }}">
+    @php($bookingCustomer = auth()->user()?->isCustomer() ? auth()->user() : null)
     <div class="booking-experience-shell">
         <div class="booking-experience-intro">
             <p class="fleet-eyebrow"><span aria-hidden="true"></span>03 / Booking request</p>
@@ -133,11 +134,14 @@
                 <div class="booking-fields-grid">
                     <div class="booking-field">
                         <label for="customer-name">Full name <span>*</span></label>
-                        <input id="customer-name" name="full_name" type="text" autocomplete="name" maxlength="100" required placeholder="Your full name">
+                        <input id="customer-name" name="full_name" type="text" autocomplete="name" maxlength="100" required placeholder="Your full name" value="{{ $bookingCustomer?->name }}">
                     </div>
                     <div class="booking-field">
                         <label for="customer-email">Email address <span>*</span></label>
-                        <input id="customer-email" name="email" type="email" autocomplete="email" maxlength="150" required placeholder="you@example.com">
+                        <input id="customer-email" name="email" type="email" autocomplete="email" maxlength="150" required placeholder="you@example.com" value="{{ $bookingCustomer?->email }}" @if ($bookingCustomer) readonly aria-describedby="customer-email-note" @endif>
+                        @if ($bookingCustomer)
+                            <small class="booking-account-note" id="customer-email-note">This email is fixed to your customer account.</small>
+                        @endif
                     </div>
                     <div class="booking-field">
                         <label for="customer-phone">Mobile number <span>*</span></label>

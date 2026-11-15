@@ -59,7 +59,7 @@ class AdminAuditLogTest extends TestCase
 
         $this->app['auth']->logout();
 
-        $this->get(route('admin.audit-logs.index'))->assertRedirect(route('login'));
+        $this->get(route('admin.audit-logs.index'))->assertRedirect(route('admin.login'));
     }
 
     public function test_directory_aggregates_metrics_and_paginates_newest_first(): void
@@ -103,7 +103,9 @@ class AdminAuditLogTest extends TestCase
             ->assertOk()
             ->assertSee('Customer updated')
             ->assertSee('Customer note added')
-            ->assertSee('No authentication events recorded');
+            ->assertSee('Customer account registered')
+            ->assertSee('Customer account linked')
+            ->assertSee('Customer account link conflict');
     }
 
     public function test_search_matches_action_actor_and_booking_reference(): void

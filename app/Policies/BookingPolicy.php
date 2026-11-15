@@ -19,6 +19,7 @@ class BookingPolicy
         }
 
         return $user->isCustomer()
+            && $user->hasVerifiedEmail()
             && $booking->customer()->exists()
             && $booking->customer->user_id === $user->id;
     }

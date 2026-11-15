@@ -235,7 +235,7 @@ class AdminBookingManagementTest extends TestCase
 
         $this->app['auth']->logout();
         $this->get(route('admin.bookings.show', $booking))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('admin.login'));
     }
 
     public function test_approval_is_rechecked_against_maintenance_and_overlapping_approved_bookings(): void

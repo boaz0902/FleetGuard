@@ -114,7 +114,7 @@ class AdminDashboardTest extends TestCase
 
     public function test_dashboard_requires_authorized_admin_or_manager_access(): void
     {
-        $this->get(route('admin.dashboard'))->assertRedirect(route('login'));
+        $this->get(route('admin.dashboard'))->assertRedirect(route('admin.login'));
         $this->actingAs($this->userWithRole('customer'))->get(route('admin.dashboard'))->assertForbidden();
         $this->actingAs($this->userWithRole('staff'))->get(route('admin.dashboard'))->assertForbidden();
         $this->actingAs($this->userWithRole('manager'))->get(route('admin.dashboard'))->assertOk();

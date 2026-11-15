@@ -47,7 +47,7 @@ class AdminCustomerManagementTest extends TestCase
         $staff = $this->userWithRole('staff');
         $customerUser = $this->userWithRole('customer');
 
-        $this->get(route('admin.customers.index'))->assertRedirect(route('login'));
+        $this->get(route('admin.customers.index'))->assertRedirect(route('admin.login'));
         $this->actingAs($customerUser)->get(route('admin.customers.index'))->assertForbidden();
 
         $this->actingAs($admin)
