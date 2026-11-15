@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Verify Your Email | FleetGuard')
+@section('meta-description', 'Verify your email address to activate customer account features on FleetGuard.')
 
 @section('content')
     @include('partials.public-navigation')

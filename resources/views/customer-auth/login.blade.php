@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Customer Sign In | FleetGuard')
+@section('meta-description', 'Sign in to your FleetGuard customer account to review your account and booking requests.')
 
 @section('content')
     @include('partials.public-navigation')

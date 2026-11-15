@@ -16,14 +16,14 @@ const bookingForm = document.querySelector('[data-booking-form]');
 const pickupDate = document.querySelector('[data-pickup-date]');
 const returnDate = document.querySelector('[data-return-date]');
 const bookingMessage = document.querySelector('[data-booking-message]');
-const publicNavigationLinks = document.querySelectorAll('[data-public-nav-link]');
+const publicNavigationLinks = document.querySelectorAll('[data-section-link]');
 const searchButton = bookingForm?.querySelector('[data-search-button]');
 const searchButtonLabel = searchButton?.querySelector('[data-search-label]');
 const searchButtonDefaultLabel = searchButtonLabel?.textContent?.trim() ?? 'Search available cars';
 const bookingFields = bookingForm
     ? [...bookingForm.querySelectorAll('[data-booking-field]')]
     : [];
-const transitionRules = document.querySelectorAll('[data-transition-rule]');
+const scrollRevealItems = document.querySelectorAll('[data-scroll-reveal]');
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const getLocalDate = () => {
@@ -132,13 +132,69 @@ if (header) {
     window.addEventListener('scroll', updateHeader, { passive: true });
 }
 
+if (scrollRevealItems.length > 0 && !reduceMotion) {
+    scrollRevealItems.forEach((item) => {
+        gsap.fromTo(item, {
+            autoAlpha: 0,
+            y: 18,
+        }, {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.65,
+            ease: 'power2.out',
+            immediateRender: false,
+            scrollTrigger: {
+                trigger: item,
+                start: 'top 88%',
+                once: true,
+            },
+        });
+    });
+}
+
+const accountMenu = document.querySelector('[data-account-menu]');
+const accountToggle = accountMenu?.querySelector('[data-account-toggle]');
+const accountPanel = accountMenu?.querySelector('[data-account-panel]');
+
+if (accountMenu && accountToggle && accountPanel) {
+    const closeAccountMenu = (restoreFocus = false) => {
+        accountPanel.hidden = true;
+        accountToggle.setAttribute('aria-expanded', 'false');
+        accountToggle.setAttribute('aria-label', 'Open account menu');
+
+        if (restoreFocus) {
+            accountToggle.focus();
+        }
+    };
+
+    accountToggle.addEventListener('click', () => {
+        const isExpanded = accountToggle.getAttribute('aria-expanded') === 'true';
+        accountPanel.hidden = isExpanded;
+        accountToggle.setAttribute('aria-expanded', String(!isExpanded));
+        accountToggle.setAttribute('aria-label', isExpanded ? 'Open account menu' : 'Close account menu');
+    });
+
+    document.addEventListener('click', (event) => {
+        if (event.target instanceof Node && !accountMenu.contains(event.target)) {
+            closeAccountMenu();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && accountToggle.getAttribute('aria-expanded') === 'true') {
+            event.preventDefault();
+            closeAccountMenu(true);
+        }
+    });
+}
+
 if (menuToggle && header && navigation) {
     const mobileNavigation = window.matchMedia('(max-width: 760px)');
 
     const focusableNavigationItems = () => [
         menuToggle,
         ...navigation.querySelectorAll('a[href], button:not(:disabled)'),
-    ].filter((item) => !item.hasAttribute('hidden'));
+    ].filter((item) => !item.closest('[hidden]') && item.getClientRects().length > 0);
 
     const syncNavigationState = () => {
         const isMobile = mobileNavigation.matches;
@@ -347,22 +403,6 @@ if (hero && !reduceMotion) {
             },
         );
     }
-}
-
-if (!reduceMotion && transitionRules.length > 0) {
-    gsap.fromTo(transitionRules, {
-        scaleX: 0,
-    }, {
-        scaleX: 1,
-        duration: 0.85,
-        stagger: 0.12,
-        ease: 'power2.out',
-        scrollTrigger: {
-            trigger: '[data-transition-rule]',
-            start: 'top 88%',
-            once: true,
-        },
-    });
 }
 
 const syncPageVisibility = () => {

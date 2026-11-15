@@ -68,9 +68,17 @@ Booking submissions are rate-limited and protected by Laravel CSRF and session s
 
 The public `GET /vehicle-availability` endpoint returns current database vehicle rates for a requested date/time range. Only active vehicles are listed. Approved and ongoing bookings and overlapping maintenance periods make a vehicle unavailable; pending, rejected, cancelled, and completed bookings do not. Return time is the exclusive end boundary, and business times use Asia/Manila. Booking submission and approval recheck availability inside a transaction while holding the vehicle row lock. Admin and manager booking status changes, and administrator maintenance changes, are audited. Customer booking submissions do not overwrite existing customer contact records.
 
-Role assignment is backend-controlled; customer self-registration never accepts a role, and role management is not included. Customer sign-in is at `/login`; administrator sign-in remains at `/admin/login`. Customer accounts use email verification, password reset, and verified-email-only linking to a matching existing guest customer record. Booking history is not included. Staff are denied booking and calendar access until assigned-booking authorization exists. Seed an admin only by setting `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD` in the environment before running the seeder; the seeder creates no default admin credentials.
+Role assignment is backend-controlled; customer self-registration never accepts a role, and role management is not included. Customer sign-in is at `/login`; administrator sign-in remains at `/admin/login`. Customer accounts use email verification, password reset, and verified-email-only linking to a matching existing guest customer record. Verified customers can review their booking history and cancel pending requests. Staff are denied booking and calendar access until assigned-booking authorization exists. Seed an admin only by setting `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD` in the environment before running the seeder; the seeder creates no default admin credentials.
 
 For local development, the `log` mailer writes verification and password-reset messages (including their links) to `storage/logs/mail.log`, not the application log. Do not use the log mailer in production; configure a delivery provider through `MAIL_MAILER` and its credentials instead.
+
+## Public website configuration
+
+The public FleetGuard site includes the fleet showcase, booking-request steps, About, FAQ, and Contact sections. The fleet inventory, images, rates, and availability are sample/unverified unless they are configured as live vehicle records; availability and rates are confirmed by FleetGuard. Booking requests are reviewed by the team and do not take payment.
+
+Set public business details in the environment using `FLEETGUARD_PHONE`, `FLEETGUARD_EMAIL`, `FLEETGUARD_ADDRESS`, `FLEETGUARD_BUSINESS_HOURS`, and `FLEETGUARD_MAPS_URL`. Optional social profile URLs use `FLEETGUARD_SOCIAL_FACEBOOK`, `FLEETGUARD_SOCIAL_INSTAGRAM`, and `FLEETGUARD_SOCIAL_TIKTOK`. All values are optional. When unset, the site displays “To be added”; map and social links are rendered only for HTTP or HTTPS URLs. These settings are read from `config/fleetguard.php`.
+
+The public navbar links to section anchors on the home page and to the corresponding home-page anchor from other customer-facing pages. Customer account actions reflect sign-in and email-verification state; administrator and manager sessions are not given a public admin-portal link.
 
 ## License
 

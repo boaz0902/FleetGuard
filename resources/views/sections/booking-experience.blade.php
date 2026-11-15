@@ -1,4 +1,4 @@
-<section class="booking-experience" id="booking-experience" aria-labelledby="booking-experience-title" data-booking-experience data-booking-url="{{ route('bookings.store') }}" data-availability-url="{{ route('vehicles.availability') }}">
+<section class="booking-experience" id="booking" aria-labelledby="booking-experience-title" data-booking-experience data-booking-url="{{ route('bookings.store') }}" data-availability-url="{{ route('vehicles.availability') }}">
     @php($bookingCustomer = auth()->user()?->isCustomer() ? auth()->user() : null)
     <div class="booking-experience-shell">
         <div class="booking-experience-intro">

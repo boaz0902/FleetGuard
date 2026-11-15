@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Choose a New Password | FleetGuard')
+@section('meta-description', 'Choose a new password for your FleetGuard customer account.')
 
 @section('content')
     @include('partials.public-navigation')

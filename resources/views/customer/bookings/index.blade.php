@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'My Bookings | FleetGuard')
+@section('meta-description', 'Review your FleetGuard booking requests and their latest statuses.')
 
 @section('content')
     @include('partials.public-navigation')

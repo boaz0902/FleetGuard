@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'My Account | FleetGuard')
+@section('meta-description', 'Review your FleetGuard customer profile and account activity.')
 
 @section('content')
     @include('partials.public-navigation')

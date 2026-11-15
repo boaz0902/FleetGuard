@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Create Customer Account | FleetGuard')
+@section('meta-description', 'Create a FleetGuard customer account to manage your details and follow verified booking requests.')
 
 @section('content')
     @include('partials.public-navigation')

@@ -2,7 +2,7 @@
     <div class="fleet-shell">
         <div class="fleet-intro">
             <div class="fleet-intro-copy">
-                <p class="fleet-eyebrow homepage-section-label"><span><strong>02</strong> / Our collection</span></p>
+                <p class="fleet-eyebrow homepage-section-label"><span><strong>01</strong> / Our fleet</span></p>
                 <h2 id="fleet-title">Find your<br class="fleet-title-break"> perfect ride.</h2>
                 <p class="fleet-description">
                     From comfortable city drives to spacious journeys, discover the right vehicle for every destination.

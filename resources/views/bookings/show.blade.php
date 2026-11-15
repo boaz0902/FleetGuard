@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Booking Details')
+@section('meta-description', 'Review booking details, status, and saved trip information.')
 
 @section('content')
     @if (! empty($customerView))

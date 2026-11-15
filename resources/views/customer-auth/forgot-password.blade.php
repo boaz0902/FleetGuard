@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Reset Password | FleetGuard')
+@section('meta-description', 'Request a secure password reset link for your FleetGuard customer account.')
 
 @section('content')
     @include('partials.public-navigation')

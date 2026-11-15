@@ -4,10 +4,24 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#101820">
-    <meta name="description" content="Discover a better way to move with FleetGuard. Explore a premium car rental experience in Panabo City.">
+    @if (request()->is('admin', 'admin/*'))
+        <meta name="description" content="FleetGuard administration">
+        <title>{{ trim($__env->yieldContent('title', 'FleetGuard Administration')) }}</title>
+    @else
+        @php
+            $metaTitle = trim($__env->yieldContent('title', 'FleetGuard | Premium Car Rental'));
+            $metaDescription = trim($__env->yieldContent('meta-description', 'Explore FleetGuard vehicles, check availability for your dates, and send a booking request for review in Panabo City.'));
+        @endphp
+        <meta name="description" content="{{ $metaDescription }}">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="{{ config('fleetguard.name', 'FleetGuard') }}">
+        <meta property="og:title" content="{{ $metaTitle }}">
+        <meta property="og:description" content="{{ $metaDescription }}">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <title>{{ $metaTitle }}</title>
+        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @endif
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <title>@yield('title', 'FleetGuard | Premium Car Rental')</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,5 +35,9 @@
     <a class="skip-link" href="#main-content">Skip to content</a>
 
     @yield('content')
+
+    @unless (request()->is('admin', 'admin/*'))
+        @include('partials.public-footer')
+    @endunless
 </body>
 </html>

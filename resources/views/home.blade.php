@@ -1,12 +1,13 @@
 @extends('layouts.app')
 
 @section('title', 'FleetGuard | Your Journey. Your Freedom.')
+@section('meta-description', 'Explore FleetGuard vehicles, check availability for your dates, and send a booking request for review in Panabo City.')
 
 @section('content')
     @include('partials.public-navigation')
 
     <main id="main-content">
-        <section class="hero" aria-labelledby="hero-title" data-hero>
+        <section class="hero" id="top" aria-labelledby="hero-title" data-hero>
             <div class="hero-image" aria-hidden="true">
                 <img
                     src="{{ asset('images/hero/fleetguard-hero.jpg') }}"
@@ -43,7 +44,7 @@
                         Explore our fleet
                         <i class="bi bi-arrow-right button-arrow" aria-hidden="true"></i>
                     </a>
-                    <a class="button button-quiet" href="#experience">
+                    <a class="button button-quiet" href="#how-it-works">
                         <i class="bi bi-arrow-down-short play-icon" aria-hidden="true"></i>
                         <span>Discover more</span>
                     </a>
@@ -56,12 +57,12 @@
                 <span class="hero-rail-location"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Panabo City</span>
             </aside>
 
-            <a class="scroll-cue" href="#booking" aria-label="Scroll to vehicle search">
+            <a class="scroll-cue" href="#vehicle-search" aria-label="Scroll to vehicle search">
                 <span class="scroll-cue-label">Scroll</span>
                 <span class="scroll-cue-track" aria-hidden="true"><span></span></span>
             </a>
 
-            <section class="booking-panel" id="booking" aria-labelledby="booking-title" data-booking-panel>
+            <section class="booking-panel" id="vehicle-search" aria-labelledby="booking-title" data-booking-panel>
                 <div class="booking-heading">
                     <p class="booking-kicker">A better way to go</p>
                     <h2 id="booking-title">Find your drive.</h2>
@@ -130,14 +131,23 @@
             </ul>
         </section>
 
-        <section class="experience-transition" id="experience" aria-label="The experience">
-            <span class="transition-rule" aria-hidden="true" data-transition-rule></span>
-            <p><span>01</span> / The experience <i class="bi bi-arrow-down-short" aria-hidden="true"></i></p>
-            <span class="transition-rule" aria-hidden="true" data-transition-rule></span>
-        </section>
-
         @include('sections.fleet-showcase', ['vehicles' => config('sample_fleet')])
 
+        @include('sections.how-it-works')
+
         @include('sections.booking-experience', ['vehicles' => []])
+
+        @include('sections.about')
+
+        @include('sections.faq')
+
+        @include('sections.contact')
+
+        <section class="home-closing-cta" aria-labelledby="closing-cta-title">
+            <p class="fleet-eyebrow homepage-section-label"><span>Make your next trip yours</span></p>
+            <h2 id="closing-cta-title">Your next drive starts with a request.</h2>
+            <p>Choose your dates and vehicle. FleetGuard will review availability and confirm the details with you.</p>
+            <a class="button button-primary" href="#booking">Start a booking request <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+        </section>
     </main>
 @endsection
