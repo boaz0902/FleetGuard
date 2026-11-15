@@ -220,7 +220,7 @@ class CustomerAuthTest extends TestCase
             ->get(route('account'))
             ->assertOk()
             ->assertSee('Verify your email address')
-            ->assertSee('Customer account')
+            ->assertSee('My account')
             ->assertDontSee('My Bookings');
     }
 

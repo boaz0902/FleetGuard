@@ -20,18 +20,13 @@
         @endphp
 
         <main class="customer-dashboard-page customer-bookings-page customer-booking-detail-page" id="main-content">
-            <header class="customer-bookings-hero">
-                <div class="customer-bookings-hero-inner">
-                    <div>
-                        <p class="customer-hero-eyebrow">My Bookings / Details</p>
-                        <h1>{{ $booking->booking_reference }}</h1>
-                        <p class="customer-hero-email">Reservation details and status updates.</p>
-                    </div>
-                    <span class="customer-booking-status customer-booking-status--{{ $statusMeta[2] }}">
-                        <i class="bi bi-{{ $statusMeta[1] }}" aria-hidden="true"></i> {{ $statusMeta[0] }}
-                    </span>
-                </div>
-            </header>
+            @include('partials.customer-account-hero', [
+                'heroTitle' => $booking->booking_reference,
+                'heroDescription' => 'Reservation details and status updates.',
+                'heroBackUrl' => route('account.bookings'),
+                'heroBackText' => 'Back to My Bookings',
+                'heroStatusMeta' => $statusMeta,
+            ])
 
             <div class="customer-dashboard-content">
                 @if (session('status'))
@@ -42,12 +37,13 @@
                     <p class="customer-booking-alert" role="alert">{{ $errors->first() }}</p>
                 @endif
 
-                <p class="customer-booking-status-message">
-                    <i class="bi bi-info-circle" aria-hidden="true"></i>
-                    <span><strong>{{ $statusMeta[0] }}:</strong> {{ $statusDescription }}</span>
-                </p>
+                <div class="customer-booking-layout">
+                    <p class="customer-booking-status-message" aria-live="polite">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                        <span><strong>{{ $statusMeta[0] }}:</strong> {{ $statusDescription }}</span>
+                    </p>
 
-                <section class="customer-card customer-reservation-card" aria-labelledby="reservation-summary-title">
+                    <section class="customer-card customer-reservation-card" aria-labelledby="reservation-summary-title">
                     <div class="customer-reservation-heading">
                         <div class="customer-booking-image customer-detail-image">
                             <i class="bi bi-car-front" aria-hidden="true"></i>
@@ -88,9 +84,9 @@
                             <p>{{ $booking->customer_notes }}</p>
                         </div>
                     @endif
-                </section>
+                    </section>
 
-                <section class="customer-card customer-timeline-card" aria-labelledby="booking-timeline-title">
+                    <section class="customer-card customer-timeline-card" aria-labelledby="booking-timeline-title">
                     <p class="customer-eyebrow"><span aria-hidden="true"></span> Booking progress</p>
                     <h2 id="booking-timeline-title">Status timeline</h2>
                     <ol class="customer-status-timeline">
@@ -124,22 +120,57 @@
                             </li>
                         @endforeach
                     </ol>
-                </section>
-
-                @if ($booking->status === \App\Models\Booking::STATUS_PENDING)
-                    <section class="customer-cancel-panel" aria-labelledby="cancel-booking-heading">
-                        <span class="customer-cancel-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
-                        <div>
-                            <h2 id="cancel-booking-heading">Need to cancel this request?</h2>
-                            <p>You can cancel while it is pending. Cancelling ends this request; it does not change your dates or estimated amount.</p>
-                        </div>
-                        <button class="customer-cancel-trigger" type="button" data-cancel-dialog-open>Cancel request</button>
                     </section>
-                @elseif ($booking->status === \App\Models\Booking::STATUS_APPROVED)
-                    <p class="customer-booking-guidance"><i class="bi bi-telephone" aria-hidden="true"></i> Approved bookings cannot be cancelled online. Contact FleetGuard for assistance with your reservation.</p>
-                @endif
 
-                <a class="customer-back-link" href="{{ route('account.bookings') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to My Bookings</a>
+                    @if ($booking->status === \App\Models\Booking::STATUS_PENDING)
+                        <section class="customer-cancel-panel" aria-labelledby="cancel-booking-heading">
+                            <span class="customer-cancel-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+                            <div>
+                                <h2 id="cancel-booking-heading">Need to cancel this request?</h2>
+                                <p>You can cancel while it is pending. Cancelling ends this request; it does not change your dates or estimated amount.</p>
+                            </div>
+                            <button class="customer-cancel-trigger" type="button" data-cancel-dialog-open>Cancel request</button>
+                        </section>
+                    @elseif ($booking->status === \App\Models\Booking::STATUS_APPROVED)
+                        @php
+                            $contactPhone = config('fleetguard.phone');
+                            $contactPhone = is_string($contactPhone) && trim($contactPhone) !== '' ? trim($contactPhone) : null;
+                            $contactPhoneLink = $contactPhone ? preg_replace('/[^0-9+().,;*#]/', '', $contactPhone) : null;
+                            $contactEmail = config('fleetguard.email');
+                            $contactEmail = is_string($contactEmail) && filter_var($contactEmail, FILTER_VALIDATE_EMAIL) ? $contactEmail : null;
+                        @endphp
+                        <section class="customer-booking-guidance" aria-labelledby="approved-booking-guidance">
+                            <i class="bi bi-telephone" aria-hidden="true"></i>
+                            <div>
+                                <h2 id="approved-booking-guidance">Need assistance?</h2>
+                                <p>Approved bookings cannot be cancelled online. Contact FleetGuard for help with this reservation.</p>
+                                <dl class="customer-guidance-contact">
+                                    <div>
+                                        <dt>Phone</dt>
+                                        <dd>
+                                            @if ($contactPhone)
+                                                <a href="tel:{{ $contactPhoneLink }}">{{ $contactPhone }}</a>
+                                            @else
+                                                <span>To be added</span>
+                                            @endif
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt>Email</dt>
+                                        <dd>
+                                            @if ($contactEmail)
+                                                <a href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a>
+                                            @else
+                                                <span>To be added</span>
+                                            @endif
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </section>
+                    @endif
+                </div>
+
             </div>
         </main>
 
@@ -155,8 +186,8 @@
                     <h2 id="cancel-dialog-title">Cancel this request?</h2>
                     <p class="customer-cancel-dialog-copy">This will cancel {{ $booking->booking_reference }}. You can’t undo this action.</p>
                     <label for="customer-cancel-reason">Reason <span>(optional)</span></label>
-                    <textarea id="customer-cancel-reason" name="reason" maxlength="250" rows="3" placeholder="Share a short reason, if you’d like." data-cancel-reason></textarea>
-                    <small class="customer-reason-counter"><span data-cancel-reason-count>0</span> / 250</small>
+                    <textarea id="customer-cancel-reason" name="reason" maxlength="250" rows="3" placeholder="Share a short reason, if you’d like." aria-describedby="cancel-reason-counter" data-cancel-reason></textarea>
+                    <small class="customer-reason-counter" id="cancel-reason-counter" aria-live="polite" aria-atomic="true"><span data-cancel-reason-count>0</span> / 250</small>
                     <div class="customer-cancel-dialog-actions">
                         <button class="customer-cancel-secondary" type="button" data-cancel-dialog-close>Keep request</button>
                         <button class="customer-cancel-confirm" type="submit" data-cancel-submit>

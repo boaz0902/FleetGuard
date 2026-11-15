@@ -93,7 +93,15 @@ class CustomerBookingsTest extends TestCase
             ->assertOk()
             ->assertSee('Verify your email to view bookings.')
             ->assertSee(route('verification.send'), false)
+            ->assertDontSee('Verified')
             ->assertDontSee('FG-UNVERIFIED');
+
+        $this->actingAs($unverified)
+            ->get(route('account'))
+            ->assertOk()
+            ->assertSee('Resend verification link')
+            ->assertSee(route('verification.send'), false)
+            ->assertDontSee('Verified');
 
         $admin = $this->customerUser('admin@example.com', true, 'admin');
         $this->actingAs($admin)->get(route('account.bookings'))->assertForbidden();
@@ -127,6 +135,11 @@ class CustomerBookingsTest extends TestCase
             ->assertOk()
             ->assertSee('FG-CLOSED')
             ->assertDontSee('FG-PENDING');
+
+        $this->get(route('account.bookings', ['status' => 'completed']))
+            ->assertOk()
+            ->assertSee('No bookings in this status.')
+            ->assertSee(route('account.bookings'), false);
 
         $this->get(route('account.bookings', ['status' => 'invalid']))->assertSessionHasErrors('status');
     }
@@ -174,6 +187,10 @@ class CustomerBookingsTest extends TestCase
             ->assertSee('Daily rate at booking')
             ->assertSee('₱1,200.00')
             ->assertSee('₱2,400.00')
+            ->assertSee('customer-booking-layout', false)
+            ->assertSee('customer-booking-status--completed', false)
+            ->assertSee('customer-status-dot', false)
+            ->assertSee('Back to My Bookings')
             ->assertSee('Request submitted')
             ->assertSee('Approved')
             ->assertSee('Checked out')
@@ -199,6 +216,13 @@ class CustomerBookingsTest extends TestCase
             'daily_rate_snapshot' => 1500,
             'estimated_total' => 3000,
         ]);
+        $this->actingAs($user)
+            ->get(route('bookings.show', $booking))
+            ->assertOk()
+            ->assertSee('data-cancel-dialog', false)
+            ->assertSee('aria-describedby="cancel-reason-counter"', false)
+            ->assertSee('aria-live="polite"', false);
+
         $original = $booking->only([
             'pickup_datetime',
             'return_datetime',
@@ -338,6 +362,8 @@ class CustomerBookingsTest extends TestCase
         $this->actingAs($user)
             ->get(route('account'))
             ->assertOk()
+            ->assertSee('Welcome back,')
+            ->assertSee('customer-quick-links', false)
             ->assertSee('My Bookings')
             ->assertSee(route('account.bookings'), false)
             ->assertSee($booking->vehicle->name)

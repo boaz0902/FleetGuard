@@ -14,6 +14,22 @@ if (cancelDialog instanceof HTMLDialogElement) {
         button.addEventListener('click', () => cancelDialog.close());
     });
 
+    cancelDialog.addEventListener('close', () => {
+        cancelTrigger?.focus();
+    });
+
+    cancelDialog.addEventListener('cancel', (event) => {
+        event.preventDefault();
+        cancelDialog.close();
+    });
+
+    cancelDialog.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            cancelDialog.close();
+        }
+    });
+
     cancelDialog.addEventListener('click', (event) => {
         if (event.target === cancelDialog) {
             cancelDialog.close();

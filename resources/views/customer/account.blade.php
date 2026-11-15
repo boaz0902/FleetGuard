@@ -6,28 +6,19 @@
 @section('content')
     @include('partials.public-navigation')
 
+    @php
+        $firstName = collect(preg_split('/\s+/', trim($user->name)) ?: [])->first() ?: 'there';
+    @endphp
+
     <main class="customer-dashboard-page" id="main-content">
-        <header class="customer-bookings-hero">
-            <div class="customer-bookings-hero-inner">
-                <div>
-                    <p class="customer-hero-eyebrow">Customer account</p>
-                    <h1 id="customer-account-title">{{ $user->name }}</h1>
-                    <p class="customer-hero-email">{{ $user->email }}</p>
-                </div>
-                <div class="customer-hero-profile">
-                    <span class="customer-avatar" aria-hidden="true">{{ $initials }}</span>
-                    @if ($user->hasVerifiedEmail())
-                        <span class="customer-hero-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
-                    @else
-                        <span class="customer-hero-unverified"><i class="bi bi-envelope-exclamation" aria-hidden="true"></i> Verify email</span>
-                    @endif
-                </div>
-            </div>
-        </header>
+        @include('partials.customer-account-hero', [
+            'heroTitle' => 'Welcome back, '.$firstName,
+            'heroDescription' => $user->name.' · '.$user->email,
+        ])
 
         <div class="customer-dashboard-content">
             @if (session('status'))
-                <p class="customer-status" role="status">{{ session('status') }}</p>
+                <p class="customer-status" role="status" aria-live="polite">{{ session('status') }}</p>
             @endif
 
             @if (! $user->hasVerifiedEmail())
@@ -37,7 +28,10 @@
                         <strong>Verify your email address</strong>
                         <p>Verification protects your account and lets FleetGuard safely connect an existing guest customer record.</p>
                     </div>
-                    <a href="{{ route('verification.notice') }}">Verify email</a>
+                    <form method="POST" action="{{ route('verification.send') }}">
+                        @csrf
+                        <button type="submit">Resend verification link</button>
+                    </form>
                 </section>
             @else
                 <section class="customer-account-summary" aria-label="Booking summary">
@@ -74,12 +68,20 @@
                 @endif
             @endif
 
-            <div class="customer-account-actions">
+            <nav class="customer-quick-links" aria-label="Account shortcuts">
                 @if ($user->hasVerifiedEmail())
-                    <a class="customer-submit" href="{{ route('account.bookings') }}">View My Bookings <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+                    <a class="customer-quick-link" href="{{ route('account.bookings') }}">
+                        <span class="customer-quick-link-icon"><i class="bi bi-calendar2-check" aria-hidden="true"></i></span>
+                        <span><strong>My Bookings</strong><small>Review your reservations and their status.</small></span>
+                        <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                    </a>
                 @endif
-                <a class="customer-action-link" href="{{ route('home') }}#booking">Book a vehicle <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
-            </div>
+                <a class="customer-quick-link" href="{{ route('home') }}#fleet">
+                    <span class="customer-quick-link-icon"><i class="bi bi-car-front" aria-hidden="true"></i></span>
+                    <span><strong>Browse the fleet</strong><small>Find a vehicle for your next journey.</small></span>
+                    <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                </a>
+            </nav>
         </div>
     </main>
 @endsection

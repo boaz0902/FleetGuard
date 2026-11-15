@@ -6,32 +6,15 @@
 @section('content')
     @include('partials.public-navigation')
 
-    @php
-        $initials = collect(preg_split('/\s+/', trim(auth()->user()->name)) ?: [])
-            ->filter()
-            ->take(2)
-            ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)))
-            ->implode('');
-    @endphp
-
     <main class="customer-dashboard-page customer-bookings-page" id="main-content">
-        <header class="customer-bookings-hero">
-            <div class="customer-bookings-hero-inner">
-                <div>
-                    <p class="customer-hero-eyebrow">My account / Reservations</p>
-                    <h1>My Bookings</h1>
-                    <p class="customer-hero-email">Your requests and confirmed journeys, all in one place.</p>
-                </div>
-                <div class="customer-hero-profile">
-                    <span class="customer-avatar" aria-hidden="true">{{ $initials }}</span>
-                    <span class="customer-hero-verified"><i class="bi bi-patch-check-fill" aria-hidden="true"></i> Verified</span>
-                </div>
-            </div>
-        </header>
+        @include('partials.customer-account-hero', [
+            'heroTitle' => 'My Bookings',
+            'heroDescription' => 'Your requests and confirmed journeys, all in one place.',
+        ])
 
         <div class="customer-dashboard-content">
             @if (session('status'))
-                <p class="customer-status" role="status">{{ session('status') }}</p>
+                <p class="customer-status" role="status" aria-live="polite">{{ session('status') }}</p>
             @endif
 
             @if ($errors->any())
@@ -43,10 +26,9 @@
                     <span class="customer-empty-icon"><i class="bi bi-envelope-exclamation" aria-hidden="true"></i></span>
                     <h2>Verify your email to view bookings.</h2>
                     <p>Your reservation history is private. Verify your email address to continue.</p>
-                    <a class="customer-submit" href="{{ route('verification.notice') }}">Verify email <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
                     <form method="POST" action="{{ route('verification.send') }}">
                         @csrf
-                        <button class="customer-text-button" type="submit">Resend verification link</button>
+                        <button class="customer-submit" type="submit">Resend verification link <i class="bi bi-arrow-up-right" aria-hidden="true"></i></button>
                     </form>
                 </section>
             @else
@@ -154,9 +136,7 @@
                                 </div>
 
                                 <div class="customer-booking-card-footer">
-                                    <span class="customer-booking-status customer-booking-status--{{ $statusMeta[2] }}">
-                                        <i class="bi bi-{{ $statusMeta[1] }}" aria-hidden="true"></i> {{ $statusMeta[0] }}
-                                    </span>
+                                    @include('partials.customer-booking-status', ['statusMeta' => $statusMeta])
                                     <span class="customer-booking-total"><small>Estimated total</small><strong>₱{{ number_format((float) $booking->estimated_total, 2) }}</strong></span>
                                     <a class="customer-action-link" href="{{ route('bookings.show', $booking) }}">View details <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
                                 </div>
