@@ -62,7 +62,8 @@ class CustomerAuthTest extends TestCase
             'role' => 'admin',
         ]);
 
-        $response->assertRedirect(route('verification.notice'));
+        $response->assertRedirect(route('verification.notice'))
+            ->assertSessionHas('status', 'Please verify your email to continue');
         $user = User::query()->firstOrFail();
 
         $this->assertSame('new.customer@example.com', $user->email);
@@ -225,18 +226,88 @@ class CustomerAuthTest extends TestCase
     {
         $customer = $this->customerAccount('unverified-login@example.com');
 
+        $this->get(route('account.bookings'))->assertRedirect(route('login'));
+
         $this->post(route('login.submit'), [
             'email' => $customer->email,
             'password' => 'password',
-        ])->assertRedirect(route('verification.notice'));
+        ])->assertRedirect(route('verification.notice'))
+            ->assertSessionHas('status', 'Please verify your email to continue');
 
         $this->assertAuthenticatedAs($customer);
         $this->get(route('verification.notice'))
             ->assertOk()
-            ->assertSee('still needs verification')
+            ->assertSee('Please verify your email to continue')
+            ->assertSee($customer->email)
+            ->assertSee('Account verification')
             ->assertSee('Send a new verification link')
             ->assertSee('Continue to your account')
+            ->assertSee('Sign out')
             ->assertSee(route('account'), false);
+
+        $verificationUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(30), [
+            'id' => $customer->id,
+            'hash' => sha1($customer->getEmailForVerification()),
+        ]);
+
+        $this->get($verificationUrl)
+            ->assertRedirect(route('account.bookings'))
+            ->assertSessionHas('status', 'Your email address has been verified.');
+        $this->assertTrue($customer->fresh()->hasVerifiedEmail());
+        $this->get(route('account.bookings'))->assertOk();
+    }
+
+    public function test_customer_login_failures_share_the_same_generic_response(): void
+    {
+        $this->customerAccount('known@example.com');
+        $admin = $this->customerAccount('admin-login@example.com', 'admin');
+
+        foreach ([
+            ['known@example.com', 'incorrect'],
+            ['unknown@example.com', 'password'],
+            [$admin->email, 'password'],
+        ] as [$email, $password]) {
+            $this->from(route('login'))
+                ->post(route('login.submit'), [
+                    'email' => $email,
+                    'password' => $password,
+                ])
+                ->assertStatus(302)
+                ->assertRedirect(route('login'))
+                ->assertSessionHasErrors([
+                    'email' => 'These customer sign-in details could not be verified.',
+                ]);
+
+            $this->assertGuest();
+        }
+    }
+
+    public function test_already_verified_customer_is_redirected_away_from_verification_notice(): void
+    {
+        $customer = $this->customerAccount('verified-notice@example.com', 'customer', true);
+
+        $this->actingAs($customer)
+            ->get(route('verification.notice'))
+            ->assertRedirect(route('account'));
+    }
+
+    public function test_verification_resend_keeps_its_throttle_and_confirms_the_request(): void
+    {
+        Notification::fake();
+        $customer = $this->customerAccount('resend@example.com');
+
+        for ($attempt = 0; $attempt < 6; $attempt++) {
+            $this->actingAs($customer)
+                ->post(route('verification.send'))
+                ->assertRedirect(route('verification.notice'))
+                ->assertSessionHas('status', 'If your email still needs verification, a new link has been sent.');
+        }
+
+        $this->actingAs($customer)
+            ->post(route('verification.send'))
+            ->assertTooManyRequests();
+
+        Notification::assertSentToTimes($customer, VerifyCustomerEmail::class, 6);
     }
 
     public function test_customer_logout_invalidates_the_session(): void
@@ -275,13 +346,21 @@ class CustomerAuthTest extends TestCase
     public function test_customer_password_reset_sends_a_notification_and_resets_the_password(): void
     {
         Notification::fake();
-        $user = $this->customerAccount('reset@example.com');
+        $user = $this->customerAccount('reset@example.com', 'customer', true);
 
         $this->post(route('password.email'), ['email' => $user->email])
             ->assertSessionHas('status');
-        Notification::assertSentTo($user, ResetCustomerPassword::class);
+        Notification::assertSentToTimes($user, ResetCustomerPassword::class, 1);
 
-        $token = Password::broker()->createToken($user);
+        $notification = Notification::sent($user, ResetCustomerPassword::class)->first();
+        $this->assertNotNull($notification);
+        $token = $notification->token;
+        $resetUrl = $notification->toMail($user)->action['url'];
+
+        $this->get($resetUrl)
+            ->assertOk()
+            ->assertViewHas('token', $token);
+
         $this->post(route('password.update'), [
             'token' => $token,
             'email' => $user->email,
@@ -291,6 +370,64 @@ class CustomerAuthTest extends TestCase
 
         $this->assertTrue(Hash::check('Changed9!', $user->fresh()->password));
         $this->assertDatabaseCount('password_reset_tokens', 0);
+
+        $this->from(route('password.reset', ['token' => $token]))
+            ->post(route('password.update'), [
+                'token' => $token,
+                'email' => $user->email,
+                'password' => 'Changed9!',
+                'password_confirmation' => 'Changed9!',
+            ])
+            ->assertSessionHasErrors('email');
+
+        $this->post(route('login.submit'), [
+            'email' => $user->email,
+            'password' => 'Changed9!',
+        ])->assertRedirect(route('account'));
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_password_reset_response_is_generic_for_known_and_unknown_customers(): void
+    {
+        Notification::fake();
+        $customer = $this->customerAccount('reset-generic@example.com');
+
+        $knownResponse = $this->from(route('password.request'))
+            ->post(route('password.email'), ['email' => ' RESET-GENERIC@example.com ']);
+        $unknownResponse = $this->from(route('password.request'))
+            ->post(route('password.email'), ['email' => 'missing@example.com']);
+
+        foreach ([$knownResponse, $unknownResponse] as $response) {
+            $response->assertStatus(302)
+                ->assertRedirect(route('password.request'))
+                ->assertSessionHas(
+                    'status',
+                    'If a customer account exists for that email, a password reset link has been sent.',
+                );
+        }
+
+        Notification::assertSentToTimes($customer, ResetCustomerPassword::class, 1);
+    }
+
+    public function test_password_reset_link_expires_after_the_configured_window(): void
+    {
+        $user = $this->customerAccount('reset-expired@example.com');
+        $token = Password::broker()->createToken($user);
+        $passwordBeforeReset = $user->password;
+        $expiryMinutes = (int) config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
+        Carbon::setTestNow(now()->addMinutes($expiryMinutes + 1));
+
+        $this->from(route('password.reset', ['token' => $token]))
+            ->post(route('password.update'), [
+                'token' => $token,
+                'email' => $user->email,
+                'password' => 'Changed9!',
+                'password_confirmation' => 'Changed9!',
+            ])
+            ->assertSessionHasErrors('email');
+
+        $this->assertSame($passwordBeforeReset, $user->fresh()->password);
     }
 
     public function test_password_reset_does_not_create_tokens_for_administrator_accounts(): void
@@ -320,7 +457,10 @@ class CustomerAuthTest extends TestCase
 
         $booking = Booking::query()->firstOrFail();
         $this->assertNull($guest->fresh()->user_id);
-        $this->get(route('bookings.show', $booking))->assertForbidden();
+        $this->get(route('bookings.show', $booking))
+            ->assertRedirect(route('verification.notice'))
+            ->assertSessionHas('status', 'Please verify your email to continue')
+            ->assertSessionHas('url.intended', route('bookings.show', $booking));
     }
 
     public function test_verified_customer_booking_links_the_matching_guest_record(): void

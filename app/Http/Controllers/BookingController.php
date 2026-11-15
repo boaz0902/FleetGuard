@@ -141,9 +141,21 @@ class BookingController extends Controller
 
     public function show(Request $request, Booking $booking)
     {
+        $user = $request->user();
+
+        if ($user?->isCustomer() && ! $user->hasVerifiedEmail()) {
+            if (! $request->session()->has('url.intended')) {
+                $request->session()->put('url.intended', $request->fullUrl());
+            }
+
+            return redirect()
+                ->route('verification.notice')
+                ->with('status', 'Please verify your email to continue');
+        }
+
         $this->authorize('view', $booking);
 
-        if ($request->user()->isCustomer()) {
+        if ($user->isCustomer()) {
             $booking->load([
                 'vehicle',
                 'auditLogs' => fn ($query) => $query

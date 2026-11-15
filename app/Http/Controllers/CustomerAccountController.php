@@ -31,8 +31,15 @@ class CustomerAccountController extends Controller
         ]);
     }
 
-    public function verificationNotice(): View
+    public function verificationNotice(Request $request): View|RedirectResponse
     {
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->isCustomer(), 403);
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('account');
+        }
+
         return view('customer-auth.verify-email');
     }
 
@@ -40,7 +47,9 @@ class CustomerAccountController extends Controller
     {
         $request->fulfill();
 
-        return redirect()->route('account')->with('status', 'Your email address has been verified.');
+        return redirect()
+            ->intended(route('account'))
+            ->with('status', 'Your email address has been verified.');
     }
 
     public function resendVerification(Request $request): RedirectResponse

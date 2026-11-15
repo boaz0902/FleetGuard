@@ -90,10 +90,9 @@ class CustomerBookingsTest extends TestCase
 
         $this->actingAs($unverified)
             ->get(route('account.bookings'))
-            ->assertOk()
-            ->assertSee('Verify your email to view bookings.')
-            ->assertSee(route('verification.send'), false)
-            ->assertDontSee('Verified')
+            ->assertRedirect(route('verification.notice'))
+            ->assertSessionHas('status', 'Please verify your email to continue')
+            ->assertSessionHas('url.intended', route('account.bookings'))
             ->assertDontSee('FG-UNVERIFIED');
 
         $this->actingAs($unverified)

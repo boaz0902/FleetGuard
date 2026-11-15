@@ -52,7 +52,7 @@ class CustomerAuthController extends Controller
         if (! $user->hasVerifiedEmail()) {
             return redirect()
                 ->route('verification.notice')
-                ->with('status', 'You are signed in, but your email address still needs verification.');
+                ->with('status', 'Please verify your email to continue');
         }
 
         return redirect()->intended(route('account'));
@@ -88,7 +88,7 @@ class CustomerAuthController extends Controller
 
         return redirect()
             ->route('verification.notice')
-            ->with('status', 'Your account is ready. Check your email to verify your address.');
+            ->with('status', 'Please verify your email to continue');
     }
 
     public function logout(Request $request): RedirectResponse

@@ -15,21 +15,21 @@ use Illuminate\View\View;
 
 class CustomerBookingsController extends Controller
 {
-    public function index(Request $request, CustomerBookingService $bookings): View
+    public function index(Request $request, CustomerBookingService $bookings): View|RedirectResponse
     {
         $user = $request->user();
-        $now = Carbon::now(config('app.timezone'));
 
         if (! $user->hasVerifiedEmail()) {
-            return view('customer.bookings.index', [
-                'verified' => false,
-                'bookings' => null,
-                'counts' => null,
-                'summary' => null,
-                'activeFilter' => 'all',
-            ]);
+            if (! $request->session()->has('url.intended')) {
+                $request->session()->put('url.intended', $request->fullUrl());
+            }
+
+            return redirect()
+                ->route('verification.notice')
+                ->with('status', 'Please verify your email to continue');
         }
 
+        $now = Carbon::now(config('app.timezone'));
         $validated = $request->validate([
             'status' => ['nullable', 'string', Rule::in(CustomerBookingService::FILTERS)],
         ]);
