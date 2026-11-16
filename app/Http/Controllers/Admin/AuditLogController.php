@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AuditLogFiltersRequest;
 use App\Models\AuditLog;
 use App\Models\Booking;
+use App\Models\ContactMessage;
 use App\Models\Customer;
+use App\Models\SiteSetting;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleUnavailability;
@@ -25,6 +27,8 @@ class AuditLogController extends Controller
         'Customers',
         'Rentals',
         'Reports',
+        'Messages',
+        'Settings',
         'Auth',
         'Other',
     ];
@@ -50,6 +54,8 @@ class AuditLogController extends Controller
         'customer_account_registered' => ['Auth', 'Customer account registered', 'person-plus'],
         'customer_account_linked' => ['Auth', 'Customer account linked', 'link-45deg'],
         'customer_link_conflict' => ['Auth', 'Customer account link conflict', 'exclamation-triangle'],
+        'contact_message_status_changed' => ['Messages', 'Contact message status changed', 'envelope'],
+        'site_settings_updated' => ['Settings', 'Business settings updated', 'sliders'],
         'rental_checked_out' => ['Rentals', 'Rental checked out', 'key'],
         'rental_checked_in' => ['Rentals', 'Rental checked in', 'box-arrow-in-left'],
         'report_exported' => ['Reports', 'Report exported', 'download'],
@@ -336,6 +342,22 @@ class AuditLogController extends Controller
                 'url' => $vehicle && $viewer->can('view', $vehicle)
                     ? route('admin.fleet.show', $vehicle)
                     : null,
+            ];
+        }
+
+        if ($subject instanceof ContactMessage) {
+            return [
+                'label' => $subject->reference,
+                'context' => 'Contact message',
+                'url' => $viewer->can('view', $subject) ? route('admin.messages.show', $subject) : null,
+            ];
+        }
+
+        if ($subject instanceof SiteSetting || $log->subject_type === SiteSetting::class) {
+            return [
+                'label' => 'Settings update',
+                'context' => 'Business details',
+                'url' => $viewer->can('viewAny', SiteSetting::class) ? route('admin.settings.index') : null,
             ];
         }
 

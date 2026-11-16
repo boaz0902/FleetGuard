@@ -80,6 +80,34 @@
                     <span class="admin-nav-label">Audit Logs</span>
                 </a>
             @endcan
+            @can('viewAny', \App\Models\ContactMessage::class)
+                @if (\Illuminate\Support\Facades\Schema::hasTable('contact_messages'))
+                    @php
+                        $unreadMessages = \App\Models\ContactMessage::query()->where('status', \App\Models\ContactMessage::STATUS_NEW)->count();
+                    @endphp
+                <a class="admin-nav-item {{ request()->routeIs('admin.messages.*') ? 'is-active' : '' }}"
+                   href="{{ route('admin.messages.index') }}"
+                   @if (request()->routeIs('admin.messages.*')) aria-current="page" @endif
+                   title="Messages">
+                    <i class="bi bi-envelope" aria-hidden="true"></i>
+                    <span class="admin-nav-label">Messages</span>
+                    @if ($unreadMessages > 0)
+                        <span class="admin-nav-badge">{{ $unreadMessages }}</span>
+                    @endif
+                </a>
+                @endif
+            @endcan
+            @can('viewAny', \App\Models\SiteSetting::class)
+                @if (\Illuminate\Support\Facades\Schema::hasTable('site_settings'))
+                    <a class="admin-nav-item {{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}"
+                       href="{{ route('admin.settings.index') }}"
+                       @if (request()->routeIs('admin.settings.*')) aria-current="page" @endif
+                       title="Business settings">
+                        <i class="bi bi-sliders" aria-hidden="true"></i>
+                        <span class="admin-nav-label">Settings</span>
+                    </a>
+                @endif
+            @endcan
         </div>
     </nav>
 

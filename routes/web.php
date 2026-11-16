@@ -4,12 +4,15 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BookingCalendarController;
 use App\Http\Controllers\Admin\BookingManagementController;
+use App\Http\Controllers\Admin\ContactMessagesController as AdminContactMessagesController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FleetController;
 use App\Http\Controllers\Admin\RentalController;
 use App\Http\Controllers\Admin\ReportsController;
+use App\Http\Controllers\Admin\SiteSettingsController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ContactMessagesController;
 use App\Http\Controllers\CustomerAccountController;
 use App\Http\Controllers\CustomerAuthController;
 use App\Http\Controllers\CustomerBookingsController;
@@ -83,6 +86,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])
         ->name('bookings.show');
 });
+
+Route::post('/contact', [ContactMessagesController::class, 'store'])
+    ->middleware('throttle:contact-message')
+    ->name('contact.store');
 
 Route::prefix('admin')->name('admin.')->middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -159,4 +166,15 @@ Route::middleware(['auth', 'can:viewAny,App\\Models\\Customer'])->prefix('admin'
     Route::put('/customers/{customer}', [CustomerController::class, 'update'])
         ->middleware('can:update,customer')
         ->name('customers.update');
+});
+
+Route::middleware(['auth', 'can:viewAny,App\\Models\\ContactMessage'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/messages', [AdminContactMessagesController::class, 'index'])->name('messages.index');
+    Route::get('/messages/{contactMessage}', [AdminContactMessagesController::class, 'show'])->name('messages.show');
+    Route::patch('/messages/{contactMessage}/status', [AdminContactMessagesController::class, 'updateStatus'])->name('messages.status');
+});
+
+Route::middleware(['auth', 'can:viewAny,App\\Models\\SiteSetting'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/settings', [SiteSettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [SiteSettingsController::class, 'update'])->name('settings.update');
 });
