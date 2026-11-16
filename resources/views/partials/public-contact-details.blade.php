@@ -8,19 +8,17 @@
     $contactAddress = is_string($contactAddress) && trim($contactAddress) !== '' ? trim($contactAddress) : null;
     $businessHours = config('fleetguard.business_hours');
     $businessHours = is_string($businessHours) && trim($businessHours) !== '' ? trim($businessHours) : null;
-    $mapsUrl = config('fleetguard.maps_url');
-    $mapsScheme = is_string($mapsUrl) ? parse_url($mapsUrl, PHP_URL_SCHEME) : null;
-    $mapsUrl = in_array($mapsScheme, ['http', 'https'], true) ? $mapsUrl : null;
-    $socialProfiles = [
-        ['name' => 'Facebook', 'icon' => 'facebook', 'url' => config('fleetguard.social.facebook')],
-        ['name' => 'Instagram', 'icon' => 'instagram', 'url' => config('fleetguard.social.instagram')],
-        ['name' => 'TikTok', 'icon' => 'tiktok', 'url' => config('fleetguard.social.tiktok')],
-    ];
-    $socialProfiles = array_filter($socialProfiles, function ($profile) {
-        $scheme = is_string($profile['url']) ? parse_url($profile['url'], PHP_URL_SCHEME) : null;
-
-        return in_array($scheme, ['http', 'https'], true);
-    });
+    $configuredMapUrl = config('fleetguard.maps_url');
+    $mapLink = app(\App\Services\MapLink::class)->parse(is_string($configuredMapUrl) ? $configuredMapUrl : null, $contactAddress);
+    $socialParser = app(\App\Services\SocialProfile::class);
+    $socialProfiles = [];
+    foreach (\App\Services\SocialProfile::platforms() as $platform => $definition) {
+        $profileUrl = config('fleetguard.social.'.$platform);
+        $profile = $socialParser->parse($platform, is_string($profileUrl) ? $profileUrl : null);
+        if ($profile['valid'] && $profile['url']) {
+            $socialProfiles[] = $profile;
+        }
+    }
 @endphp
 
 <dl class="public-contact-details">
@@ -67,8 +65,8 @@
     <div>
         <dt><i class="bi bi-map" aria-hidden="true"></i> Map</dt>
         <dd>
-            @if ($mapsUrl && $contactAddress)
-                <a href="{{ $mapsUrl }}" target="_blank" rel="noopener noreferrer">Open in Maps</a>
+            @if ($mapLink['valid'] && $mapLink['open_url'])
+                <a href="{{ $mapLink['open_url'] }}" target="_blank" rel="noopener noreferrer">Open in Maps</a>
             @else
                 <span class="public-placeholder"><i class="bi bi-info-circle" aria-hidden="true"></i> To be added</span>
             @endif
@@ -79,11 +77,10 @@
 @if ($socialProfiles)
     <div class="public-social-links" aria-label="FleetGuard social media">
         @foreach ($socialProfiles as $profile)
-            <a href="{{ $profile['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="FleetGuard on {{ $profile['name'] }}" title="{{ $profile['name'] }}">
+            <a href="{{ $profile['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="FleetGuard on {{ $profile['name'] }}{{ $profile['username'] ? ', @'.$profile['username'] : '' }}" title="{{ $profile['name'] }}">
                 <i class="bi bi-{{ $profile['icon'] }}" aria-hidden="true"></i>
+                <span>{{ $profile['username'] ? '@'.$profile['username'] : $profile['label'] }}</span>
             </a>
         @endforeach
     </div>
-@else
-    <p class="public-social-placeholder"><span>Social links</span> <span class="public-placeholder"><i class="bi bi-info-circle" aria-hidden="true"></i> To be added</span></p>
 @endif

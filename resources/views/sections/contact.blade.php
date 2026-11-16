@@ -1,15 +1,24 @@
+@php
+    $configuredMapUrl = config('fleetguard.maps_url');
+    $contactAddress = config('fleetguard.address');
+    $contactMap = app(\App\Services\MapLink::class)->parse(
+        is_string($configuredMapUrl) ? $configuredMapUrl : null,
+        is_string($contactAddress) ? $contactAddress : null,
+    );
+@endphp
+
 <section class="public-content-section contact-section" id="contact" aria-labelledby="contact-title" data-reveal-section>
     <div class="public-content-shell">
         <header class="public-section-heading" data-scroll-reveal>
             <p class="fleet-eyebrow homepage-section-label"><span><strong>06</strong> / Contact</span></p>
             <h2 id="contact-title">Let's plan your next trip.</h2>
-            <p>Have a question about a request? Reach out through the FleetGuard contact details below.</p>
+            <p>Have a question about a request? Reach out through the {{ config('fleetguard.name') ?: 'FleetGuard' }} contact details below.</p>
         </header>
 
         <div class="contact-grid">
             <article class="contact-card contact-information-card" data-scroll-reveal>
                 <span class="public-icon-tile"><i class="bi bi-chat-dots" aria-hidden="true"></i></span>
-                <h3>Contact FleetGuard</h3>
+                <h3>Contact {{ config('fleetguard.name') ?: 'FleetGuard' }}</h3>
                 @include('partials.public-contact-details')
             </article>
 
@@ -17,15 +26,17 @@
                 <span class="public-icon-tile"><i class="bi bi-envelope-paper" aria-hidden="true"></i></span>
                 <h3>Send a message</h3>
 
-                @if (session('status'))
+                @if (session('status') || session('contact_status'))
                     <div class="contact-form-status" role="status" aria-live="polite">
-                        {{ session('status') }}
+                        {{ session('status') ?? session('contact_status') }}
                     </div>
                 @endif
 
+                <div class="contact-form-feedback" data-contact-feedback role="status" aria-live="polite" hidden></div>
+
                 <form method="POST" action="{{ route('contact.store') }}" novalidate data-contact-form>
                     @csrf
-                    <input type="hidden" name="submitted_at" value="{{ microtime(true) }}">
+                    <input type="hidden" name="submitted_at" value="{{ microtime(true) }}" data-contact-submitted-at>
                     <input type="text" name="honeypot" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" aria-hidden="true">
 
                     <div class="contact-form-grid">
@@ -85,13 +96,34 @@
 
             <article class="contact-card contact-location-card" data-scroll-reveal>
                 <span class="public-icon-tile"><i class="bi bi-geo-alt" aria-hidden="true"></i></span>
-                <p class="contact-overline">Based in</p>
-                <h3>Panabo City</h3>
-                <p>Philippines</p>
-                <div class="contact-location-note">
-                    <i class="bi bi-info-circle" aria-hidden="true"></i>
-                    <span>Specific office or pickup details will be shared by FleetGuard when confirmed.</span>
-                </div>
+                @if ($contactMap['valid'] && $contactMap['embed_url'])
+                    <p class="contact-overline">Find us</p>
+                    <h3>{{ is_string($contactAddress) && trim($contactAddress) !== '' ? $contactAddress : 'FleetGuard location' }}</h3>
+                    <div class="contact-map-frame">
+                        <iframe src="{{ $contactMap['embed_url'] }}" title="FleetGuard location map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                    <a class="button button-primary contact-map-link" href="{{ $contactMap['open_url'] }}" target="_blank" rel="noopener noreferrer">
+                        <i class="bi bi-geo-alt" aria-hidden="true"></i> Open in Maps
+                    </a>
+                @elseif ($contactMap['valid'] && $contactMap['open_url'])
+                    <p class="contact-overline">Find us</p>
+                    <h3>{{ is_string($contactAddress) && trim($contactAddress) !== '' ? $contactAddress : 'FleetGuard location' }}</h3>
+                    <div class="contact-location-note">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                        <span>This Google Maps short link can be opened in Maps but does not support an embedded preview.</span>
+                    </div>
+                    <a class="button button-primary contact-map-link" href="{{ $contactMap['open_url'] }}" target="_blank" rel="noopener noreferrer">
+                        <i class="bi bi-geo-alt" aria-hidden="true"></i> Open in Maps
+                    </a>
+                @else
+                    <p class="contact-overline">Based in</p>
+                    <h3>Panabo City</h3>
+                    <p>Philippines</p>
+                    <div class="contact-location-note">
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                        <span>Map details: To be added. Specific office or pickup details will be shared by FleetGuard when confirmed.</span>
+                    </div>
+                @endif
             </article>
 
             <article class="contact-card contact-request-card" data-scroll-reveal>

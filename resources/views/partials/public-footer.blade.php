@@ -13,7 +13,7 @@
                 </span>
                 <span class="brand-wordmark">FLEET<span>GUARD</span></span>
             </a>
-            <p>A considered car rental experience in Panabo City.</p>
+            <p>{{ config('fleetguard.tagline') ?: config('fleetguard.tagline_default', 'A considered car rental experience in Panabo City.') }}</p>
         </div>
 
         <nav class="public-footer-links" aria-label="Footer navigation">

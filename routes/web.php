@@ -177,4 +177,7 @@ Route::middleware(['auth', 'can:viewAny,App\\Models\\ContactMessage'])->prefix('
 Route::middleware(['auth', 'can:viewAny,App\\Models\\SiteSetting'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/settings', [SiteSettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SiteSettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings/preview', [SiteSettingsController::class, 'preview'])
+        ->middleware('throttle:30,1')
+        ->name('settings.preview');
 });

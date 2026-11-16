@@ -93,9 +93,7 @@
                 @can('updateStatus', $message)
                     <section class="admin-message-detail-card" aria-label="Message actions">
                         <div class="admin-message-detail-actions">
-                            <a class="admin-message-primary-action" href="mailto:{{ $message->email }}?subject={{ rawurlencode('Re: '.$message->subject.' ('.$message->reference.')') }}">
-                                <i class="bi bi-envelope" aria-hidden="true"></i> Reply by email
-                            </a>
+                            @include('admin.messages.partials.reply-chooser', ['instance' => 'actions', 'label' => 'Reply by email'])
                             @if ($message->status !== 'replied')
                                 <form method="POST" action="{{ route('admin.messages.status', $message) }}" data-admin-disable-submit>
                                     @csrf
@@ -127,9 +125,7 @@
                 <section class="admin-message-detail-card">
                     <h2>Sender details</h2>
                     <div class="admin-message-contact-list">
-                        <a class="admin-message-contact-button" href="mailto:{{ $message->email }}">
-                            <i class="bi bi-envelope" aria-hidden="true"></i><span>{{ $message->email }}</span>
-                        </a>
+                        @include('admin.messages.partials.reply-chooser', ['instance' => 'sender', 'label' => $message->email])
                         @if ($message->phone)
                             <a class="admin-message-contact-button" href="tel:{{ preg_replace('/[^0-9+]/', '', $message->phone) }}">
                                 <i class="bi bi-telephone" aria-hidden="true"></i><span>{{ $message->phone }}</span>

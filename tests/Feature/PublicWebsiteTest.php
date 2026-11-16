@@ -97,15 +97,15 @@ class PublicWebsiteTest extends TestCase
         $placeholderResponse = $this->get(route('home'))->assertOk();
         $placeholderResponse->assertSee('To be added');
         $placeholderResponse->assertDontSee('Open in Maps');
-        $placeholderResponse->assertSee('Social links');
+        $placeholderResponse->assertDontSee('public-social-links');
 
         config([
             'fleetguard.phone' => '+63 912 345 6789',
             'fleetguard.email' => 'hello@fleetguard.example',
             'fleetguard.address' => 'Panabo City, Philippines',
             'fleetguard.business_hours' => 'Monday to Saturday, 8:00 AM to 5:00 PM',
-            'fleetguard.maps_url' => 'https://maps.example.test/fleetguard',
-            'fleetguard.social.facebook' => 'https://social.example.test/fleetguard',
+            'fleetguard.maps_url' => 'https://www.google.com/maps/place/fleetguard',
+            'fleetguard.social.facebook' => 'https://www.facebook.com/fleetguard',
             'fleetguard.social.instagram' => 'javascript:alert(1)',
             'fleetguard.social.tiktok' => null,
         ]);
@@ -115,8 +115,11 @@ class PublicWebsiteTest extends TestCase
         $configuredResponse->assertSee('href="mailto:hello@fleetguard.example"', false);
         $configuredResponse->assertSee('Panabo City, Philippines');
         $configuredResponse->assertSee('Monday to Saturday, 8:00 AM to 5:00 PM');
-        $configuredResponse->assertSee('href="https://maps.example.test/fleetguard"', false);
-        $configuredResponse->assertSee('FleetGuard on Facebook');
+        $configuredResponse->assertSee('href="https://www.google.com/maps?q=fleetguard"', false);
+        $configuredResponse->assertSee('FleetGuard on Facebook, @fleetguard');
+        $configuredResponse->assertSee('@fleetguard');
+        $configuredResponse->assertSee('title="FleetGuard location map"', false);
+        $configuredResponse->assertSee('loading="lazy"', false);
         $configuredResponse->assertDontSee('javascript:alert(1)');
 
         config(['fleetguard.maps_url' => 'javascript:alert(2)']);

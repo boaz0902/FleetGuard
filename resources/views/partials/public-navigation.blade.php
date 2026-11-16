@@ -10,7 +10,7 @@
                     <path d="M13.8 21h12.4M15 24h.1m9.8 0h.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
             </span>
-            <span class="brand-wordmark">FLEET<span>GUARD</span></span>
+            <span class="brand-wordmark">{{ strtoupper(config('fleetguard.name', 'FleetGuard')) }}</span>
         </a>
 
         <button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="primary-navigation" data-menu-toggle>

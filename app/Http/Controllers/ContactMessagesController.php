@@ -6,17 +6,17 @@ use App\Http\Requests\StoreContactMessageRequest;
 use App\Mail\FleetGuardMessageMail;
 use App\Models\ContactMessage;
 use App\Models\Customer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Redirect;
 
 class ContactMessagesController extends Controller
 {
-    public function store(StoreContactMessageRequest $request): RedirectResponse
+    public function store(StoreContactMessageRequest $request): JsonResponse|RedirectResponse
     {
         $email = strtolower(trim((string) $request->input('email')));
         $ipKey = 'contact-message-ip:'.hash('sha256', (string) ($request->ip() ?: 'unknown'));
@@ -26,12 +26,27 @@ class ContactMessagesController extends Controller
             RateLimiter::hit($ipKey, 3600);
             RateLimiter::hit($emailKey, 3600);
 
-            return Redirect::back()->with('status', 'Thanks for reaching out. Your message is queued for review and we will reply by email if needed.');
+            $message = 'Too many messages were sent recently. Please try again later.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 429);
+            }
+
+            return redirect(route('home').'#contact')
+                ->withInput($request->except(['_token', 'honeypot', 'submitted_at']))
+                ->with('contact_status', $message);
         }
 
         $submittedAt = (float) $request->input('submitted_at', microtime(true));
         if (microtime(true) - $submittedAt < 3.0) {
-            return Redirect::back()->withErrors([
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Please wait a moment before submitting the form again.',
+                    'errors' => ['message' => ['Please wait a moment before submitting the form again.']],
+                ], 422);
+            }
+
+            return redirect(route('home').'#contact')->withErrors([
                 'message' => 'Please wait a moment before submitting the form again.',
             ])->withInput();
         }
@@ -63,8 +78,17 @@ class ContactMessagesController extends Controller
             $this->sendBusinessNotification($message);
         });
 
-        return Redirect::back()
-            ->with('status', 'Your message has been sent. Your reference is '.$message->reference.'. FleetGuard will reply by email.')
+        $successMessage = 'Your message has been sent. FleetGuard will reply by email.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'reference' => $message->reference,
+                'message' => $successMessage,
+            ], 201);
+        }
+
+        return redirect(route('home').'#contact')
+            ->with('status', $successMessage.' Your reference is '.$message->reference.'.')
             ->with('contact_message_reference', $message->reference);
     }
 

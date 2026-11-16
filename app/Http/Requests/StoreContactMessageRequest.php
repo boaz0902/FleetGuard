@@ -14,19 +14,32 @@ class StoreContactMessageRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $name = trim(strip_tags((string) $this->input('name', '')));
-        $email = strtolower(trim((string) $this->input('email', '')));
-        $phone = trim(strip_tags((string) $this->input('phone', '')));
-        $subject = trim(strip_tags((string) $this->input('subject', '')));
-        $message = trim(strip_tags((string) $this->input('message', '')));
+        $clean = static function (mixed $value): mixed {
+            if (! is_string($value) && ! is_numeric($value)) {
+                return $value;
+            }
+
+            return trim(strip_tags((string) $value));
+        };
+
+        $name = $clean($this->input('name', ''));
+        $email = $clean($this->input('email', ''));
+        $phone = $clean($this->input('phone', ''));
+        $subject = $clean($this->input('subject', ''));
+        $message = $clean($this->input('message', ''));
 
         $this->merge([
             'name' => $name,
-            'email' => $email,
+            'email' => is_string($email) ? strtolower($email) : $email,
             'phone' => $phone,
             'subject' => $subject,
             'message' => $message,
         ]);
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return route('home').'#contact';
     }
 
     public function rules(): array

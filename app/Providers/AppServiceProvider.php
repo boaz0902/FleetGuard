@@ -97,10 +97,21 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('contact-message', function (Request $request) {
             $email = strtolower(trim((string) $request->input('email')));
+            $contactLimitResponse = static function (Request $request, array $headers) {
+                $message = 'Too many messages were sent recently. Please try again later.';
+
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => $message], 429, $headers);
+                }
+
+                return redirect(route('home').'#contact')
+                    ->withInput($request->except(['_token', 'honeypot', 'submitted_at']))
+                    ->with('contact_status', $message);
+            };
 
             return [
-                Limit::perHour(5)->by($request->ip() ?: 'unknown-ip'),
-                Limit::perHour(3)->by('contact-message:'.$email),
+                Limit::perHour(5)->by($request->ip() ?: 'unknown-ip')->response($contactLimitResponse),
+                Limit::perHour(3)->by('contact-message:'.$email)->response($contactLimitResponse),
             ];
         });
 
