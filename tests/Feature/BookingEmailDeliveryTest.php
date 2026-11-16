@@ -11,8 +11,10 @@ use App\Notifications\ResetCustomerPassword;
 use App\Notifications\VerifyCustomerEmail;
 use App\Services\BookingStatusTransitionService;
 use App\Services\SafeMailDeliveryService;
+use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Process;
@@ -173,7 +175,7 @@ class BookingEmailDeliveryTest extends TestCase
         $admin = $this->user('rollback-admin@example.test', 'admin', true);
 
         try {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($booking, $admin): void {
+            DB::transaction(function () use ($booking, $admin): void {
                 app(BookingStatusTransitionService::class)->transition(
                     $booking,
                     Booking::STATUS_APPROVED,
@@ -393,7 +395,7 @@ class BookingEmailDeliveryTest extends TestCase
 
     public function test_queued_transport_failure_logs_only_sanitized_context(): void
     {
-        $mailer = \Mockery::mock(\Illuminate\Contracts\Mail\Mailer::class);
+        $mailer = \Mockery::mock(Mailer::class);
         $mailer->shouldReceive('send')
             ->once()
             ->andThrow(new RuntimeException('SMTP password and private URL'));
