@@ -301,6 +301,126 @@ document.querySelectorAll('form[data-admin-disable-submit]').forEach((form) => {
     });
 });
 
+const messageViewButtons = document.querySelectorAll('[data-message-view-toggle]');
+
+if (messageViewButtons.length > 0) {
+    const messageViewPanels = document.querySelectorAll('[data-message-view-panel]');
+    const viewStorageKey = 'admin-message-inbox-view';
+    const compactLayout = window.matchMedia('(max-width: 850px)');
+    const setMessageView = (view, persist = true) => {
+        messageViewPanels.forEach((panel) => {
+            panel.hidden = panel.dataset.messageViewPanel !== view;
+        });
+        messageViewButtons.forEach((button) => {
+            button.setAttribute('aria-pressed', String(button.dataset.messageViewToggle === view));
+        });
+
+        if (persist) {
+            window.localStorage.setItem(viewStorageKey, view);
+        }
+    };
+    const storedView = window.localStorage.getItem(viewStorageKey);
+    const preferredView = ['table', 'cards'].includes(storedView) ? storedView : 'table';
+
+    setMessageView(compactLayout.matches ? 'cards' : preferredView, false);
+    messageViewButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            if (!compactLayout.matches) {
+                setMessageView(button.dataset.messageViewToggle);
+            }
+        });
+    });
+    compactLayout.addEventListener('change', (event) => {
+        setMessageView(event.matches ? 'cards' : window.localStorage.getItem(viewStorageKey) || preferredView, false);
+    });
+}
+
+const settingsForm = document.querySelector('[data-settings-form]');
+
+if (settingsForm) {
+    const previewDefaults = {
+        name: 'FleetGuard',
+        tagline: 'Your next journey starts here',
+    };
+
+    const updateSettingsPreview = (input) => {
+        const key = input.dataset.settingsPreviewInput;
+        const preview = document.querySelector(`[data-settings-preview="${key}"]`);
+
+        if (key === 'maps_url' || key === 'address') {
+            const mapsInput = settingsForm.querySelector('[data-settings-preview-input="maps_url"]');
+            const addressInput = settingsForm.querySelector('[data-settings-preview-input="address"]');
+            const mapsPreview = document.querySelector('[data-settings-preview="maps_url"]');
+            const hasMap = mapsInput?.value.trim() && addressInput?.value.trim();
+
+            if (mapsPreview) {
+                mapsPreview.textContent = hasMap ? 'Open in Maps' : 'To be added';
+                mapsPreview.title = mapsInput?.value.trim() ?? '';
+                mapsPreview.classList.toggle('is-placeholder', !hasMap);
+            }
+        }
+
+        if (key.startsWith('social.')) {
+            const socialPreview = document.querySelector('[data-settings-preview="social"]');
+            const profiles = ['Facebook', 'Instagram', 'TikTok'].filter((label) => {
+                const profileKey = `social.${label.toLowerCase()}`;
+                const profileInput = settingsForm.querySelector(`[data-settings-preview-input="${profileKey}"]`);
+
+                return profileInput?.value.trim();
+            });
+
+            if (socialPreview) {
+                socialPreview.textContent = profiles.join(' · ') || 'To be added';
+                socialPreview.classList.toggle('is-placeholder', profiles.length === 0);
+            }
+        }
+
+        if (preview && key !== 'maps_url') {
+            const value = input.value.trim();
+            const isPlaceholder = value === '';
+            preview.textContent = value || previewDefaults[key] || 'To be added';
+            preview.classList.toggle('is-placeholder', isPlaceholder && !previewDefaults[key]);
+        }
+    };
+
+    settingsForm.querySelectorAll('[data-settings-preview-input]').forEach((input) => {
+        input.addEventListener('input', () => updateSettingsPreview(input));
+        updateSettingsPreview(input);
+    });
+}
+
+document.querySelectorAll('[data-contact-form]').forEach((form) => {
+    const message = form.querySelector('[data-contact-message]');
+    const counter = form.querySelector('[data-contact-counter]');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const submitLabel = form.querySelector('[data-contact-submit-label]');
+    const submitIcon = form.querySelector('[data-contact-submit-icon]');
+
+    if (message && counter) {
+        const updateCounter = () => {
+            counter.textContent = `${Array.from(message.value).length}/2000 characters`;
+        };
+
+        message.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+
+    form.addEventListener('submit', () => {
+        form.setAttribute('aria-busy', 'true');
+
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
+        if (submitLabel) {
+            submitLabel.textContent = 'Sending...';
+        }
+        if (submitIcon) {
+            submitIcon.classList.remove('bi-send');
+            submitIcon.classList.add('bi-arrow-repeat');
+        }
+    });
+});
+
 const rentalViewButtons = document.querySelectorAll('[data-rental-view-toggle]');
 
 if (rentalViewButtons.length > 0) {

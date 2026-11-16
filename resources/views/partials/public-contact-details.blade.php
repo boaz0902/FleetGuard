@@ -30,7 +30,7 @@
             @if ($contactPhone)
                 <a href="tel:{{ $contactPhoneLink }}">{{ $contactPhone }}</a>
             @else
-                <span class="public-placeholder">To be added</span>
+                <span class="public-placeholder"><i class="bi bi-info-circle" aria-hidden="true"></i> To be added</span>
             @endif
         </dd>
     </div>
@@ -40,17 +40,29 @@
             @if ($contactEmail)
                 <a href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a>
             @else
-                <span class="public-placeholder">To be added</span>
+                <span class="public-placeholder"><i class="bi bi-info-circle" aria-hidden="true"></i> To be added</span>
             @endif
         </dd>
     </div>
     <div>
         <dt><i class="bi bi-geo-alt" aria-hidden="true"></i> Address</dt>
-        <dd>{{ $contactAddress ?: 'To be added' }}</dd>
+        <dd>
+            @if ($contactAddress)
+                {{ $contactAddress }}
+            @else
+                <span class="public-placeholder"><i class="bi bi-info-circle" aria-hidden="true"></i> To be added</span>
+            @endif
+        </dd>
     </div>
     <div>
         <dt><i class="bi bi-clock" aria-hidden="true"></i> Business hours</dt>
-        <dd class="public-business-hours">{{ $businessHours ?: 'To be added' }}</dd>
+        <dd class="public-business-hours">
+            @if ($businessHours)
+                {{ $businessHours }}
+            @else
+                <span class="public-placeholder"><i class="bi bi-info-circle" aria-hidden="true"></i> To be added</span>
+            @endif
+        </dd>
     </div>
     <div>
         <dt><i class="bi bi-map" aria-hidden="true"></i> Map</dt>
@@ -58,7 +70,7 @@
             @if ($mapsUrl && $contactAddress)
                 <a href="{{ $mapsUrl }}" target="_blank" rel="noopener noreferrer">Open in Maps</a>
             @else
-                <span class="public-placeholder">To be added</span>
+                <span class="public-placeholder"><i class="bi bi-info-circle" aria-hidden="true"></i> To be added</span>
             @endif
         </dd>
     </div>
@@ -73,5 +85,5 @@
         @endforeach
     </div>
 @else
-    <p class="public-social-placeholder"><span>Social links</span> <span class="public-placeholder">To be added</span></p>
+    <p class="public-social-placeholder"><span>Social links</span> <span class="public-placeholder"><i class="bi bi-info-circle" aria-hidden="true"></i> To be added</span></p>
 @endif

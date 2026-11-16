@@ -18,12 +18,12 @@
                 <h3>Send a message</h3>
 
                 @if (session('status'))
-                    <div class="contact-form-status" aria-live="polite" style="margin-bottom: 1rem; padding: .75rem 1rem; border-radius: 0.75rem; background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3); color: #0f172a;">
+                    <div class="contact-form-status" role="status" aria-live="polite">
                         {{ session('status') }}
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('contact.store') }}" novalidate>
+                <form method="POST" action="{{ route('contact.store') }}" novalidate data-contact-form>
                     @csrf
                     <input type="hidden" name="submitted_at" value="{{ microtime(true) }}">
                     <input type="text" name="honeypot" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" aria-hidden="true">
@@ -31,39 +31,54 @@
                     <div class="contact-form-grid">
                         <label>
                             <span>Name</span>
-                            <input type="text" name="name" value="{{ old('name', auth()->user()?->name ?? '') }}" required>
-                            @error('name')<small>{{ $message }}</small>@enderror
+                            <span class="contact-form-input-wrap">
+                                <i class="bi bi-person" aria-hidden="true"></i>
+                                <input type="text" name="name" value="{{ old('name', auth()->user()?->name ?? '') }}" autocomplete="name" required aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}" @error('name') aria-describedby="contact-name-error" @enderror>
+                            </span>
+                            @error('name')<small class="contact-field-error" id="contact-name-error">{{ $message }}</small>@enderror
                         </label>
                         <label>
                             <span>Email</span>
-                            <input type="email" name="email" value="{{ old('email', auth()->user()?->email ?? '') }}" required {{ auth()->check() ? 'readonly' : '' }}>
-                            @error('email')<small>{{ $message }}</small>@enderror
+                            <span class="contact-form-input-wrap">
+                                <i class="bi bi-envelope" aria-hidden="true"></i>
+                                <input type="email" name="email" value="{{ old('email', auth()->user()?->email ?? '') }}" autocomplete="email" required aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}" @error('email') aria-describedby="contact-email-error" @enderror {{ auth()->check() ? 'readonly' : '' }}>
+                            </span>
+                            @error('email')<small class="contact-field-error" id="contact-email-error">{{ $message }}</small>@enderror
                         </label>
                         <label>
                             <span>Phone</span>
-                            <input type="tel" name="phone" value="{{ old('phone') }}">
-                            @error('phone')<small>{{ $message }}</small>@enderror
+                            <span class="contact-form-input-wrap">
+                                <i class="bi bi-telephone" aria-hidden="true"></i>
+                                <input type="tel" name="phone" value="{{ old('phone') }}" autocomplete="tel" aria-invalid="{{ $errors->has('phone') ? 'true' : 'false' }}" @error('phone') aria-describedby="contact-phone-error" @enderror>
+                            </span>
+                            @error('phone')<small class="contact-field-error" id="contact-phone-error">{{ $message }}</small>@enderror
                         </label>
                         <label>
                             <span>Subject</span>
-                            <select name="subject" required>
-                                <option value="">Select a topic</option>
-                                @foreach (['General question', 'Booking question', 'Vehicle question', 'Feedback', 'Other'] as $option)
-                                    <option value="{{ $option }}" @selected(old('subject') === $option)>{{ $option }}</option>
-                                @endforeach
-                            </select>
-                            @error('subject')<small>{{ $message }}</small>@enderror
+                            <span class="contact-form-input-wrap">
+                                <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+                                <select name="subject" required aria-invalid="{{ $errors->has('subject') ? 'true' : 'false' }}" @error('subject') aria-describedby="contact-subject-error" @enderror>
+                                    <option value="">Select a topic</option>
+                                    @foreach (['General question', 'Booking question', 'Vehicle question', 'Feedback', 'Other'] as $option)
+                                        <option value="{{ $option }}" @selected(old('subject') === $option)>{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            </span>
+                            @error('subject')<small class="contact-field-error" id="contact-subject-error">{{ $message }}</small>@enderror
                         </label>
                         <label class="contact-message-field">
                             <span>Message</span>
-                            <textarea name="message" rows="5" maxlength="2000" required>{{ old('message') }}</textarea>
-                            <small class="contact-form-charcount">{{ strlen((string) old('message')) }}/2000</small>
-                            @error('message')<small>{{ $message }}</small>@enderror
+                            <span class="contact-form-input-wrap contact-form-input-wrap--textarea">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                <textarea name="message" rows="5" maxlength="2000" required data-contact-message aria-invalid="{{ $errors->has('message') ? 'true' : 'false' }}" @error('message') aria-describedby="contact-message-error contact-message-counter" @else aria-describedby="contact-message-counter" @enderror>{{ old('message') }}</textarea>
+                            </span>
+                            <small class="contact-form-charcount" id="contact-message-counter" data-contact-counter aria-live="polite">{{ mb_strlen((string) old('message')) }}/2000 characters</small>
+                            @error('message')<small class="contact-field-error" id="contact-message-error">{{ $message }}</small>@enderror
                         </label>
                     </div>
 
                     <button class="button button-primary contact-request-button" type="submit">
-                        Send message <i class="bi bi-send" aria-hidden="true"></i>
+                        <span data-contact-submit-label aria-live="polite">Send message</span> <i class="bi bi-send" aria-hidden="true" data-contact-submit-icon></i>
                     </button>
                 </form>
             </article>
