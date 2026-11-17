@@ -49,6 +49,9 @@
                             <a class="account-menu-link" href="{{ route('account') }}">
                                 <i class="bi bi-person-circle" aria-hidden="true"></i><span>My account</span>
                             </a>
+                            <a class="account-menu-link" href="{{ route('account.profile') }}">
+                                <i class="bi bi-person-gear" aria-hidden="true"></i><span>Profile</span>
+                            </a>
                             @if (auth()->user()->hasVerifiedEmail())
                                 <a class="account-menu-link" href="{{ route('account.bookings') }}">
                                     <i class="bi bi-calendar2-check" aria-hidden="true"></i><span>My Bookings</span>
@@ -84,6 +87,9 @@
                     @if (auth()->user()->isCustomer())
                         <a class="nav-link" href="{{ route('account') }}">
                             <i class="nav-icon bi bi-person-circle" aria-hidden="true"></i><span>My account</span>
+                        </a>
+                        <a class="nav-link" href="{{ route('account.profile') }}">
+                            <i class="nav-icon bi bi-person-gear" aria-hidden="true"></i><span>Profile</span>
                         </a>
                         @if (auth()->user()->hasVerifiedEmail())
                             <a class="nav-link" href="{{ route('account.bookings') }}">

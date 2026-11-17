@@ -121,6 +121,7 @@ class ContactAndSettingsTest extends TestCase
             'social_tiktok' => 'https://www.tiktok.com/@fleetguard',
             'social_x' => 'https://x.com/fleet_guard',
             'social_youtube' => 'https://www.youtube.com/@FleetGuard',
+            'social_messenger' => 'https://m.me/FleetGuard',
         ];
 
         foreach ($expectedSocial as $key => $value) {
@@ -132,6 +133,10 @@ class ContactAndSettingsTest extends TestCase
         $this->assertDatabaseHas('site_settings', [
             'key' => 'maps_url',
             'value' => 'https://www.google.com/maps/embed?pb=!1m0&key=fleetguard',
+        ]);
+        $this->assertDatabaseHas('site_settings', [
+            'key' => 'text_number',
+            'value' => '+639123456789',
         ]);
         $this->assertDatabaseMissing('site_settings', ['key' => 'social']);
         $this->assertDatabaseMissing('site_settings', ['key' => 'social.facebook']);
@@ -149,12 +154,16 @@ class ContactAndSettingsTest extends TestCase
             ->assertSee('title="FleetGuard location map"', false)
             ->assertSee('FleetGuard on Instagram, @fleet.guard')
             ->assertSee('FleetGuard on X, @fleet_guard')
-            ->assertSee('@FleetGuard');
+            ->assertSee('@FleetGuard')
+            ->assertSee('href="sms:+639123456789"', false)
+            ->assertSee('aria-label="Text FleetGuard at +63 912 345 6789"', false);
 
         $this->get(route('admin.settings.index'))->assertOk()
             ->assertSee('data-settings-preview="social"', false)
             ->assertSee('public-social-links--card', false)
             ->assertSee('FleetGuard on Instagram, @fleet.guard')
+            ->assertSee('FleetGuard on Messenger, @FleetGuard')
+            ->assertSee('Shown to visitors on phones only.')
             ->assertSee('target="_blank" rel="noopener noreferrer"', false);
     }
 
@@ -233,6 +242,14 @@ class ContactAndSettingsTest extends TestCase
             ->assertJsonPath('map.embed_url', 'https://www.google.com/maps?q=Panabo%20City&output=embed')
             ->assertJsonPath('social.instagram.username', 'fleet.guard')
             ->assertJsonPath('social.tiktok.url', null);
+
+        $this->postJson(route('admin.settings.preview'), [
+            'phone' => '09123456789',
+            'text_number' => '',
+            'social' => ['messenger' => 'm.me/yourpage'],
+        ])->assertOk()
+            ->assertJsonPath('text_number.number', '+639123456789')
+            ->assertJsonPath('social.messenger.url', 'https://m.me/yourpage');
 
         $this->postJson(route('admin.settings.preview'), [
             'maps_url' => 'https://maps.example.test/place',
@@ -505,12 +522,14 @@ class ContactAndSettingsTest extends TestCase
             'address' => 'Panabo City, Philippines',
             'business_hours' => 'Monday to Saturday, 8 AM to 5 PM',
             'maps_url' => '<iframe width="600" src="https://www.google.com/maps/embed?pb=!1m0&amp;key=fleetguard" allowfullscreen></iframe>',
+            'text_number' => '(0912) 345-6789',
             'social' => [
                 'facebook' => '@fleetguard',
                 'instagram' => 'https://www.instagram.com/fleet.guard/?utm_source=admin',
                 'tiktok' => 'https://www.tiktok.com/@fleetguard?lang=en',
                 'x' => 'https://twitter.com/fleet_guard?utm_source=admin',
                 'youtube' => '@FleetGuard',
+                'messenger' => 'm.me/FleetGuard?ref=admin',
             ],
         ];
     }

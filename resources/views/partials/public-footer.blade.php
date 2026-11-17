@@ -30,6 +30,7 @@
             @auth
                 @if (auth()->user()->isCustomer())
                     <a href="{{ route('account') }}">My account</a>
+                    <a href="{{ route('account.profile') }}">Profile</a>
                     @if (auth()->user()->hasVerifiedEmail())
                         <a href="{{ route('account.bookings') }}">My Bookings</a>
                     @endif

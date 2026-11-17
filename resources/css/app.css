@@ -13,6 +13,7 @@
 @import './admin-messages-settings.css';
 @import './customer-auth.css';
 @import './customer-bookings.css';
+@import './customer-profile.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -1392,6 +1393,29 @@ select:focus-visible {
 
 .public-social-link:active {
     transform: translateY(1px);
+}
+
+.public-social-link--touch-only,
+.public-social-links--touch-only-only {
+    display: none;
+}
+
+.admin-settings-preview .public-social-link--touch-only {
+    display: inline-flex;
+}
+
+.admin-settings-preview .public-social-links--touch-only-only {
+    display: flex;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .public-social-link--touch-only {
+        display: inline-flex;
+    }
+
+    .public-social-links--touch-only-only {
+        display: flex;
+    }
 }
 
 .contact-location-card {

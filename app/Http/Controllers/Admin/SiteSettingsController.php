@@ -7,6 +7,7 @@ use App\Models\SiteSetting;
 use App\Services\MapLink;
 use App\Services\SiteSettings as SiteSettingsService;
 use App\Services\SocialProfile;
+use App\Services\TextMessageNumber;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class SiteSettingsController extends Controller
     public function __construct(
         private readonly MapLink $mapLink,
         private readonly SocialProfile $socialProfile,
+        private readonly TextMessageNumber $textMessageNumber,
         private readonly SiteSettingsService $siteSettings,
     ) {}
 
@@ -40,6 +42,11 @@ class SiteSettingsController extends Controller
             'values' => $values,
             'mapPreview' => $this->mapLink->parse(is_string($mapValue) ? $mapValue : null, is_string($address) ? $address : null),
             'socialPreview' => $this->parseSocialValues($socialValues),
+            'textPreview' => $this->textMessageNumber->parse(
+                is_string(old('text_number', $values['text_number']))
+                    ? (old('text_number', $values['text_number']) ?: $values['phone'])
+                    : null,
+            ),
         ]);
     }
 
@@ -55,16 +62,17 @@ class SiteSettingsController extends Controller
             'address' => ['present', 'nullable', 'string', 'max:255'],
             'business_hours' => ['present', 'nullable', 'string', 'max:255'],
             'maps_url' => ['present', 'nullable', 'string', 'max:5000'],
+            'text_number' => ['sometimes', 'nullable', 'string', 'max:50'],
             'social' => ['required', 'array:'.implode(',', $this->socialPlatforms())],
         ];
         foreach ($this->socialPlatforms() as $platform) {
-            $rules['social.'.$platform] = ['present', 'nullable', 'string', 'max:500'];
+            $rules['social.'.$platform] = [$platform === 'messenger' ? 'sometimes' : 'present', 'nullable', 'string', 'max:500'];
         }
 
         $validator = Validator::make($request->all(), $rules);
 
         $validator->after(function ($validator) use ($request): void {
-            foreach (['name', 'tagline', 'phone', 'email', 'address', 'business_hours', 'maps_url'] as $key) {
+            foreach (['name', 'tagline', 'phone', 'email', 'address', 'business_hours', 'maps_url', 'text_number'] as $key) {
                 $this->rejectControlCharacters($validator, $key, $request->input($key));
             }
             foreach (['name', 'tagline', 'phone', 'email', 'address', 'business_hours'] as $key) {
@@ -90,6 +98,11 @@ class SiteSettingsController extends Controller
                     }
                 }
             }
+
+            $textNumber = $request->input('text_number');
+            if (is_string($textNumber) && ! $this->textMessageNumber->parse($textNumber)['valid']) {
+                $validator->errors()->add('text_number', 'Enter a valid Philippine mobile number or an international number beginning with +.');
+            }
         });
 
         $validated = $validator->validate();
@@ -101,9 +114,11 @@ class SiteSettingsController extends Controller
             $updates[$key] = $validated[$key];
         }
         $updates['maps_url'] = $mapResult['stored_url'];
+        $textNumber = $this->textMessageNumber->parse($validated['text_number'] ?? null);
+        $updates['text_number'] = $textNumber['number'];
 
         foreach ($this->socialPlatforms() as $platform) {
-            $profile = $this->socialProfile->parse($platform, $validated['social'][$platform]);
+            $profile = $this->socialProfile->parse($platform, $validated['social'][$platform] ?? null);
             $updates['social_'.$platform] = $profile['url'];
         }
 
@@ -118,7 +133,9 @@ class SiteSettingsController extends Controller
 
         $rules = [
             'address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
             'maps_url' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'text_number' => ['sometimes', 'nullable', 'string', 'max:50'],
             'social' => ['sometimes', 'array:'.implode(',', $this->socialPlatforms())],
         ];
         foreach ($this->socialPlatforms() as $platform) {
@@ -128,7 +145,9 @@ class SiteSettingsController extends Controller
         $validator = Validator::make($request->all(), $rules);
         $validator->after(function ($validator) use ($request): void {
             $this->rejectControlCharacters($validator, 'address', $request->input('address'));
+            $this->rejectControlCharacters($validator, 'phone', $request->input('phone'));
             $this->rejectControlCharacters($validator, 'maps_url', $request->input('maps_url'));
+            $this->rejectControlCharacters($validator, 'text_number', $request->input('text_number'));
             foreach ($this->socialPlatforms() as $platform) {
                 $this->rejectControlCharacters($validator, 'social.'.$platform, $request->input('social.'.$platform));
             }
@@ -143,6 +162,11 @@ class SiteSettingsController extends Controller
         $address = $input['address'] ?? null;
         $map = $this->mapLink->parse(is_string($mapValue) ? $mapValue : null, is_string($address) ? $address : null);
         $social = $this->parseSocialValues($input['social'] ?? []);
+        $numberInput = $input['text_number'] ?? null;
+        if (! is_string($numberInput) || trim($numberInput) === '') {
+            $numberInput = $input['phone'] ?? null;
+        }
+        $textNumber = $this->textMessageNumber->parse(is_string($numberInput) ? $numberInput : null);
         $errors = [];
 
         if (! $map['valid']) {
@@ -154,17 +178,21 @@ class SiteSettingsController extends Controller
                 $errors['social.'.$platform] = [$profile['error']];
             }
         }
+        if (! $textNumber['valid']) {
+            $errors['text_number'] = [$textNumber['error']];
+        }
 
         return response()->json([
             'map' => $map,
             'social' => $social,
+            'text_number' => $textNumber,
             'errors' => (object) $errors,
         ], $errors === [] ? 200 : 422);
     }
 
     private function currentValues($settings): array
     {
-        $keys = ['name', 'tagline', 'phone', 'email', 'address', 'business_hours', 'maps_url'];
+        $keys = ['name', 'tagline', 'phone', 'email', 'address', 'business_hours', 'maps_url', 'text_number'];
         $values = [];
 
         foreach ($keys as $key) {

@@ -137,20 +137,23 @@ class PublicWebsiteTest extends TestCase
             ->assertDontSee('Add a full Google Maps link to show a live map.');
     }
 
-    public function test_social_links_use_the_shared_component_for_all_five_platforms(): void
+    public function test_social_links_use_the_shared_component_for_all_six_platforms(): void
     {
         config([
+            'fleetguard.phone' => null,
+            'fleetguard.text_number' => null,
             'fleetguard.social.facebook' => '@FleetGuard',
             'fleetguard.social.instagram' => '@fleetguardlonghandle123456789',
             'fleetguard.social.tiktok' => '@fleetguardvisualqa',
             'fleetguard.social.x' => '@FleetGuardQA',
             'fleetguard.social.youtube' => '@FleetGuardPreviewChannel123456',
+            'fleetguard.social.messenger' => 'https://m.me/FleetGuardLongPageName',
         ]);
 
         $response = $this->get(route('home'))->assertOk();
         $content = $response->getContent();
 
-        foreach (['facebook', 'instagram', 'tiktok', 'twitter-x', 'youtube'] as $icon) {
+        foreach (['facebook', 'instagram', 'tiktok', 'twitter-x', 'youtube', 'messenger'] as $icon) {
             $response->assertSee('bi-'.$icon, false);
         }
 
@@ -161,9 +164,10 @@ class PublicWebsiteTest extends TestCase
             ->assertSee('FleetGuard on TikTok, @fleetguardvisualqa')
             ->assertSee('FleetGuard on X, @FleetGuardQA')
             ->assertSee('FleetGuard on YouTube, @FleetGuardPreviewChannel123456')
+            ->assertSee('FleetGuard on Messenger, @FleetGuardLongPageName')
             ->assertSee('target="_blank" rel="noopener noreferrer"', false);
 
-        $this->assertSame(10, substr_count($content, 'class="public-social-link"'));
+        $this->assertSame(12, substr_count($content, 'class="public-social-link"'));
     }
 
     public function test_social_registry_extension_renders_without_partial_markup_changes(): void

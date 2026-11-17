@@ -45,6 +45,43 @@ document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
         icon.classList.toggle('bi-eye', !showPassword);
         icon.classList.toggle('bi-eye-slash', showPassword);
     });
+
+    document.querySelectorAll('[data-profile-form]').forEach((form) => {
+        form.addEventListener('submit', () => {
+            const submit = form.querySelector('[data-profile-submit]');
+            const label = submit?.querySelector('[data-submit-label]');
+
+            if (submit instanceof HTMLButtonElement) {
+                submit.disabled = true;
+                submit.setAttribute('aria-busy', 'true');
+                if (label) {
+                    label.textContent = form.action.endsWith('/password') ? 'Changing password…' : 'Saving profile…';
+                }
+            }
+        });
+    });
+
+    const passwordStrengthInput = document.querySelector('[data-password-strength-input]');
+    const passwordStrengthHint = document.querySelector('[data-password-strength]');
+
+    if (passwordStrengthInput instanceof HTMLInputElement && passwordStrengthHint) {
+        passwordStrengthInput.addEventListener('input', () => {
+            const password = passwordStrengthInput.value;
+            if (!password) {
+                passwordStrengthHint.textContent = 'Use at least 8 characters. A longer, unique password is easier to keep secure.';
+                return;
+            }
+
+            const score = [
+                password.length >= 8,
+                /[a-z]/.test(password),
+                /[A-Z]/.test(password),
+                /\d/.test(password),
+                /[^A-Za-z0-9]/.test(password),
+            ].filter(Boolean).length;
+            passwordStrengthHint.textContent = `Password strength: ${score >= 5 ? 'strong' : score >= 3 ? 'fair' : 'needs more variety'}.`;
+        });
+    }
 });
 
 const getLocalDate = () => {

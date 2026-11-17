@@ -64,8 +64,15 @@ Route::post('/reset-password', [CustomerPasswordController::class, 'reset'])
     ->middleware(['guest', 'throttle:password-reset'])
     ->name('password.update');
 
-Route::middleware(['auth', 'customer'])->group(function () {
+Route::middleware(['auth', 'customer', 'auth.session'])->group(function () {
     Route::get('/account', [CustomerAccountController::class, 'show'])->name('account');
+    Route::get('/account/profile', [CustomerAccountController::class, 'editProfile'])->name('account.profile');
+    Route::put('/account/profile', [CustomerAccountController::class, 'updateProfile'])
+        ->middleware('throttle:30,1')
+        ->name('account.profile.update');
+    Route::put('/account/profile/password', [CustomerAccountController::class, 'changePassword'])
+        ->middleware('throttle:5,1')
+        ->name('account.profile.password');
     Route::get('/account/bookings', [CustomerBookingsController::class, 'index'])
         ->name('account.bookings');
     Route::post('/account/bookings/{booking}/cancel', [CustomerBookingsController::class, 'cancel'])

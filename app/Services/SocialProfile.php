@@ -45,6 +45,18 @@ class SocialProfile
             'label' => 'YouTube channel',
             'pattern' => '/^[A-Za-z0-9._-]{3,30}$/',
         ],
+        'messenger' => [
+            'name' => 'Messenger',
+            'icon' => 'messenger',
+            'hosts' => ['m.me', 'www.m.me', 'messenger.com', 'www.messenger.com'],
+            'base' => 'https://m.me/',
+            'label' => 'Messenger page',
+            'pattern' => '/^(?=.{1,50}$)[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$/',
+            'input_type' => 'page',
+            'normalization' => 'canonical_messenger_url',
+            'label_style' => 'handle',
+            'aria_label' => 'FleetGuard on Messenger',
+        ],
     ];
 
     public static function platforms(): array
@@ -68,6 +80,10 @@ class SocialProfile
 
         if ($value === '') {
             return $this->emptyResult($platform, $definition);
+        }
+
+        if ($platform === 'messenger') {
+            return $this->parseMessenger($value, $definition);
         }
 
         if (str_starts_with($value, '@')) {
@@ -164,6 +180,61 @@ class SocialProfile
         return $this->profileResult($platform, $definition, $handle, $url, '@'.$handle);
     }
 
+    private function parseMessenger(string $value, array $definition): array
+    {
+        if (preg_match('/^(?:www\.)?(?:m\.me|messenger\.com)\//i', $value)) {
+            $value = 'https://'.$value;
+        }
+
+        $page = $value;
+        if (str_starts_with(strtolower($value), 'https://')) {
+            $parts = parse_url($value);
+
+            if (! is_array($parts)
+                || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+                || ! isset($parts['host'])
+                || isset($parts['user'])
+                || isset($parts['pass'])
+                || isset($parts['port'])
+                || ! in_array(strtolower(rtrim($parts['host'], '.')), $definition['hosts'], true)) {
+                return $this->invalidResult('messenger', $definition);
+            }
+
+            $segments = array_values(array_filter(
+                explode('/', trim($parts['path'] ?? '', '/')),
+                fn (string $segment): bool => $segment !== '',
+            ));
+
+            if (in_array(strtolower($parts['host']), ['messenger.com', 'www.messenger.com'], true)) {
+                if (count($segments) !== 2 || strtolower($segments[0]) !== 't') {
+                    return $this->invalidResult('messenger', $definition);
+                }
+                $page = rawurldecode($segments[1]);
+            } else {
+                if (count($segments) !== 1) {
+                    return $this->invalidResult('messenger', $definition);
+                }
+                $page = rawurldecode($segments[0]);
+            }
+        } elseif (str_contains($value, '://') || str_starts_with(strtolower($value), 'javascript:') || str_starts_with(strtolower($value), 'data:')) {
+            return $this->invalidResult('messenger', $definition);
+        }
+
+        $page = str_starts_with($page, '@') ? substr($page, 1) : $page;
+
+        if (! preg_match($definition['pattern'], $page)) {
+            return $this->invalidResult('messenger', $definition);
+        }
+
+        return $this->profileResult(
+            'messenger',
+            $definition,
+            $page,
+            $definition['base'].rawurlencode($page),
+            '@'.$page,
+        );
+    }
+
     private function profileResult(string $platform, array $definition, ?string $username, ?string $url, ?string $label): array
     {
         return [
@@ -174,6 +245,11 @@ class SocialProfile
             'username' => $username,
             'label' => $label,
             'url' => $url,
+            'input_type' => $definition['input_type'] ?? 'profile',
+            'normalization' => $definition['normalization'] ?? 'canonical_profile_url',
+            'label_style' => $definition['label_style'] ?? ($username === null ? 'descriptor' : 'handle'),
+            'aria_label' => ($definition['aria_label'] ?? 'FleetGuard on '.$definition['name'])
+                .($username === null ? '' : ', @'.$username),
             'error' => null,
         ];
     }

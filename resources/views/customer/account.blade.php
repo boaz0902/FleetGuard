@@ -69,6 +69,11 @@
             @endif
 
             <nav class="customer-quick-links" aria-label="Account shortcuts">
+                <a class="customer-quick-link" href="{{ route('account.profile') }}">
+                    <span class="customer-quick-link-icon"><i class="bi bi-person-gear" aria-hidden="true"></i></span>
+                    <span><strong>Profile</strong><small>Update your details and password.</small></span>
+                    <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                </a>
                 @if ($user->hasVerifiedEmail())
                     <a class="customer-quick-link" href="{{ route('account.bookings') }}">
                         <span class="customer-quick-link-icon"><i class="bi bi-calendar2-check" aria-hidden="true"></i></span>

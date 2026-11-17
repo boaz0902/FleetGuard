@@ -106,6 +106,44 @@ class SafeMailDeliveryService
         }
     }
 
+    public function sendPasswordChangedNotification(User $user, int $auditLogId): void
+    {
+        DB::afterCommit(function () use ($user, $auditLogId): void {
+            try {
+                if (! Cache::add("fleetguard:password-changed-email:{$auditLogId}", true, now()->addDay())) {
+                    return;
+                }
+
+                $contactDetails = collect([
+                    'Phone' => config('fleetguard.phone'),
+                    'Email' => config('fleetguard.email'),
+                    'Address' => config('fleetguard.address'),
+                ])->map(fn ($value) => is_string($value) && trim($value) !== '' ? trim($value) : 'To be added');
+
+                $mail = new FleetGuardMessageMail(
+                    subjectLine: 'Your password was changed',
+                    preheader: 'Your FleetGuard account password was updated.',
+                    heading: 'Your password was changed',
+                    intro: 'The password for your FleetGuard account was changed.',
+                    details: $contactDetails
+                        ->map(fn (string $value, string $label): array => ['label' => $label, 'value' => $value])
+                        ->values()
+                        ->all(),
+                    action: [
+                        'label' => 'Reset your password',
+                        'url' => route('password.request'),
+                    ],
+                    note: 'If this was not you, reset your password using the link above and contact FleetGuard.',
+                    eventType: 'customer_password_changed',
+                );
+
+                Mail::to($user->email)->send($mail);
+            } catch (Throwable $exception) {
+                $this->logFailure($exception, $user->email, 'customer_password_changed');
+            }
+        });
+    }
+
     private function queue(string $email, FleetGuardMessageMail $mail): bool
     {
         Mail::to($email)->queue($mail->afterCommit());

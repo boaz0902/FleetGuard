@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureCustomer;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias(['customer' => EnsureCustomer::class]);
+        $middleware->appendToPriorityList(
+            AuthenticatesRequests::class,
+            EnsureCustomer::class,
+        );
         $middleware->redirectGuestsTo(
             fn (Request $request): string => $request->is('admin/*')
                 ? route('admin.login')

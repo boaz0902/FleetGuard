@@ -54,6 +54,8 @@ class AuditLogController extends Controller
         'customer_account_registered' => ['Auth', 'Customer account registered', 'person-plus'],
         'customer_account_linked' => ['Auth', 'Customer account linked', 'link-45deg'],
         'customer_link_conflict' => ['Auth', 'Customer account link conflict', 'exclamation-triangle'],
+        'customer_profile_updated' => ['Auth', 'Customer profile updated', 'person-gear'],
+        'customer_password_changed' => ['Auth', 'Customer password changed', 'key'],
         'contact_message_status_changed' => ['Messages', 'Contact message status changed', 'envelope'],
         'site_settings_updated' => ['Settings', 'Business settings updated', 'sliders'],
         'rental_checked_out' => ['Rentals', 'Rental checked out', 'key'],
@@ -422,6 +424,17 @@ class AuditLogController extends Controller
 
     private function diffRows(array $changes): array
     {
+        if (isset($changes['changed_fields']) && is_array($changes['changed_fields'])) {
+            return array_map(
+                fn (string $field): array => [
+                    'field' => Str::headline($field),
+                    'from' => '—',
+                    'to' => 'Updated',
+                ],
+                array_values(array_filter($changes['changed_fields'], 'is_string')),
+            );
+        }
+
         if (array_key_exists('from', $changes) || array_key_exists('to', $changes)) {
             return [[
                 'field' => 'Status',
@@ -483,6 +496,14 @@ class AuditLogController extends Controller
 
     private function summary(array $changes): string
     {
+        if (isset($changes['changed_fields']) && is_array($changes['changed_fields'])) {
+            $fields = array_values(array_filter($changes['changed_fields'], 'is_string'));
+
+            return $fields === []
+                ? 'Customer profile updated.'
+                : 'Updated profile fields: '.implode(', ', array_map(Str::headline(...), $fields)).'.';
+        }
+
         if (array_key_exists('from', $changes) || array_key_exists('to', $changes)) {
             return 'Status changed.';
         }

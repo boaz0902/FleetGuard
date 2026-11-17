@@ -11,6 +11,8 @@
         $canManageSettings = auth()->user()->can('manage', \App\Models\SiteSetting::class);
         $latestSetting = $settings->sortByDesc('updated_at')->first();
         $updatedByName = $latestSetting?->updatedBy?->name ?? 'an administrator';
+        $socialPreviewProfiles = array_merge($socialPreview, ['text_number' => $textPreview]);
+        $hasSocialPreview = collect($socialPreviewProfiles)->contains(fn ($profile) => $profile['valid'] && $profile['url']);
     @endphp
 
     <main class="admin-settings" id="main-content">
@@ -142,7 +144,7 @@
                             <span class="admin-settings-card-icon"><i class="bi bi-link-45deg" aria-hidden="true"></i></span>
                             <span>
                                 <h2 id="settings-social-title">Social</h2>
-                                <p>Optional links to your official social profiles.</p>
+                                <p>Optional social links and a phone-only text messaging option.</p>
                             </span>
                         </div>
                         <div class="admin-settings-field-grid">
@@ -151,7 +153,7 @@
                                     <span>{{ $profile['name'] }}</span>
                                     <span class="admin-settings-input-wrap">
                                         <i class="bi bi-{{ $profile['icon'] }}" aria-hidden="true"></i>
-                                        <input type="text" name="social[{{ $platform }}]" value="{{ old('social.'.$platform, $values['social_'.$platform] ?? '') }}" placeholder="@username or profile URL" data-settings-preview-input="social.{{ $platform }}" aria-invalid="{{ $errors->has('social.'.$platform) ? 'true' : 'false' }}" aria-describedby="{{ $platform }}-help{{ $errors->has('social.'.$platform) ? ' '.$platform.'-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
+                                        <input type="text" name="social[{{ $platform }}]" value="{{ old('social.'.$platform, $values['social_'.$platform] ?? '') }}" placeholder="{{ $platform === 'messenger' ? 'm.me/yourpage or @yourpage' : '@username or profile URL' }}" data-settings-preview-input="social.{{ $platform }}" aria-invalid="{{ $errors->has('social.'.$platform) ? 'true' : 'false' }}" aria-describedby="{{ $platform }}-help{{ $errors->has('social.'.$platform) ? ' '.$platform.'-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
                                     </span>
                                     <small id="{{ $platform }}-help" data-settings-detection="social.{{ $platform }}" aria-live="polite">
                                         @if (! $profile['valid'])
@@ -164,9 +166,30 @@
                                             Leave empty to hide this social link on the public site.
                                         @endif
                                     </small>
+                                    @if ($platform === 'messenger')
+                                        <small>Examples: m.me/yourpage, messenger.com/t/yourpage, or @yourpage.</small>
+                                    @endif
                                     @error('social.'.$platform)<small class="admin-settings-error" id="{{ $platform }}-error">{{ $message }}</small>@enderror
                                 </label>
                             @endforeach
+                                <label class="admin-settings-field">
+                                    <span>Text message number</span>
+                                    <span class="admin-settings-input-wrap">
+                                        <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                                        <input type="tel" name="text_number" value="{{ old('text_number', $values['text_number'] ?? '') }}" placeholder="09XX XXX XXXX" data-settings-preview-input="text_number" aria-invalid="{{ $errors->has('text_number') ? 'true' : 'false' }}" aria-describedby="text-number-help{{ $errors->has('text_number') ? ' text-number-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
+                                    </span>
+                                    <small id="text-number-help">Examples: 09XX XXX XXXX or +63 9XX XXX XXXX. Leave empty to use the business phone number. Shown to visitors on phones only.</small>
+                                    <small class="admin-settings-detection" data-settings-detection="text_number" aria-live="polite">
+                                        @if (! $textPreview['valid'])
+                                            {{ $textPreview['error'] }}
+                                        @elseif ($textPreview['number'])
+                                            Detected: {{ $textPreview['formatted'] }}
+                                        @else
+                                            Leave empty to hide text messaging.
+                                        @endif
+                                    </small>
+                                    @error('text_number')<small class="admin-settings-error" id="text-number-error">{{ $message }}</small>@enderror
+                                </label>
                         </div>
                     </section>
 
@@ -215,11 +238,11 @@
                         </div>
                         <div>
                             <dt><i class="bi bi-link-45deg" aria-hidden="true"></i></dt>
-                            <dd data-settings-preview="social" class="{{ collect($socialPreview)->filter(fn ($profile) => $profile['valid'] && $profile['url'])->isEmpty() ? 'is-placeholder' : '' }}">
-                                @if (collect($socialPreview)->filter(fn ($profile) => $profile['valid'] && $profile['url'])->isEmpty())
+                            <dd data-settings-preview="social" class="{{ $hasSocialPreview ? '' : 'is-placeholder' }}">
+                                @unless ($hasSocialPreview)
                                     <span data-settings-social-empty>To be added</span>
-                                @endif
-                                @include('partials.social-links', ['profiles' => $socialPreview, 'variant' => 'card', 'includeTemplates' => true])
+                                @endunless
+                                @include('partials.social-links', ['profiles' => $socialPreviewProfiles, 'variant' => 'card', 'includeTemplates' => true])
                             </dd>
                         </div>
                     </dl>

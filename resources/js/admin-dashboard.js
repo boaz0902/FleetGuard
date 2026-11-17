@@ -438,13 +438,25 @@ if (settingsForm) {
         }
 
         const links = linksTemplate.content.firstElementChild.cloneNode(true);
+        const hasDesktopProfile = activeProfiles.some((profile) => !profile.touch_only);
+        links.classList.toggle(
+            'public-social-links--touch-only-only',
+            !hasDesktopProfile && activeProfiles.some((profile) => profile.touch_only),
+        );
         activeProfiles.forEach((profile) => {
             const link = linkTemplate.content.firstElementChild.cloneNode(true);
             link.href = profile.url;
-            link.setAttribute('aria-label', `FleetGuard on ${profile.name}${profile.username ? `, @${profile.username}` : ''}`);
+            link.setAttribute('aria-label', profile.aria_label || `FleetGuard on ${profile.name}${profile.username ? `, @${profile.username}` : ''}`);
             link.title = profile.name;
+            link.classList.toggle('public-social-link--touch-only', Boolean(profile.touch_only));
             link.querySelector('.public-social-link-icon').className = `public-social-link-icon bi bi-${profile.icon}`;
-            link.querySelector('.public-social-link-label').textContent = profile.username ? `@${profile.username}` : profile.label;
+            link.querySelector('.public-social-link-label').textContent = profile.label_style === 'handle' && profile.username
+                ? `@${profile.username}`
+                : profile.label;
+            if (profile.url.startsWith('https://')) {
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+            }
             links.append(link);
         });
         preview.append(links);
@@ -462,7 +474,9 @@ if (settingsForm) {
         });
         const payload = {
             address: settingsForm.querySelector('[data-settings-preview-input="address"]')?.value ?? '',
+            phone: settingsForm.querySelector('[data-settings-preview-input="phone"]')?.value ?? '',
             maps_url: settingsForm.querySelector('[data-settings-preview-input="maps_url"]')?.value ?? '',
+            text_number: settingsForm.querySelector('[data-settings-preview-input="text_number"]')?.value ?? '',
             social,
         };
 
@@ -486,6 +500,7 @@ if (settingsForm) {
                 renderMapPreview(result.map);
             }
             if (result.social) {
+                const profiles = { ...result.social };
                 Object.entries(result.social).forEach(([platform, profile]) => {
                     if (!profile.valid) {
                         setDetection(`social.${platform}`, profile.error, true);
@@ -497,7 +512,18 @@ if (settingsForm) {
                         setDetection(`social.${platform}`, 'Leave empty to hide this social link on the public site.');
                     }
                 });
-                renderSocialPreview(result.social);
+                if (result.text_number) {
+                    const textProfile = result.text_number;
+                    if (!textProfile.valid) {
+                        setDetection('text_number', textProfile.error, true);
+                    } else if (textProfile.number) {
+                        setDetection('text_number', `Detected: ${textProfile.formatted}`);
+                    } else {
+                        setDetection('text_number', 'Leave empty to hide text messaging.');
+                    }
+                    profiles.text_number = textProfile;
+                }
+                renderSocialPreview(profiles);
             }
             if (result.errors) {
                 Object.entries(result.errors).forEach(([key, messages]) => {

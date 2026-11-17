@@ -50,6 +50,28 @@ class SocialProfileTest extends TestCase
         $this->assertSame('https://www.youtube.com/channel/UC123456', $youtubeChannel['url']);
     }
 
+    #[DataProvider('messengerPages')]
+    public function test_messenger_inputs_canonicalize_to_m_me(string $input, string $page): void
+    {
+        $profile = (new SocialProfile)->parse('messenger', $input);
+
+        $this->assertTrue($profile['valid']);
+        $this->assertSame($page, $profile['username']);
+        $this->assertSame('https://m.me/'.$page, $profile['url']);
+        $this->assertSame('messenger', $profile['icon']);
+    }
+
+    public static function messengerPages(): array
+    {
+        return [
+            'at handle' => ['@FleetGuard.page', 'FleetGuard.page'],
+            'plain page name' => ['FleetGuard_Page-1', 'FleetGuard_Page-1'],
+            'short m.me input' => ['m.me/FleetGuard?ref=profile#contact', 'FleetGuard'],
+            'm.me URL' => ['https://m.me/FleetGuard?ref=profile#contact', 'FleetGuard'],
+            'messenger.com URL' => ['https://www.messenger.com/t/FleetGuard_Page?ref=profile', 'FleetGuard_Page'],
+        ];
+    }
+
     #[DataProvider('invalidProfiles')]
     public function test_platform_mismatch_bad_schemes_credentials_and_ports_are_rejected(string $platform, string $input): void
     {
@@ -66,6 +88,29 @@ class SocialProfileTest extends TestCase
             'credentials' => ['instagram', 'https://user:pass@instagram.com/fleetguard'],
             'port' => ['tiktok', 'https://tiktok.com:8443/@fleetguard'],
             'invalid handle' => ['x', '@this-handle-is-far-too-long-to-be-valid'],
+        ];
+    }
+
+    #[DataProvider('invalidMessengerPages')]
+    public function test_messenger_rejects_unsafe_hosts_schemes_and_page_names(string $input): void
+    {
+        $this->assertFalse((new SocialProfile)->parse('messenger', $input)['valid']);
+    }
+
+    public static function invalidMessengerPages(): array
+    {
+        return [
+            'wrong host' => ['https://example.test/SomePage'],
+            'http' => ['http://m.me/SomePage'],
+            'javascript' => ['javascript:alert(1)'],
+            'data' => ['data:text/html,SomePage'],
+            'credentials' => ['https://user:password@m.me/SomePage'],
+            'port' => ['https://m.me:8443/SomePage'],
+            'bad path' => ['https://messenger.com/SomePage'],
+            'malformed name' => ['bad name'],
+            'unicode' => ['ページ'],
+            'emoji' => ['fleet🚗'],
+            'too long' => [str_repeat('a', 51)],
         ];
     }
 }

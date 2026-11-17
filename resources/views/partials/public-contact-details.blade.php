@@ -11,6 +11,7 @@
     $configuredMapUrl = config('fleetguard.maps_url');
     $mapLink = app(\App\Services\MapLink::class)->parse(is_string($configuredMapUrl) ? $configuredMapUrl : null, $contactAddress);
     $socialParser = app(\App\Services\SocialProfile::class);
+    $textNumberParser = app(\App\Services\TextMessageNumber::class);
     $socialVariant = ($socialVariant ?? 'card') === 'footer' ? 'footer' : 'card';
     $socialProfiles = [];
     foreach (\App\Services\SocialProfile::platforms() as $platform => $definition) {
@@ -19,6 +20,12 @@
         if ($profile['valid'] && $profile['url']) {
             $socialProfiles[] = $profile;
         }
+    }
+    $textNumber = config('fleetguard.text_number');
+    $textNumber = is_string($textNumber) && trim($textNumber) !== '' ? $textNumber : $contactPhone;
+    $textProfile = $textNumberParser->parse($textNumber);
+    if ($textProfile['valid'] && $textProfile['url']) {
+        $socialProfiles[] = $textProfile;
     }
 @endphp
 
