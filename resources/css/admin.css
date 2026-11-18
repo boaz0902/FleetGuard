@@ -2,11 +2,11 @@
     --admin-navy: #101820;
     --admin-charcoal: #171c23;
     --admin-blue: #3988d6;
-    --admin-ice: #f4f6f8;
+    --admin-ice: #f5f6f8;
     --admin-steel: #89939f;
     --admin-ink: #1b2530;
     --admin-muted: #697582;
-    --admin-border: #e4e9ee;
+    --admin-border: #e5e9ed;
     --admin-sidebar-expanded-width: 252px;
     --admin-sidebar-collapsed-width: 82px;
     display: grid;
@@ -47,9 +47,11 @@ body.admin-sidebar-open {
     min-height: 0;
     flex-direction: column;
     overflow: hidden;
-    background: var(--admin-navy);
+    border-right: 1px solid rgb(255 255 255 / 5%);
+    background: linear-gradient(155deg, #101820 0%, #151e28 100%);
     color: #eaf0f6;
     padding: 27px 16px 18px;
+    box-shadow: 12px 0 32px rgb(16 24 32 / 8%);
 }
 
 .admin-brand {
@@ -142,7 +144,7 @@ body.admin-sidebar-open {
     align-items: center;
     gap: 13px;
     border: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: transparent;
     color: #b6c0cb;
     padding: 0 12px;
@@ -160,7 +162,8 @@ a.admin-nav-item:hover,
 }
 
 .admin-nav-item.is-active {
-    background: #1d3348;
+    box-shadow: inset 0 0 0 1px rgb(120 186 255 / 10%);
+    background: linear-gradient(110deg, #1d3348, #203b54);
     color: #fff;
 }
 
@@ -970,13 +973,15 @@ a.admin-nav-item:hover,
     .admin-sidebar {
         position: fixed;
         inset: 0 auto 0 0;
-        width: min(290px, 84vw);
+        width: min(320px, 88vw);
         height: 100vh;
+        padding: calc(22px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
         height: 100dvh;
         min-height: 0;
         overflow: hidden;
         transform: translateX(-102%);
-        transition: transform 180ms ease;
+        transition: transform 240ms cubic-bezier(0.2, 0.7, 0.25, 1);
+        box-shadow: 20px 0 48px rgb(7 13 20 / 24%);
     }
 
     .admin-mobile-menu-toggle {
@@ -988,7 +993,7 @@ a.admin-nav-item:hover,
     }
 
     .admin-shell.is-sidebar-collapsed .admin-sidebar {
-        width: min(290px, 84vw);
+        width: min(320px, 88vw);
     }
 
     .admin-shell.is-sidebar-open .admin-sidebar {
@@ -1006,6 +1011,8 @@ a.admin-nav-item:hover,
     .admin-shell.is-sidebar-open .admin-sidebar-backdrop {
         position: fixed;
         z-index: 19;
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
         inset: 0;
         display: block;
         border: 0;
@@ -1039,9 +1046,29 @@ a.admin-nav-item:hover,
     }
 
     .admin-topbar {
-        min-height: 74px;
-        gap: 12px;
-        padding: 12px 18px;
+        position: sticky;
+        z-index: 15;
+        top: 0;
+        min-height: 70px;
+        gap: 10px;
+        border-bottom-color: rgb(228 233 238 / 90%);
+        background: rgb(255 255 255 / 94%);
+        padding-block: 10px;
+        padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+        -webkit-backdrop-filter: blur(14px);
+        min-width: 0;
+        flex: 1 1 auto;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 5px 18px rgb(16 24 32 / 4%);
+    .admin-topbar-page-copy {
+        flex: 1 1 auto;
+    }
+
+    .admin-menu-toggle {
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgb(16 24 32 / 5%);
+    }
+
     }
 
     .admin-topbar-heading {
@@ -1054,12 +1081,32 @@ a.admin-nav-item:hover,
 
     .admin-topbar-page-copy h1 {
         overflow: hidden;
-        max-width: 44vw;
+        max-width: min(48vw, 320px);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
     .admin-topbar-description {
+    .admin-topbar {
+        min-height: 64px;
+        gap: 8px;
+        padding-inline: max(13px, env(safe-area-inset-left)) max(13px, env(safe-area-inset-right));
+    }
+
+    .admin-topbar-page-icon,
+    .admin-breadcrumb {
+        display: none;
+    }
+
+    .admin-topbar-heading {
+        gap: 9px;
+    }
+
+    .admin-topbar-page-copy h1 {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
         display: none;
     }
 
