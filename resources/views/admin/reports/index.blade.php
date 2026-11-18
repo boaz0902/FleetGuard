@@ -121,6 +121,9 @@
         $auditCoverageWidth = $operations['completed_rentals'] > 0
             ? min(100, ($operations['paired_audit_rentals'] / $operations['completed_rentals']) * 100)
             : 0;
+        $activeReportFilterCount = (int) ($filters['range'] !== 'this_month')
+            + (int) !empty($filters['category'])
+            + (int) !empty($filters['vehicle_id']);
     @endphp
 
     <main class="admin-content admin-reports-page" id="main-content">
@@ -152,76 +155,110 @@
         </section>
 
         <section class="admin-panel admin-report-filters" aria-labelledby="report-filter-heading">
-            <div class="admin-panel-heading">
-                <div>
-                    <p class="admin-eyebrow">Refine reports</p>
-                    <h2 id="report-filter-heading">Report filters</h2>
-                </div>
-            </div>
-            <form method="GET" action="{{ route('admin.reports.index') }}" class="admin-report-filter-form">
-                <fieldset class="admin-report-preset-field">
-                    <legend>Date preset</legend>
-                    <div class="admin-report-preset-group" role="group" aria-label="Date preset">
-                        @foreach ([
-                            'this_month' => 'This month',
-                            'last_month' => 'Last month',
-                            'last_30_days' => '30 days',
-                            'last_90_days' => '90 days',
-                            'this_year' => 'This year',
-                            'custom' => 'Custom',
-                        ] as $rangeValue => $rangeLabel)
-                            <label class="admin-report-preset-option">
-                                <input type="radio" name="range" value="{{ $rangeValue }}" @checked($filters['range'] === $rangeValue)>
-                                <span>{{ $rangeLabel }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </fieldset>
-                <label>
-                    <span>Start date</span>
-                    <input type="date" name="start_date" value="{{ $filters['start_date'] }}">
-                </label>
-                <label>
-                    <span>End date</span>
-                    <input type="date" name="end_date" value="{{ $filters['end_date'] }}">
-                </label>
-                <label>
-                    <span>Vehicle category</span>
-                    <select name="category">
-                        <option value="">All categories</option>
-                        @foreach ($category_options as $category)
-                            <option value="{{ $category }}" @selected($filters['category'] === $category)>{{ ucfirst($category) }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label>
-                    <span>Vehicle</span>
-                    <select name="vehicle_id">
-                        <option value="">All vehicles</option>
-                        @foreach ($vehicle_options as $vehicle)
-                            <option value="{{ $vehicle->id }}" @selected($filters['vehicle_id'] === $vehicle->id)>
-                                {{ $vehicle->name }} · {{ ucfirst($vehicle->category) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </label>
-                <button class="admin-primary-link admin-report-apply" type="submit">
-                    <i class="bi bi-funnel" aria-hidden="true"></i>
-                    Apply filters
+            <div class="admin-report-filter-toolbar" hidden>
+                <button class="admin-report-filter-trigger" type="button" aria-controls="report-filter-sheet" aria-expanded="false" data-report-filter-open>
+                    <i class="bi bi-sliders" aria-hidden="true"></i>
+                    <span>Filters</span>
+                    <span class="admin-report-filter-count">{{ $activeReportFilterCount }}</span>
                 </button>
-            </form>
-
-            <p class="admin-report-active-range">
-                <span>Active range</span>
-                <strong>
+                <p class="admin-report-filter-current-range">
                     @if ($date_range['start']->isSameMonth($date_range['end']) && $date_range['start']->isSameYear($date_range['end']))
                         {{ $date_range['start']->format('M j') }} – {{ $date_range['end']->format('M j, Y') }}
                     @else
                         {{ $date_range['start']->format('M j, Y') }} – {{ $date_range['end']->format('M j, Y') }}
                     @endif
-                </strong>
-                <small>{{ $filters['category'] ? ucfirst($filters['category']) : 'All categories' }} · {{ $filters['vehicle_id'] ? ($vehicle_options->firstWhere('id', $filters['vehicle_id'])?->name ?? $filters['vehicle_id']) : 'All vehicles' }}</small>
-            </p>
+                </p>
+            </div>
+            <button class="admin-report-filter-backdrop" type="button" aria-label="Close report filters" tabindex="-1" data-report-filter-close hidden></button>
+            <div class="admin-report-filter-sheet" id="report-filter-sheet" aria-labelledby="report-filter-heading" aria-hidden="true" data-report-filter-sheet>
+                <div class="admin-report-filter-sheet-head" hidden>
+                    <span class="admin-report-filter-handle" aria-hidden="true"></span>
+                    <div class="admin-report-filter-sheet-title">
+                        <p class="admin-eyebrow">Refine reports</p>
+                        <h2 id="report-filter-heading">Report filters</h2>
+                    </div>
+                    <button class="admin-report-filter-dismiss" type="button" aria-label="Close report filters" data-report-filter-close>
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <form method="GET" action="{{ route('admin.reports.index') }}" class="admin-report-filter-form" id="report-filter-form">
+                    <fieldset class="admin-report-preset-field">
+                        <legend>Date preset</legend>
+                        <div class="admin-report-preset-group" role="group" aria-label="Date preset">
+                            @foreach ([
+                                'this_month' => 'This month',
+                                'last_month' => 'Last month',
+                                'last_30_days' => '30 days',
+                                'last_90_days' => '90 days',
+                                'this_year' => 'This year',
+                                'custom' => 'Custom',
+                            ] as $rangeValue => $rangeLabel)
+                                <label class="admin-report-preset-option">
+                                    <input type="radio" name="range" value="{{ $rangeValue }}" @checked($filters['range'] === $rangeValue)>
+                                    <span>{{ $rangeLabel }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </fieldset>
+                    <label>
+                        <span>Start date</span>
+                        <input type="date" name="start_date" value="{{ $filters['start_date'] }}">
+                    </label>
+                    <label>
+                        <span>End date</span>
+                        <input type="date" name="end_date" value="{{ $filters['end_date'] }}">
+                    </label>
+                    <label>
+                        <span>Vehicle category</span>
+                        <select name="category">
+                            <option value="">All categories</option>
+                            @foreach ($category_options as $category)
+                                <option value="{{ $category }}" @selected($filters['category'] === $category)>{{ ucfirst($category) }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label>
+                        <span>Vehicle</span>
+                        <select name="vehicle_id">
+                            <option value="">All vehicles</option>
+                            @foreach ($vehicle_options as $vehicle)
+                                <option value="{{ $vehicle->id }}" @selected($filters['vehicle_id'] === $vehicle->id)>
+                                    {{ $vehicle->name }} · {{ ucfirst($vehicle->category) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <div class="admin-report-filter-form-actions">
+                        <button class="admin-primary-link admin-report-apply" type="submit">
+                            <i class="bi bi-funnel" aria-hidden="true"></i>
+                            Apply filters
+                        </button>
+                        <a class="admin-report-filter-reset" href="{{ route('admin.reports.index') }}" hidden>Reset</a>
+                    </div>
+                </form>
+
+                <p class="admin-report-active-range">
+                    <span>Active range</span>
+                    <strong>
+                        @if ($date_range['start']->isSameMonth($date_range['end']) && $date_range['start']->isSameYear($date_range['end']))
+                            {{ $date_range['start']->format('M j') }} – {{ $date_range['end']->format('M j, Y') }}
+                        @else
+                            {{ $date_range['start']->format('M j, Y') }} – {{ $date_range['end']->format('M j, Y') }}
+                        @endif
+                    </strong>
+                    <small>{{ $filters['category'] ? ucfirst($filters['category']) : 'All categories' }} · {{ $filters['vehicle_id'] ? ($vehicle_options->firstWhere('id', $filters['vehicle_id'])?->name ?? $filters['vehicle_id']) : 'All vehicles' }}</small>
+                </p>
+                @if ($errors->any())
+                    <div class="admin-report-validation" role="alert">
+                        <strong>Check the report filters:</strong>
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            </div>
 
             <div class="admin-report-filter-chips" aria-label="Active report filters">
                 <span class="admin-report-filter-chip">
@@ -267,16 +304,6 @@
                     <a class="admin-report-clear-filters" href="{{ route('admin.reports.index') }}">Clear filters</a>
                 @endif
             </div>
-            @if ($errors->any())
-                <div class="admin-report-validation" role="alert">
-                    <strong>Check the report filters:</strong>
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
         </section>
 
         <nav class="admin-report-section-nav" aria-label="Report sections" data-report-section-nav>
@@ -895,6 +922,60 @@
     </main>
     <script>
         (() => {
+            const filterPanel = document.querySelector('.admin-report-filters');
+            const filterTrigger = filterPanel?.querySelector('[data-report-filter-open]');
+            const filterSheet = filterPanel?.querySelector('[data-report-filter-sheet]');
+            const filterBackdrop = filterPanel?.querySelector('.admin-report-filter-backdrop');
+            const isMobile = window.matchMedia('(max-width: 767px)');
+
+            if (filterTrigger && filterSheet && filterBackdrop) {
+                const closeFilterSheet = (restoreFocus = true) => {
+                    filterPanel.classList.remove('is-filter-sheet-open');
+                    filterTrigger.setAttribute('aria-expanded', 'false');
+                    filterSheet.setAttribute('aria-hidden', 'true');
+                    filterSheet.removeAttribute('aria-modal');
+                    filterBackdrop.hidden = true;
+                    document.body.classList.remove('admin-report-filter-open');
+
+                    if (restoreFocus) {
+                        filterTrigger.focus();
+                    }
+                };
+
+                const openFilterSheet = () => {
+                    filterPanel.classList.add('is-filter-sheet-open');
+                    filterTrigger.setAttribute('aria-expanded', 'true');
+                    filterSheet.setAttribute('aria-hidden', 'false');
+                    filterSheet.setAttribute('aria-modal', 'true');
+                    filterBackdrop.hidden = false;
+                    document.body.classList.add('admin-report-filter-open');
+                    filterPanel.querySelector('.admin-report-filter-dismiss')?.focus();
+                };
+
+                filterTrigger.addEventListener('click', openFilterSheet);
+                filterPanel.querySelectorAll('[data-report-filter-close]').forEach((control) => {
+                    control.addEventListener('click', () => closeFilterSheet());
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape' && filterPanel.classList.contains('is-filter-sheet-open')) {
+                        closeFilterSheet();
+                    }
+                });
+
+                if (!isMobile.matches) {
+                    filterSheet.setAttribute('aria-hidden', 'false');
+                }
+
+                isMobile.addEventListener?.('change', (event) => {
+                    if (event.matches) {
+                        closeFilterSheet(false);
+                    } else {
+                        closeFilterSheet(false);
+                        filterSheet.setAttribute('aria-hidden', 'false');
+                    }
+                });
+            }
+
             const navigation = document.querySelector('[data-report-section-nav]');
             const links = navigation ? Array.from(navigation.querySelectorAll('a[href^="#"]')) : [];
             const sections = links
