@@ -594,6 +594,11 @@
                                         <span class="admin-report-stacked-segment admin-report-stacked-segment--maintenance" style="width: {{ $maintenanceWidth }}%" title="Maintenance: {{ number_format($vehicle['maintenance_days'], 2) }} days" tabindex="0"></span>
                                         <span class="admin-report-stacked-segment admin-report-stacked-segment--idle" style="width: {{ $idleWidth }}%" title="Idle: {{ number_format($vehicle['idle_days'], 2) }} days" tabindex="0"></span>
                                     </div>
+                                    <div class="admin-report-stacked-values" aria-hidden="true" hidden>
+                                        <span>Rented <strong>{{ number_format($vehicle['rented_days'], 2) }}</strong></span>
+                                        <span>Maintenance <strong>{{ number_format($vehicle['maintenance_days'], 2) }}</strong></span>
+                                        <span>Idle <strong>{{ number_format($vehicle['idle_days'], 2) }}</strong></span>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -634,14 +639,14 @@
                             <tbody>
                                 @foreach ($fleet['vehicles'] as $vehicle)
                                     <tr>
-                                        <td>{{ $vehicle['name'] }}</td>
-                                        <td>{{ ucfirst($vehicle['category']) }}</td>
-                                        <td>{{ number_format($vehicle['booking_count']) }}</td>
-                                        <td>{{ number_format($vehicle['rented_days'], 2) }}</td>
-                                        <td>{{ number_format($vehicle['available_days'], 2) }}</td>
-                                        <td>{{ number_format($vehicle['utilization'], 1) }}%</td>
-                                        <td>{{ number_format($vehicle['maintenance_days'], 2) }}</td>
-                                        <td>{{ number_format($vehicle['idle_days'], 2) }}</td>
+                                        <td data-label="Vehicle" data-card-title>{{ $vehicle['name'] }}</td>
+                                        <td data-label="Category">{{ ucfirst($vehicle['category']) }}</td>
+                                        <td data-label="Confirmed bookings">{{ number_format($vehicle['booking_count']) }}</td>
+                                        <td data-label="Rented days">{{ number_format($vehicle['rented_days'], 2) }}</td>
+                                        <td data-label="Available days">{{ number_format($vehicle['available_days'], 2) }}</td>
+                                        <td data-label="Utilization">{{ number_format($vehicle['utilization'], 1) }}%</td>
+                                        <td data-label="Maintenance days">{{ number_format($vehicle['maintenance_days'], 2) }}</td>
+                                        <td data-label="Idle days">{{ number_format($vehicle['idle_days'], 2) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -719,6 +724,18 @@
                                 @endforeach
                             </ul>
                         </div>
+                        <div class="admin-report-category-ranks" role="list" aria-label="Popular categories ranked by confirmed bookings" hidden>
+                            @foreach ($categorySlices as $slice)
+                                <div class="admin-report-category-rank" role="listitem">
+                                    <span class="admin-report-rank-badge">{{ $loop->iteration }}</span>
+                                    <strong>{{ $slice['label'] }}</strong>
+                                    <span class="admin-report-category-rank-bar" role="img" aria-label="{{ $slice['label'] }}: {{ $slice['count'] }} bookings, {{ number_format($slice['percentage'], 1) }} percent">
+                                        <span style="width: {{ min(100, $slice['percentage']) }}%"></span>
+                                    </span>
+                                    <span class="admin-report-category-rank-count">{{ number_format($slice['count']) }}</span>
+                                </div>
+                            @endforeach
+                        </div>
                     @else
                         <div class="admin-report-empty admin-report-empty--compact"><strong>No confirmed category bookings in this range.</strong></div>
                     @endif
@@ -736,7 +753,7 @@
                 <span>No customer accounts or registrations are implied</span>
             </div>
             <div class="admin-report-chart-grid">
-                <article class="admin-panel admin-report-panel admin-report-card">
+                <article class="admin-panel admin-report-panel admin-report-card admin-report-customer-insights-card">
                     <div class="admin-report-card-heading">
                         <span class="admin-report-card-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
                         <div>
@@ -774,6 +791,22 @@
                             @endforeach
                         </ul>
                     </div>
+                    <div class="admin-report-customer-split" hidden>
+                        <div class="admin-report-customer-split-track" role="img" aria-label="New records {{ number_format($customers['new_records']) }} of {{ number_format($customerTotal) }}; returning records {{ number_format($customers['returning_customers']) }} of {{ number_format($customerTotal) }}">
+                            <span class="admin-report-customer-split-new" style="width: {{ number_format($customerSlices[0]['percentage'], 3, '.', '') }}%"></span>
+                            <span class="admin-report-customer-split-returning" style="width: {{ number_format($customerSlices[1]['percentage'], 3, '.', '') }}%"></span>
+                        </div>
+                        <ul class="admin-report-customer-split-legend" aria-label="Customer record legend">
+                            @foreach ($customerSlices as $slice)
+                                <li>
+                                    <span class="admin-report-legend-dot" style="--legend-color: {{ $slice['color'] }}"></span>
+                                    <span>{{ $slice['label'] }}</span>
+                                    <strong>{{ number_format($slice['count']) }}</strong>
+                                    <small>{{ number_format($slice['percentage'], 1) }}%</small>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                     <p class="admin-report-footnote">New uses the customer record’s created date. Returning means the record existed before the selected range and has a matching booking. Pending requests are included in customer activity.</p>
                 </article>
                 <article class="admin-panel admin-report-panel admin-report-card">
@@ -791,9 +824,9 @@
                                 <tbody>
                                     @foreach ($customers['top_customers'] as $customer)
                                         <tr>
-                                            <td><span class="admin-report-rank-badge">{{ $loop->iteration }}</span></td>
-                                            <td>{{ $customer->full_name }}</td>
-                                            <td>{{ number_format($customer->completed_bookings) }}</td>
+                                            <td data-label="Rank"><span class="admin-report-rank-badge">{{ $loop->iteration }}</span></td>
+                                            <td data-label="Customer" data-card-title>{{ $customer->full_name }}</td>
+                                            <td data-label="Completed bookings">{{ number_format($customer->completed_bookings) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

@@ -564,6 +564,33 @@
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
+    .admin-report-stacked-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 7px;
+    }
+
+    .admin-report-stacked-values[hidden] {
+        display: grid !important;
+    }
+
+    .admin-report-stacked-values {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        color: #7a8793;
+        font-size: 11px;
+    }
+
+    .admin-report-stacked-values span {
+        display: grid;
+        gap: 3px;
+    }
+
+    .admin-report-stacked-values strong {
+        color: #344250;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+    }
+
     .admin-report-header {
         align-items: flex-start;
         gap: 18px;
@@ -1485,6 +1512,386 @@
 
     .admin-report-chart-data .admin-report-table td[data-card-title]::before {
         display: none;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .admin-report-chart-grid .admin-report-donut-layout {
+        grid-template-columns: minmax(110px, 42%) minmax(0, 1fr);
+    }
+
+    .admin-report-category-ranks[hidden],
+    .admin-report-customer-split[hidden] {
+        display: grid !important;
+    }
+
+    .admin-report-chart-grid--popular .admin-report-donut-layout {
+        display: none;
+    }
+
+    .admin-report-customer-insights-card > .admin-report-donut-layout {
+        display: none;
+    }
+
+    .admin-report-category-ranks {
+        gap: 12px;
+    }
+
+    .admin-report-category-rank {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px 10px;
+    }
+
+    .admin-report-category-rank > strong {
+        overflow: hidden;
+        color: #344250;
+        font-size: 13px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .admin-report-category-rank-bar {
+        display: block;
+        height: 8px;
+        grid-column: 2;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #edf1f4;
+    }
+
+    .admin-report-category-rank-bar > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: #3988d6;
+    }
+
+    .admin-report-category-rank-count {
+        grid-column: 3;
+        grid-row: 2;
+        color: #263440;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-report-customer-split {
+        gap: 16px;
+    }
+
+    .admin-report-customer-split-track {
+        display: flex;
+        height: 14px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #edf1f4;
+    }
+
+    .admin-report-customer-split-new,
+    .admin-report-customer-split-returning {
+        display: block;
+        height: 100%;
+    }
+
+    .admin-report-customer-split-new {
+        background: #3988d6;
+    }
+
+    .admin-report-customer-split-returning {
+        background: #89939f;
+    }
+
+    .admin-report-customer-split-legend {
+        display: grid;
+        gap: 4px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .admin-report-customer-split-legend li {
+        display: grid;
+        min-height: 44px;
+        grid-template-columns: 10px minmax(0, 1fr) auto auto;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #edf0f3;
+        color: #667481;
+        font-size: 13px;
+    }
+
+    .admin-report-customer-split-legend strong {
+        color: #263440;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-report-customer-split-legend small {
+        min-width: 42px;
+        color: #89939f;
+        font-size: 12px;
+        text-align: right;
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-report-gauge-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .admin-report-gauge {
+        max-width: 250px;
+    }
+
+    .admin-report-gauge-number {
+        font-size: 32px;
+    }
+
+    .admin-report-gauge-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .admin-report-gauge-stats div {
+        display: grid;
+        gap: 4px;
+        border: 1px solid #e8edf1;
+        border-radius: 11px;
+        background: #fbfcfd;
+        padding: 10px;
+    }
+
+    .admin-report-gauge-stats span,
+    .admin-report-gauge-stats strong {
+        font-size: 12px;
+    }
+
+    .admin-report-stacked-list,
+    .admin-report-maintenance-bars {
+        gap: 13px;
+    }
+
+    .admin-report-stacked-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 7px;
+        border: 1px solid #e6ebef;
+        border-radius: 13px;
+        background: #fbfcfd;
+        padding: 12px;
+    }
+
+    .admin-report-stacked-label strong {
+        font-size: 14px;
+    }
+
+    .admin-report-stacked-label small {
+        font-size: 12px;
+    }
+
+    .admin-report-stacked-track {
+        height: 12px;
+    }
+
+    .admin-report-stacked-values {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+        color: #7a8793;
+        font-size: 11px;
+    }
+
+    .admin-report-stacked-values[hidden] {
+        display: grid !important;
+    }
+
+    .admin-report-stacked-values span {
+        display: grid;
+        gap: 3px;
+    }
+
+    .admin-report-stacked-values strong {
+        color: #344250;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-report-bar-legend {
+        gap: 12px;
+        margin-top: 12px;
+        font-size: 12px;
+    }
+
+    .admin-report-bar-legend .admin-report-legend-dot {
+        width: 10px;
+        height: 10px;
+    }
+
+    .admin-report-insights {
+        display: grid;
+    }
+
+    .admin-report-insights p {
+        min-height: 44px;
+        flex-wrap: wrap;
+        gap: 6px 8px;
+        font-size: 12px;
+    }
+
+    .admin-report-rank-list {
+        gap: 9px;
+    }
+
+    .admin-report-rank-row {
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        gap: 8px 10px;
+        border: 1px solid #e6ebef;
+        border-radius: 12px;
+        background: #fbfcfd;
+        padding: 10px;
+    }
+
+    .admin-report-rank-badge {
+        width: 26px;
+        height: 26px;
+        grid-row: 1;
+        font-size: 12px;
+    }
+
+    .admin-report-rank-name {
+        min-width: 0;
+        grid-column: 2;
+        color: #344250;
+        font-size: 14px;
+    }
+
+    .admin-report-rank-name small {
+        margin-top: 3px;
+        color: #788591;
+        font-size: 12px;
+    }
+
+    .admin-report-rank-bar {
+        height: 8px;
+        grid-column: 2;
+        grid-row: 2;
+        cursor: default;
+    }
+
+    .admin-report-rank-row > strong {
+        grid-column: 3;
+        grid-row: 1;
+        font-size: 13px;
+    }
+
+    .admin-report-category-ranks[hidden],
+    .admin-report-customer-split[hidden] {
+        display: grid !important;
+    }
+
+    .admin-report-chart-grid--popular .admin-report-donut-layout,
+    .admin-report-customer-insights-card > .admin-report-donut-layout {
+        display: none;
+    }
+
+    .admin-report-category-ranks {
+        gap: 12px;
+    }
+
+    .admin-report-category-rank {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px 10px;
+    }
+
+    .admin-report-category-rank > strong {
+        overflow: hidden;
+        color: #344250;
+        font-size: 14px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .admin-report-category-rank-bar {
+        display: block;
+        height: 8px;
+        grid-column: 2;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #edf1f4;
+    }
+
+    .admin-report-category-rank-bar > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: #3988d6;
+    }
+
+    .admin-report-category-rank-count {
+        grid-column: 3;
+        grid-row: 2;
+        color: #263440;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-report-customer-split {
+        gap: 14px;
+    }
+
+    .admin-report-customer-split-track {
+        display: flex;
+        height: 16px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #edf1f4;
+    }
+
+    .admin-report-customer-split-new,
+    .admin-report-customer-split-returning {
+        display: block;
+        height: 100%;
+    }
+
+    .admin-report-customer-split-new {
+        background: #3988d6;
+    }
+
+    .admin-report-customer-split-returning {
+        background: #89939f;
+    }
+
+    .admin-report-customer-split-legend {
+        display: grid;
+        gap: 4px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .admin-report-customer-split-legend li {
+        display: grid;
+        min-height: 44px;
+        grid-template-columns: 10px minmax(0, 1fr) auto auto;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #edf0f3;
+        color: #667481;
+        font-size: 13px;
+    }
+
+    .admin-report-customer-split-legend strong {
+        color: #263440;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-report-customer-split-legend small {
+        min-width: 42px;
+        color: #89939f;
+        font-size: 12px;
+        text-align: right;
     }
 }
 
