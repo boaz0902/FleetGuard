@@ -1870,6 +1870,393 @@
     }
 }
 
+@media (min-width: 768px) and (max-width: 899px) {
+    .admin-report-chart-grid,
+    .admin-report-chart-grid--popular {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-report-chart-grid--trend {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .admin-reports-page {
+        gap: 20px;
+        padding-bottom: 28px;
+    }
+
+    .admin-page-footer {
+        margin-top: 8px;
+        padding: 14px 8px 24px;
+        color: #788491;
+        line-height: 1.55;
+        text-align: center;
+    }
+
+    .admin-report-operations-grid {
+        gap: 11px;
+    }
+
+    .admin-report-operation-card {
+        min-height: 148px;
+        border-radius: 14px;
+        padding: 15px;
+    }
+
+    .admin-report-operation-card > strong {
+        font-size: 22px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-report-operation-card > small {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .admin-report-operation-card--warning {
+        border-color: #efdfb9;
+        background: #fffaf0;
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-reports-page {
+        gap: 18px;
+        padding-bottom: calc(44px + env(safe-area-inset-bottom));
+    }
+
+    .admin-report-section {
+        gap: 13px;
+    }
+
+    .admin-report-section-nav {
+        margin-block: 0 2px;
+    }
+
+    .admin-report-chart-grid,
+    .admin-report-chart-grid--trend,
+    .admin-report-chart-grid--popular {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .admin-report-card,
+    .admin-report-chart-grid .admin-report-panel,
+    .admin-report-card.admin-panel {
+        border-radius: 16px;
+        padding: 16px 14px;
+        box-shadow: 0 6px 20px rgb(26 39 52 / 5%);
+    }
+
+    .admin-report-card-heading {
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .admin-report-card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        font-size: 17px;
+    }
+
+    .admin-report-card-heading h3 {
+        font-size: 16px;
+        line-height: 1.3;
+    }
+
+    .admin-report-card-heading p {
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .admin-report-operations-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .admin-report-operation-card {
+        min-height: 132px;
+        grid-template-columns: 40px minmax(0, 1fr);
+        gap: 5px 11px;
+        border-radius: 14px;
+        padding: 15px;
+        box-shadow: 0 5px 16px rgb(26 39 52 / 5%);
+    }
+
+    .admin-report-operation-card:hover {
+        transform: none;
+    }
+
+    .admin-report-operation-icon {
+        width: 40px;
+        height: 40px;
+        grid-row: span 2;
+        border-radius: 12px;
+        font-size: 16px;
+    }
+
+    .admin-report-operation-label {
+        color: #667481;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .admin-report-operation-card > strong {
+        color: #17212b;
+        font-size: clamp(20px, 6vw, 26px);
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-report-operation-card > small {
+        min-height: 0;
+        color: #788491;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .admin-report-operation-card--warning {
+        border-color: #efdfb9;
+        background: #fffaf0;
+    }
+
+    .admin-report-operation-card > .admin-report-progress-track {
+        height: 8px;
+        margin-top: 5px;
+    }
+
+    .admin-page-footer {
+        margin-top: 4px;
+        padding: 14px 8px calc(38px + env(safe-area-inset-bottom));
+        color: #788491;
+        font-size: 12px;
+        line-height: 1.6;
+        text-align: center;
+    }
+
+    #main-content .admin-report-filter-form input[type="date"],
+    #main-content .admin-report-filter-form select {
+        min-height: 48px;
+        font-size: 16px;
+    }
+
+    #main-content .admin-report-last-updated,
+    #main-content .admin-report-filter-current-range,
+    #main-content .admin-report-filter-chip,
+    #main-content .admin-report-clear-filters,
+    #main-content .admin-report-range-line,
+    #main-content .admin-report-range-line > span,
+    #main-content .admin-report-metrics .admin-metric-heading,
+    #main-content .admin-report-metrics .admin-metric-card > small,
+    #main-content .admin-report-card-heading p,
+    #main-content .admin-report-table td,
+    #main-content .admin-report-table td::before,
+    #main-content .admin-report-operation-card > small,
+    #main-content .admin-report-footnote {
+        font-size: 14px;
+    }
+
+    #main-content .admin-report-filter-current-range {
+        font-size: 13px;
+    }
+
+    #main-content .admin-report-metrics .admin-metric-card > small {
+        font-size: 12px;
+    }
+
+    #main-content .admin-report-table td::before {
+        font-size: 12px;
+    }
+
+    #main-content .admin-report-card-heading p,
+    #main-content .admin-report-operation-card > small {
+        font-size: 14px;
+    }
+
+    #main-content .admin-report-range-line,
+    #main-content .admin-report-range-line > span,
+    #main-content .admin-report-last-updated,
+    #main-content .admin-report-filter-current-range,
+    #main-content .admin-report-filter-trigger,
+    #main-content .admin-report-filter-count,
+    #main-content .admin-report-filter-chip,
+    #main-content .admin-report-clear-filters,
+    #main-content .admin-report-preset-option,
+    #main-content .admin-report-metrics .admin-metric-heading,
+    #main-content .admin-report-metrics .admin-metric-card > small,
+    #main-content .admin-report-revenue-hero > small,
+    #main-content .admin-report-revenue-labels,
+    #main-content .admin-report-revenue-labels strong,
+    #main-content .admin-report-card-heading p,
+    #main-content .admin-report-trend-detail,
+    #main-content .admin-report-trend-detail strong,
+    #main-content .admin-report-chart-data summary,
+    #main-content .admin-report-status-layout .admin-report-legend li,
+    #main-content .admin-report-status-layout .admin-report-legend li strong,
+    #main-content .admin-report-status-layout .admin-report-legend li small,
+    #main-content .admin-report-gauge-stats span,
+    #main-content .admin-report-gauge-stats strong,
+    #main-content .admin-report-stacked-label small,
+    #main-content .admin-report-stacked-values,
+    #main-content .admin-report-stacked-values strong,
+    #main-content .admin-report-bar-legend,
+    #main-content .admin-report-insights p,
+    #main-content .admin-report-empty strong,
+    #main-content .admin-report-empty span,
+    #main-content .admin-report-rank-badge,
+    #main-content .admin-report-rank-name,
+    #main-content .admin-report-rank-name small,
+    #main-content .admin-report-rank-row > strong,
+    #main-content .admin-report-category-rank > strong,
+    #main-content .admin-report-category-rank-count,
+    #main-content .admin-report-customer-split-legend li,
+    #main-content .admin-report-customer-split-legend small,
+    #main-content .admin-report-summary-bar span,
+    #main-content .admin-report-maintenance-row > strong,
+    #main-content .admin-report-pagination nav a,
+    #main-content .admin-report-pagination nav span,
+    #main-content .admin-report-footnote,
+    #main-content .admin-page-footer {
+        font-size: 14px;
+    }
+
+    #main-content .admin-report-section-heading .admin-eyebrow,
+    #main-content .admin-report-card-heading p {
+        font-size: 11px;
+    }
+
+    #main-content .admin-report-card-heading p {
+        font-size: 14px;
+    }
+
+    #main-content .admin-report-metrics .admin-metric-card > small,
+    #main-content .admin-report-summary-bar span {
+        line-height: 1.45;
+    }
+
+    #main-content .admin-report-table td::before {
+        font-size: 14px;
+    }
+
+    #main-content .admin-report-trend-axis-label,
+    #main-content .admin-report-trend-date-label {
+        font-size: 38px;
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-reports-page,
+    .admin-reports-page * {
+        max-width: 100%;
+    }
+
+    .admin-reports-page {
+        overflow-x: clip;
+    }
+
+    .admin-report-trend-chart,
+    .admin-report-trend-chart svg,
+    .admin-report-table-wrap,
+    .admin-report-chart-data,
+    .admin-report-donut-layout,
+    .admin-report-gauge-layout,
+    .admin-report-stacked-list,
+    .admin-report-maintenance-bars,
+    .admin-report-rank-list,
+    .admin-report-category-ranks,
+    .admin-report-customer-split {
+        min-width: 0;
+    }
+
+    .admin-report-filter-toolbar,
+    .admin-report-filter-sheet,
+    .admin-report-section-nav,
+    .admin-report-header,
+    .admin-report-metrics,
+    .admin-report-chart-grid,
+    .admin-report-summary-bar,
+    .admin-report-operations-grid,
+    .admin-report-pagination,
+    .admin-page-footer {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 359px) {
+    .admin-reports-page {
+        padding-inline: 10px;
+    }
+
+    .admin-report-header-copy h2 {
+        font-size: 22px;
+    }
+
+    .admin-report-filter-trigger {
+        min-width: 104px;
+        padding-inline: 9px;
+    }
+
+    .admin-report-filter-current-range {
+        font-size: 12px;
+    }
+
+    .admin-report-metrics {
+        gap: 8px;
+    }
+
+    .admin-report-metrics .admin-metric-card {
+        padding-inline: 10px;
+    }
+
+    .admin-report-metrics .admin-metric-heading {
+        font-size: 12px;
+    }
+
+    .admin-report-metrics .admin-metric-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .admin-report-section-heading > div {
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 2px 7px;
+    }
+
+    .admin-report-section-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .admin-report-section-heading h2 {
+        font-size: 16px;
+    }
+
+    .admin-report-card,
+    .admin-report-chart-grid .admin-report-panel,
+    .admin-report-card.admin-panel {
+        padding-inline: 12px;
+    }
+
+    .admin-report-stacked-values,
+    .admin-report-gauge-stats,
+    .admin-report-summary-bar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-report-summary-bar article:last-child {
+        grid-column: 1;
+    }
+
+    .admin-report-filter-form-actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 @media (max-width: 767px) {
     .admin-report-gauge-layout {
         grid-template-columns: minmax(0, 1fr);

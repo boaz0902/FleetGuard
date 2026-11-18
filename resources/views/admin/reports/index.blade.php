@@ -170,7 +170,7 @@
                 </p>
             </div>
             <button class="admin-report-filter-backdrop" type="button" aria-label="Close report filters" tabindex="-1" data-report-filter-close hidden></button>
-            <div class="admin-report-filter-sheet" id="report-filter-sheet" aria-labelledby="report-filter-heading" aria-hidden="true" data-report-filter-sheet>
+            <div class="admin-report-filter-sheet" id="report-filter-sheet" role="dialog" aria-labelledby="report-filter-heading" aria-hidden="true" data-report-filter-sheet>
                 <div class="admin-report-filter-sheet-head" hidden>
                     <span class="admin-report-filter-handle" aria-hidden="true"></span>
                     <div class="admin-report-filter-sheet-title">
@@ -248,16 +248,6 @@
                     </strong>
                     <small>{{ $filters['category'] ? ucfirst($filters['category']) : 'All categories' }} · {{ $filters['vehicle_id'] ? ($vehicle_options->firstWhere('id', $filters['vehicle_id'])?->name ?? $filters['vehicle_id']) : 'All vehicles' }}</small>
                 </p>
-                @if ($errors->any())
-                    <div class="admin-report-validation" role="alert">
-                        <strong>Check the report filters:</strong>
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
             </div>
 
             <div class="admin-report-filter-chips" aria-label="Active report filters">
@@ -304,6 +294,16 @@
                     <a class="admin-report-clear-filters" href="{{ route('admin.reports.index') }}">Clear filters</a>
                 @endif
             </div>
+            @if ($errors->any())
+                <div class="admin-report-validation" role="alert">
+                    <strong>Check the report filters:</strong>
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
         </section>
 
         <nav class="admin-report-section-nav" aria-label="Report sections" data-report-section-nav>
@@ -415,7 +415,7 @@
                     @if ($overview['total_reservations'] > 0)
                         <div class="admin-report-trend-chart"
                              aria-label="Reservation trend has {{ number_format($overview['total_reservations']) }} booking{{ $overview['total_reservations'] === 1 ? '' : 's' }}, grouped by {{ $date_range['days'] <= 31 ? 'day' : ($date_range['days'] <= 180 ? 'week' : 'month') }}. Highest bucket: {{ number_format($trendMaximum) }}.">
-                            <svg viewBox="0 0 760 270" width="100%" height="auto" role="group"
+                            <svg viewBox="0 0 760 270" width="100%" height="auto" preserveAspectRatio="none" role="group"
                                  aria-label="Reservations trend chart">
                                 <defs>
                                     <linearGradient id="report-trend-fill" x1="0" x2="0" y1="0" y2="1">
@@ -432,11 +432,14 @@
                                 @endif
                                 <path class="admin-report-trend-line" d="{{ $trendLinePath }}"></path>
                                 @foreach ($trendPoints as $point)
-                                    <circle class="admin-report-trend-point" cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="4" aria-hidden="true"></circle>
+                                    <circle class="admin-report-trend-point" cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="4"
+                                            tabindex="0" focusable="true" aria-label="{{ $point['label'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}">
+                                        <title>{{ $point['label'] }} · {{ $point['start'] === $point['end'] ? $point['start'] : $point['start'].' – '.$point['end'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}</title>
+                                    </circle>
                                     <circle class="admin-report-trend-hit-target"
                                             cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="18"
                                             tabindex="0" focusable="true" role="button"
-                                            data-report-point
+                                            data-report-point hidden aria-hidden="true"
                                             data-period="{{ $point['label'] }} · {{ $point['start'] === $point['end'] ? $point['start'] : $point['start'].' – '.$point['end'] }}"
                                             data-count="{{ number_format($point['count']) }}"
                                             aria-label="{{ $point['label'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}"></circle>
@@ -942,7 +945,7 @@
                     </div>
                     <small>Completed status, by pickup date</small>
                 </article>
-                <article class="admin-panel admin-report-operation-card">
+                <article class="admin-panel admin-report-operation-card admin-report-operation-card--warning">
                     <span class="admin-report-operation-icon admin-report-operation-icon--warning"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
                     <span class="admin-report-operation-label">Overdue returns</span>
                     <strong>{{ number_format($operations['overdue_returns']) }}</strong>
@@ -1038,7 +1041,14 @@
                     trendDetail.hidden = false;
                 };
 
+                document.querySelectorAll('.admin-report-trend-point').forEach((point) => {
+                    point.setAttribute('aria-hidden', 'true');
+                    point.setAttribute('tabindex', '-1');
+                });
+
                 document.querySelectorAll('[data-report-point]').forEach((point) => {
+                    point.hidden = false;
+                    point.removeAttribute('aria-hidden');
                     point.addEventListener('click', () => revealTrendPoint(point));
                     point.addEventListener('keydown', (event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
