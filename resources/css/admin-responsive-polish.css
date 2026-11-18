@@ -137,6 +137,20 @@
         line-height: 1.45;
     }
 
+    .admin-shell #main-content p:not(.admin-eyebrow),
+    .admin-shell #main-content small {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .admin-shell #main-content .admin-metric-heading,
+    .admin-shell #main-content .admin-bookings-metric-heading,
+    .admin-shell #main-content .admin-rental-kpi-heading,
+    .admin-shell #main-content .admin-message-kpi-copy,
+    .admin-shell #main-content .admin-calendar-summary-heading {
+        font-size: 14px;
+    }
+
     .admin-shell #main-content td {
         font-size: 14px;
         line-height: 1.45;
@@ -241,6 +255,274 @@
         min-height: 48px;
         font-size: 14px;
     }
+}
+
+@media (min-width: 761px) {
+    .admin-shell .admin-filter-disclosure,
+    .admin-shell .admin-filter-disclosure-fields {
+        display: contents;
+    }
+
+    .admin-shell .admin-filter-disclosure > summary {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .admin-shell .admin-filter-disclosure {
+        grid-column: 1 / -1;
+        min-width: 0;
+        border: 1px solid #e4e9ee;
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .admin-shell .admin-filter-disclosure > summary {
+        display: flex;
+        min-height: 48px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        color: #344453;
+        font-size: 14px;
+        font-weight: 650;
+        list-style: none;
+        cursor: pointer;
+    }
+
+    .admin-shell .admin-filter-disclosure > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .admin-shell .admin-filter-disclosure > summary > .bi {
+        color: #71808e;
+        transition: transform 180ms ease;
+    }
+
+    .admin-shell .admin-filter-disclosure[open] > summary {
+        border-bottom: 1px solid #edf0f3;
+    }
+
+    .admin-shell .admin-filter-disclosure[open] > summary > .bi {
+        transform: rotate(180deg);
+    }
+
+    .admin-shell .admin-filter-disclosure-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: end;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .admin-shell .admin-filter-disclosure-fields > * {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 850px) {
+    .admin-shell .admin-message-card-view {
+        gap: 10px;
+    }
+
+    .admin-shell .admin-message-card {
+        border: 1px solid #e5e9ed;
+        border-radius: 14px;
+        box-shadow: 0 4px 14px rgb(26 39 52 / 4%);
+        padding: 16px;
+    }
+
+    .admin-shell .admin-message-card-copy strong,
+    .admin-shell .admin-message-card-copy small,
+    .admin-shell .admin-message-card-subject,
+    .admin-shell .admin-message-card-meta,
+    .admin-shell .admin-message-card .admin-message-preview {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .admin-shell .admin-message-card .admin-message-actions > * {
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-shell #main-content .admin-rentals-table tbody tr {
+        border: 1px solid #e5e9ed;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgb(26 39 52 / 4%);
+        padding-inline: 14px;
+    }
+
+    .admin-shell #main-content .admin-rentals-table td:first-child {
+        border-top: 0;
+        color: #286da9;
+        font-weight: 650;
+    }
+
+    .admin-shell #main-content .admin-rentals-table td[data-label="Status"] {
+        align-items: center;
+    }
+
+    .admin-shell #main-content .admin-rentals-table td {
+        border-color: #edf0f3;
+    }
+}
+
+@media (max-width: 760px) {
+    .admin-shell #main-content .admin-report-table-wrap,
+    .admin-shell #main-content .admin-legal-table-wrap,
+    .admin-shell #main-content .admin-message-table-wrap,
+    .admin-shell #main-content .admin-audit-table-wrap,
+    .admin-shell #main-content .admin-calendar-timeline-scroll {
+        border: 1px solid #e5e9ed;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: inset -14px 0 14px -16px rgb(16 24 32 / 55%);
+        scrollbar-color: #c3ccd4 transparent;
+        scrollbar-width: thin;
+    }
+
+    .admin-shell #main-content .admin-report-table,
+    .admin-shell #main-content .admin-legal-table {
+        min-width: 620px;
+    }
+
+    .admin-shell #main-content .admin-audit-table tbody tr {
+        border-radius: 14px;
+        box-shadow: 0 4px 14px rgb(26 39 52 / 4%);
+    }
+
+    .admin-shell #main-content .admin-audit-table td {
+        padding-block: 10px;
+    }
+
+    .admin-shell #main-content .admin-calendar-timeline-scroll {
+        max-height: 68vh;
+        overscroll-behavior: contain;
+    }
+
+    .admin-shell #main-content .admin-calendar-nav-button,
+    .admin-shell #main-content .admin-calendar-nav-today {
+        min-height: 44px;
+        font-size: 14px;
+    }
+
+    .admin-shell #main-content .admin-report-export,
+    .admin-shell #main-content .admin-report-preset-option {
+        min-height: 44px;
+        font-size: 14px;
+    }
+
+    .admin-shell .admin-bookings-flash,
+    .admin-shell .admin-fleet-flash,
+    .admin-shell .admin-customers-flash,
+    .admin-shell .admin-rental-flash,
+    .admin-shell .admin-messages-flash,
+    .admin-shell .admin-settings-flash,
+    .admin-shell .admin-legal-flash,
+    .admin-shell .admin-testimonials-flash {
+        border-radius: 12px;
+        box-shadow: 0 3px 12px rgb(26 39 52 / 4%);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .admin-shell .admin-status-badge,
+    .admin-shell .admin-bookings-status,
+    .admin-shell .admin-fleet-status,
+    .admin-shell .admin-customer-status,
+    .admin-shell .admin-rental-status,
+    .admin-shell .admin-message-status,
+    .admin-shell .admin-testimonials-status,
+    .admin-shell .admin-legal-status {
+        min-height: 28px;
+        padding: 4px 10px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+}
+
+@media (max-width: 560px) {
+    .admin-shell .admin-rentals-kpis,
+    .admin-shell .admin-message-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-shell .admin-message-pagination,
+    .admin-shell .admin-bookings-pagination,
+    .admin-shell .admin-rentals-pagination,
+    .admin-shell .admin-customers-pagination,
+    .admin-shell .admin-legal-pagination,
+    .admin-shell .admin-testimonials-pagination,
+    .admin-shell .admin-audit-pagination {
+        max-width: 100%;
+        overflow-x: auto;
+        padding-block: 8px;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-shell .admin-filter-disclosure > summary > .bi {
+        transition: none;
+    }
+}
+
+.admin-login-page {
+    background: #f5f6f8;
+    color: #1b2530;
+    color-scheme: light;
+}
+
+.admin-login-page > main {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: clamp(20px, 5vw, 36px);
+}
+
+.admin-login-page > main > div {
+    border-color: #e3e8ed;
+    border-radius: 20px;
+    background: #fff;
+    color: #1b2530;
+    padding: clamp(24px, 6vw, 36px);
+    box-shadow: 0 16px 48px rgb(16 24 32 / 10%);
+}
+
+.admin-login-page h1 {
+    color: #1b2530;
+    font-family: var(--font-display);
+    letter-spacing: -0.035em;
+}
+
+.admin-login-page label {
+    color: #536170;
+    font-size: 14px;
+}
+
+.admin-login-page input[type="email"],
+.admin-login-page input[type="password"] {
+    min-height: 48px;
+    border-color: #dce3e9;
+    background: #fff;
+    color: #1b2530;
+    font-size: 16px;
+}
+
+.admin-login-page input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #3988d6;
+}
+
+.admin-login-page button {
+    min-height: 48px;
+    background: #3988d6;
+    color: #fff;
+    font-size: 14px;
 }
 
 @media (max-width: 380px) {

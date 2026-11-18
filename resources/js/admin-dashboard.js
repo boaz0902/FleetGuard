@@ -1,3 +1,52 @@
+const adminFilterForms = document.querySelectorAll(
+    'form.admin-bookings-filters, form.admin-fleet-filters, form.admin-customers-filters, '
+    + 'form.admin-rentals-filters, form.admin-testimonials-filters, form.admin-message-filters, '
+    + 'form.admin-audit-filters, form.admin-report-filter-form',
+);
+const mobileAdminFilters = window.matchMedia('(max-width: 760px)');
+
+adminFilterForms.forEach((form) => {
+    const searchInput = form.querySelector('input[type="search"]');
+    const searchChild = searchInput
+        ? Array.from(form.children).find((child) => child.contains(searchInput))
+        : null;
+    const hasFilterControl = (element) => element.matches(
+        'input:not([type="hidden"]), select, button, a',
+    ) || element.querySelector('input:not([type="hidden"]), select, button, a');
+    const filterChildren = Array.from(form.children).filter((child) => (
+        child !== searchChild && hasFilterControl(child)
+    ));
+
+    if (filterChildren.length === 0) {
+        return;
+    }
+
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const fields = document.createElement('div');
+    const icon = document.createElement('i');
+    const label = document.createElement('span');
+
+    details.className = 'admin-filter-disclosure';
+    summary.setAttribute('aria-label', 'Toggle filters');
+    icon.className = 'bi bi-chevron-down';
+    icon.setAttribute('aria-hidden', 'true');
+    label.textContent = 'Filters';
+    fields.className = 'admin-filter-disclosure-fields';
+    summary.append(label, icon);
+    details.append(summary, fields);
+
+    filterChildren.forEach((child) => fields.append(child));
+    form.append(details);
+
+    const updateDisclosure = () => {
+        details.open = !mobileAdminFilters.matches;
+    };
+
+    updateDisclosure();
+    mobileAdminFilters.addEventListener('change', updateDisclosure);
+});
+
 const adminShell = document.querySelector('[data-admin-shell]');
 
 if (adminShell) {

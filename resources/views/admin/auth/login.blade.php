@@ -6,7 +6,7 @@
     <title>FleetGuard Admin Login</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-slate-900 text-slate-100">
+<body class="admin-login-page bg-slate-900 text-slate-100">
     <main class="mx-auto flex min-h-screen max-w-md items-center justify-center p-6">
         <div class="w-full rounded-2xl border border-slate-700 bg-slate-800 p-8 shadow-2xl">
             <h1 class="mb-6 text-2xl font-semibold">FleetGuard Admin</h1>
