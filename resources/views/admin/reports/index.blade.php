@@ -904,11 +904,11 @@
                             <tbody>
                                 @foreach ($maintenance['periods'] as $period)
                                     <tr>
-                                        <td>{{ $period->vehicle?->name ?? 'Vehicle record' }}</td>
-                                        <td>{{ ucfirst($period->vehicle?->category ?? '') }}</td>
-                                        <td>{{ $period->start_datetime->timezone('Asia/Manila')->format('M j, Y g:i A') }}</td>
-                                        <td>{{ $period->end_datetime->timezone('Asia/Manila')->format('M j, Y g:i A') }}</td>
-                                        <td>{{ $period->reason }}</td>
+                                        <td data-label="Vehicle" data-card-title>{{ $period->vehicle?->name ?? 'Vehicle record' }}</td>
+                                        <td data-label="Category">{{ ucfirst($period->vehicle?->category ?? '') }}</td>
+                                        <td data-label="Starts">{{ $period->start_datetime->timezone('Asia/Manila')->format('M j, Y g:i A') }}</td>
+                                        <td data-label="Ends">{{ $period->end_datetime->timezone('Asia/Manila')->format('M j, Y g:i A') }}</td>
+                                        <td data-label="Reason">{{ $period->reason }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
