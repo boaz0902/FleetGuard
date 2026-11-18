@@ -413,9 +413,10 @@
                         </div>
                     </div>
                     @if ($overview['total_reservations'] > 0)
-                        <div class="admin-report-trend-chart" role="img"
+                        <div class="admin-report-trend-chart"
                              aria-label="Reservation trend has {{ number_format($overview['total_reservations']) }} booking{{ $overview['total_reservations'] === 1 ? '' : 's' }}, grouped by {{ $date_range['days'] <= 31 ? 'day' : ($date_range['days'] <= 180 ? 'week' : 'month') }}. Highest bucket: {{ number_format($trendMaximum) }}.">
-                            <svg viewBox="0 0 760 270" preserveAspectRatio="none" aria-hidden="true">
+                            <svg viewBox="0 0 760 270" width="100%" height="auto" role="group"
+                                 aria-label="Reservations trend chart">
                                 <defs>
                                     <linearGradient id="report-trend-fill" x1="0" x2="0" y1="0" y2="1">
                                         <stop offset="0%" stop-color="#3988d6" stop-opacity=".25"></stop>
@@ -424,23 +425,25 @@
                                 </defs>
                                 @foreach ([['y' => 28, 'value' => $trendMaximum], ['y' => 123, 'value' => round($trendMaximum / 2, 1)], ['y' => 218, 'value' => 0]] as $gridline)
                                     <line class="admin-report-trend-gridline" x1="{{ $plotLeft }}" x2="{{ $plotRight }}" y1="{{ $gridline['y'] }}" y2="{{ $gridline['y'] }}"></line>
-                                    <text class="admin-report-trend-axis-label" x="6" y="{{ $gridline['y'] + 4 }}">{{ $gridline['value'] }}</text>
+                                    <text class="admin-report-trend-axis-label {{ $gridline['y'] === 123 ? 'admin-report-trend-axis-label--middle' : '' }}" x="6" y="{{ $gridline['y'] + 4 }}">{{ $gridline['value'] }}</text>
                                 @endforeach
                                 @if ($trendAreaPath !== '')
                                     <path class="admin-report-trend-area" d="{{ $trendAreaPath }}"></path>
                                 @endif
                                 <path class="admin-report-trend-line" d="{{ $trendLinePath }}"></path>
                                 @foreach ($trendPoints as $point)
-                                    <circle class="admin-report-trend-point"
-                                            cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="4"
-                                            tabindex="0" focusable="true"
-                                        aria-label="{{ $point['label'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}">
-                                    <title>{{ $point['label'] }} · {{ $point['start'] === $point['end'] ? $point['start'] : $point['start'].' – '.$point['end'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}</title>
-                                    </circle>
+                                    <circle class="admin-report-trend-point" cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="4" aria-hidden="true"></circle>
+                                    <circle class="admin-report-trend-hit-target"
+                                            cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="18"
+                                            tabindex="0" focusable="true" role="button"
+                                            data-report-point
+                                            data-period="{{ $point['label'] }} · {{ $point['start'] === $point['end'] ? $point['start'] : $point['start'].' – '.$point['end'] }}"
+                                            data-count="{{ number_format($point['count']) }}"
+                                            aria-label="{{ $point['label'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}"></circle>
                                 @endforeach
                                 @if (count($trendPoints) > 0)
                                     @foreach (array_unique([0, (int) floor((count($trendPoints) - 1) / 2), count($trendPoints) - 1]) as $tickIndex)
-                                        <text class="admin-report-trend-date-label"
+                                        <text class="admin-report-trend-date-label {{ $tickIndex !== 0 && $tickIndex !== count($trendPoints) - 1 ? 'admin-report-trend-date-label--middle' : '' }}"
                                               x="{{ $trendPoints[$tickIndex]['x'] }}"
                                               y="253"
                                               text-anchor="{{ $tickIndex === 0 ? 'start' : ($tickIndex === count($trendPoints) - 1 ? 'end' : 'middle') }}">
@@ -450,6 +453,10 @@
                                 @endif
                             </svg>
                         </div>
+                        <div class="admin-report-trend-detail" data-report-trend-detail role="status" aria-live="polite" hidden>
+                            <span data-report-trend-period></span>
+                            <strong><span data-report-trend-count></span> reservations</strong>
+                        </div>
                         <details class="admin-report-chart-data">
                             <summary>View reservations data table</summary>
                             <div class="admin-report-table-wrap">
@@ -457,7 +464,7 @@
                                     <thead><tr><th scope="col">Period</th><th scope="col">Reservations</th></tr></thead>
                                     <tbody>
                                         @foreach ($trend as $point)
-                                            <tr><td>{{ $point['label'] }}</td><td>{{ number_format($point['count']) }}</td></tr>
+                                            <tr><td data-label="Period" data-card-title>{{ $point['label'] }}</td><td data-label="Reservations">{{ number_format($point['count']) }}</td></tr>
                                         @endforeach
                                     </tbody>
                                 </table>
@@ -987,6 +994,27 @@
             const sections = links
                 .map((link) => document.querySelector(link.getAttribute('href')))
                 .filter(Boolean);
+            const trendDetail = document.querySelector('[data-report-trend-detail]');
+            const trendPeriod = trendDetail?.querySelector('[data-report-trend-period]');
+            const trendCount = trendDetail?.querySelector('[data-report-trend-count]');
+
+            if (trendDetail && trendPeriod && trendCount && window.matchMedia('(max-width: 767px)').matches) {
+                const revealTrendPoint = (point) => {
+                    trendPeriod.textContent = point.dataset.period || '';
+                    trendCount.textContent = point.dataset.count || '0';
+                    trendDetail.hidden = false;
+                };
+
+                document.querySelectorAll('[data-report-point]').forEach((point) => {
+                    point.addEventListener('click', () => revealTrendPoint(point));
+                    point.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            revealTrendPoint(point);
+                        }
+                    });
+                });
+            }
 
             if (!navigation || !('IntersectionObserver' in window)) {
                 return;

@@ -1323,6 +1323,171 @@
     }
 }
 
+@media (max-width: 767px) {
+    .admin-report-trend-chart {
+        margin: 0;
+    }
+
+    .admin-report-trend-chart svg {
+        width: 100%;
+        height: auto;
+        min-height: 180px;
+        aspect-ratio: 760 / 270;
+        animation: none;
+    }
+
+    .admin-report-trend-axis-label--middle,
+    .admin-report-trend-date-label--middle {
+        display: none;
+    }
+
+    .admin-report-trend-hit-target {
+        fill: transparent;
+        stroke: transparent;
+        stroke-width: 0;
+        cursor: pointer;
+    }
+
+    .admin-report-trend-hit-target:focus-visible {
+        stroke: rgb(57 136 214 / 26%);
+        stroke-width: 10px;
+        outline: none;
+    }
+
+    .admin-report-trend-detail:not([hidden]) {
+        display: flex;
+        min-height: 54px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid #dfeaf2;
+        border-radius: 12px;
+        background: #f7fbff;
+        margin-top: 8px;
+        padding: 10px 12px;
+        color: #64717e;
+        font-size: 13px;
+    }
+
+    .admin-report-trend-detail > span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-report-trend-detail strong {
+        flex: 0 0 auto;
+        color: #21669e;
+        font-size: 14px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-report-chart-data {
+        margin-top: 10px;
+        padding-top: 8px;
+    }
+
+    .admin-report-chart-data summary {
+        min-height: 44px;
+        align-items: center;
+        font-size: 13px;
+    }
+
+    .admin-report-status-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .admin-report-status-layout > .admin-report-donut {
+        display: none;
+    }
+
+    .admin-report-status-layout .admin-report-legend {
+        gap: 4px;
+    }
+
+    .admin-report-status-layout .admin-report-legend li {
+        min-height: 44px;
+        grid-template-columns: 12px minmax(0, 1fr) auto auto;
+        gap: 10px;
+        border-bottom: 1px solid #edf0f3;
+        border-radius: 0;
+        padding: 7px 4px;
+        font-size: 13px;
+    }
+
+    .admin-report-status-layout .admin-report-legend li strong,
+    .admin-report-status-layout .admin-report-legend li small {
+        font-size: 13px;
+    }
+
+    .admin-report-status-layout .admin-report-legend li small {
+        min-width: 42px;
+    }
+
+    .admin-report-status-layout .admin-report-legend-dot {
+        width: 10px;
+        height: 10px;
+    }
+
+    .admin-report-chart-data .admin-report-table-wrap {
+        overflow: visible;
+    }
+
+    .admin-report-chart-data .admin-report-table,
+    .admin-report-chart-data .admin-report-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .admin-report-chart-data .admin-report-table thead {
+        display: none;
+    }
+
+    .admin-report-chart-data .admin-report-table tr {
+        display: grid;
+        gap: 0;
+        border: 1px solid #e6ebef;
+        border-radius: 12px;
+        background: #fff;
+        margin-top: 9px;
+        padding: 7px 12px;
+    }
+
+    .admin-report-chart-data .admin-report-table td {
+        display: flex;
+        min-width: 0;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        border: 0;
+        padding: 7px 0;
+        text-align: right;
+        font-size: 13px;
+    }
+
+    .admin-report-chart-data .admin-report-table td::before {
+        flex: 0 0 auto;
+        color: #788591;
+        content: attr(data-label);
+        font-size: 12px;
+        text-align: left;
+    }
+
+    .admin-report-chart-data .admin-report-table td[data-card-title] {
+        display: block;
+        border-bottom: 1px solid #edf0f3;
+        color: #243543;
+        padding: 6px 0 9px;
+        text-align: left;
+        font-size: 14px;
+        font-weight: 650;
+    }
+
+    .admin-report-chart-data .admin-report-table td[data-card-title]::before {
+        display: none;
+    }
+}
+
 .admin-report-header {
     align-items: center;
     gap: 24px;
