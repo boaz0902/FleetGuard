@@ -208,6 +208,41 @@
     }
 }
 
+@media (max-width: 640px) {
+    .admin-shell .admin-settings-card-heading p,
+    .admin-shell .admin-settings-field small,
+    .admin-shell .admin-settings-preview > p,
+    .admin-shell .admin-settings-preview-business small,
+    .admin-shell .admin-settings-preview-list dd,
+    .admin-shell .admin-settings-where li,
+    .admin-shell .admin-settings-savebar > small {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .admin-shell .admin-settings-google-visibility > label {
+        min-height: 44px;
+    }
+
+    .admin-shell .admin-settings-google-visibility input[type="checkbox"] {
+        width: 20px;
+        min-width: 20px;
+        min-height: 20px;
+        height: 20px;
+    }
+
+    .admin-shell .admin-settings-savebar {
+        bottom: 0;
+        padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+        border-radius: 14px;
+    }
+
+    .admin-shell .admin-settings-save {
+        min-height: 48px;
+        font-size: 14px;
+    }
+}
+
 @media (max-width: 380px) {
     .admin-shell .admin-topbar {
         padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
