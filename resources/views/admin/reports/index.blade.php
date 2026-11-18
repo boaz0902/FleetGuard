@@ -307,17 +307,18 @@
         </section>
 
         <nav class="admin-report-section-nav" aria-label="Report sections" data-report-section-nav>
-            <a href="#report-overview">Overview</a>
-            <a href="#report-reservations">Trends</a>
-            <a href="#report-fleet">Fleet</a>
-            <a href="#report-customers">Customers</a>
-            <a href="#report-maintenance">Maintenance</a>
-            <a href="#report-operations">Rentals</a>
+            <a href="#report-overview" aria-label="Overview"><i class="bi bi-grid-1x2" aria-hidden="true" hidden></i><span>Overview</span></a>
+            <a href="#report-reservations" aria-label="Reservations trend"><i class="bi bi-activity" aria-hidden="true" hidden></i><span>Trends</span></a>
+            <a href="#report-fleet" aria-label="Fleet utilization and popularity"><i class="bi bi-car-front" aria-hidden="true" hidden></i><span>Fleet</span></a>
+            <a href="#report-customers" aria-label="Customer insights"><i class="bi bi-people" aria-hidden="true" hidden></i><span>Customers</span></a>
+            <a href="#report-maintenance" aria-label="Maintenance summary"><i class="bi bi-wrench-adjustable" aria-hidden="true" hidden></i><span>Maintenance</span></a>
+            <a href="#report-operations" aria-label="Rental operations"><i class="bi bi-arrow-left-right" aria-hidden="true" hidden></i><span>Rentals</span></a>
         </nav>
 
         <section class="admin-report-section" id="report-overview" aria-labelledby="report-overview-heading">
             <div class="admin-report-section-heading">
                 <div>
+                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-grid-1x2"></i></span>
                     <p class="admin-eyebrow">Business summary</p>
                     <h2 id="report-overview-heading">Overview</h2>
                 </div>
@@ -396,6 +397,7 @@
         <section class="admin-report-section" id="report-reservations" aria-labelledby="report-reservations-heading">
             <div class="admin-report-section-heading">
                 <div>
+                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-activity"></i></span>
                     <p class="admin-eyebrow">Volume and outcomes</p>
                     <h2 id="report-reservations-heading">Reservations trend</h2>
                 </div>
@@ -516,6 +518,7 @@
         <section class="admin-report-section" id="report-fleet" aria-labelledby="report-fleet-heading">
             <div class="admin-report-section-heading">
                 <div>
+                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-car-front"></i></span>
                     <p class="admin-eyebrow">Vehicle performance</p>
                     <h2 id="report-fleet-heading">Fleet utilization &amp; popularity</h2>
                 </div>
@@ -719,6 +722,7 @@
         <section class="admin-report-section" id="report-customers" aria-labelledby="report-customers-heading">
             <div class="admin-report-section-heading">
                 <div>
+                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-people"></i></span>
                     <p class="admin-eyebrow">Guest-style customer records</p>
                     <h2 id="report-customers-heading">Customer insights</h2>
                 </div>
@@ -799,6 +803,7 @@
         <section class="admin-report-section" id="report-maintenance" aria-labelledby="report-maintenance-heading">
             <div class="admin-report-section-heading">
                 <div>
+                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-wrench-adjustable"></i></span>
                     <p class="admin-eyebrow">Service planning</p>
                     <h2 id="report-maintenance-heading">Maintenance summary</h2>
                 </div>
@@ -881,6 +886,7 @@
         <section class="admin-report-section" id="report-operations" aria-labelledby="report-operations-heading">
             <div class="admin-report-section-heading">
                 <div>
+                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-arrow-left-right"></i></span>
                     <p class="admin-eyebrow">Rental lifecycle</p>
                     <h2 id="report-operations-heading">Rental operations</h2>
                 </div>
@@ -987,13 +993,26 @@
             }
 
             const setActiveSection = (sectionId) => {
+                let activeLink = null;
+
                 links.forEach((link) => {
                     if (link.hash === `#${sectionId}`) {
+                        if (!link.hasAttribute('aria-current')) {
+                            activeLink = link;
+                        }
                         link.setAttribute('aria-current', 'location');
                     } else {
                         link.removeAttribute('aria-current');
                     }
                 });
+
+                if (activeLink && navigation.scrollWidth > navigation.clientWidth && window.matchMedia('(max-width: 1023px)').matches) {
+                    const left = activeLink.offsetLeft - (navigation.clientWidth - activeLink.offsetWidth) / 2;
+                    navigation.scrollTo({
+                        left,
+                        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                    });
+                }
             };
 
             links.forEach((link) => link.addEventListener('click', () => setActiveSection(link.hash.slice(1))));
