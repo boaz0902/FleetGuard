@@ -1,0 +1,244 @@
+.admin-shell .admin-main {
+    background: var(--admin-ice);
+}
+
+.admin-shell .admin-topbar {
+    border-color: #e5e9ed;
+}
+
+.admin-shell .admin-section-card,
+.admin-shell .admin-panel,
+.admin-shell .admin-metric-card,
+.admin-shell .admin-booking-metric,
+.admin-shell .admin-fleet-panel,
+.admin-shell .admin-customers-panel,
+.admin-shell .admin-rentals-panel,
+.admin-shell .admin-testimonials-panel,
+.admin-shell .admin-legal-card,
+.admin-shell .admin-settings-card,
+.admin-shell .admin-message-panel,
+.admin-shell .admin-audit-panel,
+.admin-shell .admin-report-card {
+    border-color: #e5e9ed;
+    border-radius: 14px;
+    box-shadow: 0 5px 20px rgb(26 39 52 / 4%);
+}
+
+.admin-shell #main-content table th {
+    color: #75818d;
+    font-weight: 650;
+}
+
+.admin-shell #main-content table tbody tr {
+    transition: background-color 160ms ease;
+}
+
+.admin-shell #main-content table tbody tr:hover > td {
+    background-color: #f7fafc;
+}
+
+.admin-shell button:focus-visible,
+.admin-shell a:focus-visible,
+.admin-shell input:focus-visible,
+.admin-shell select:focus-visible,
+.admin-shell textarea:focus-visible {
+    outline: 3px solid rgb(57 136 214 / 25%);
+    outline-offset: 2px;
+}
+
+.admin-shell dialog {
+    max-width: min(560px, calc(100vw - 32px));
+    max-height: min(88dvh, 760px);
+    overflow: auto;
+    border: 1px solid #e4e9ee;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 80px rgb(16 24 32 / 22%);
+}
+
+.admin-shell dialog::backdrop {
+    background: rgb(16 24 32 / 54%);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+
+@media (min-width: 1200px) {
+    .admin-shell .admin-metrics {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .admin-shell .admin-main {
+        overflow-x: clip;
+    }
+
+    .admin-shell #main-content {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-shell .admin-content,
+    .admin-shell .admin-bookings,
+    .admin-shell .admin-booking-details,
+    .admin-shell .admin-fleet,
+    .admin-shell .admin-fleet-form-page,
+    .admin-shell .admin-fleet-details,
+    .admin-shell .admin-customers,
+    .admin-shell .admin-customer-details,
+    .admin-shell .admin-customer-edit-page,
+    .admin-shell .admin-testimonials,
+    .admin-shell .admin-testimonial-editor,
+    .admin-shell .admin-settings,
+    .admin-shell .admin-rentals,
+    .admin-shell .admin-rental-details,
+    .admin-shell .admin-calendar,
+    .admin-shell .admin-audit-logs,
+    .admin-shell .admin-reports-page,
+    .admin-shell .admin-messages,
+    .admin-shell .admin-message-detail,
+    .admin-shell .admin-legal {
+        padding-inline: clamp(14px, 4vw, 22px);
+    }
+
+    .admin-shell .admin-section-card,
+    .admin-shell .admin-panel,
+    .admin-shell .admin-metric-card,
+    .admin-shell .admin-booking-metric,
+    .admin-shell .admin-fleet-panel,
+    .admin-shell .admin-customers-panel,
+    .admin-shell .admin-rentals-panel,
+    .admin-shell .admin-testimonials-panel,
+    .admin-shell .admin-legal-card,
+    .admin-shell .admin-settings-card,
+    .admin-shell .admin-message-panel,
+    .admin-shell .admin-audit-panel,
+    .admin-shell .admin-report-card {
+        border-radius: 14px;
+        box-shadow: 0 4px 16px rgb(26 39 52 / 4%);
+    }
+
+    .admin-shell #main-content input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+    .admin-shell #main-content select {
+        min-height: 44px;
+        font-size: 14px;
+    }
+
+    .admin-shell #main-content textarea {
+        min-height: 110px;
+        font-size: 14px;
+        line-height: 1.55;
+    }
+
+    .admin-shell #main-content label {
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .admin-shell #main-content td {
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .admin-shell #main-content td::before {
+        font-size: 12px;
+        line-height: 1.35;
+    }
+
+    .admin-shell #main-content .admin-primary-link,
+    .admin-shell #main-content button,
+    .admin-shell #main-content input[type="submit"],
+    .admin-shell #main-content input[type="button"] {
+        min-height: 44px;
+    }
+
+    .admin-shell #main-content .admin-page-intro {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .admin-shell #main-content .admin-page-intro > .admin-primary-link {
+        width: 100%;
+    }
+
+    .admin-shell #main-content .admin-table-wrap,
+    .admin-shell #main-content .admin-bookings-table-wrap,
+    .admin-shell #main-content .admin-fleet-table-wrap,
+    .admin-shell #main-content .admin-customers-table-wrap,
+    .admin-shell #main-content .admin-rentals-table-wrap,
+    .admin-shell #main-content .admin-testimonials-table-wrap,
+    .admin-shell #main-content .admin-message-table-wrap,
+    .admin-shell #main-content .admin-audit-table-wrap,
+    .admin-shell #main-content .admin-report-table-wrap,
+    .admin-shell #main-content .admin-legal-table-wrap {
+        max-width: 100%;
+        overscroll-behavior-inline: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-shell #main-content nav[role="navigation"] a,
+    .admin-shell #main-content nav[role="navigation"] span {
+        min-width: 40px;
+        min-height: 40px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .admin-shell dialog {
+        position: fixed;
+        inset: auto 0 0;
+        width: 100%;
+        max-width: none;
+        max-height: min(90dvh, 760px);
+        margin: 0;
+        border-radius: 20px 20px 0 0;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+
+    .admin-shell .admin-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .admin-shell .admin-metric-card {
+        min-height: 132px;
+    }
+}
+
+@media (max-width: 380px) {
+    .admin-shell .admin-topbar {
+        padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+    }
+
+    .admin-shell .admin-content,
+    .admin-shell .admin-bookings,
+    .admin-shell .admin-booking-details,
+    .admin-shell .admin-fleet,
+    .admin-shell .admin-fleet-form-page,
+    .admin-shell .admin-fleet-details,
+    .admin-shell .admin-customers,
+    .admin-shell .admin-customer-details,
+    .admin-shell .admin-customer-edit-page,
+    .admin-shell .admin-testimonials,
+    .admin-shell .admin-testimonial-editor,
+    .admin-shell .admin-settings,
+    .admin-shell .admin-rentals,
+    .admin-shell .admin-rental-details,
+    .admin-shell .admin-calendar,
+    .admin-shell .admin-audit-logs,
+    .admin-shell .admin-reports-page,
+    .admin-shell .admin-messages,
+    .admin-shell .admin-message-detail,
+    .admin-shell .admin-legal {
+        padding-inline: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-shell #main-content table tbody tr {
+        transition: none;
+    }
+}
