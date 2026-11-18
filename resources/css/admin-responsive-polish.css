@@ -242,3 +242,121 @@
         transition: none;
     }
 }
+
+@media (max-width: 900px) {
+    .admin-shell #main-content .admin-bookings-table tbody tr,
+    .admin-shell #main-content .admin-fleet-table tbody tr:not(.admin-fleet-empty-row) {
+        border: 1px solid #e5e9ed;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgb(26 39 52 / 4%);
+    }
+
+    .admin-shell #main-content .admin-bookings-table td,
+    .admin-shell #main-content .admin-fleet-table td {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Reference"] {
+        grid-column: 1;
+        grid-row: 1;
+        align-items: center;
+        font-weight: 650;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Status"] {
+        grid-column: 2;
+        grid-row: 1;
+        justify-content: flex-end;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Customer"] {
+        grid-row: 2;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Vehicle"] {
+        grid-row: 3;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Pickup"],
+    .admin-shell #main-content .admin-bookings-table td[data-label="Duration"] {
+        grid-column: 1;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Return"],
+    .admin-shell #main-content .admin-bookings-table td[data-label="Total"] {
+        grid-column: 2;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Created"],
+    .admin-shell #main-content .admin-bookings-table td[data-label="Action"] {
+        grid-column: 1 / -1;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Action"] {
+        border-top: 1px solid #edf0f3;
+        padding-top: 10px;
+    }
+
+    .admin-shell #main-content .admin-fleet-table td[data-label="Vehicle"] {
+        grid-column: 1;
+        border: 0;
+        padding-bottom: 5px;
+        font-weight: 650;
+    }
+
+    .admin-shell #main-content .admin-fleet-table td[data-label="Vehicle"]::before {
+        min-width: 0;
+    }
+
+    .admin-shell #main-content .admin-fleet-table td[data-label="Vehicle status"] {
+        grid-column: 2;
+        grid-row: 1;
+        justify-content: flex-end;
+    }
+
+    .admin-shell #main-content .admin-fleet-table td[data-label="Actions"] {
+        border-top: 1px solid #edf0f3;
+        padding-top: 10px;
+    }
+}
+
+@media (max-width: 560px) {
+    .admin-shell #main-content .admin-reservations-table tr {
+        position: relative;
+        border: 1px solid #e5e9ed;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgb(26 39 52 / 4%);
+        padding: 10px 12px;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td[data-label="Reference"] {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td[data-label="Status"] {
+        grid-column: 2;
+        grid-row: 1;
+        justify-content: flex-end;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td[data-label="Customer"] {
+        grid-row: 2;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td[data-label="Vehicle"] {
+        grid-row: 3;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td[data-label="Pickup"] {
+        grid-column: 1;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td[data-label="Return"] {
+        grid-column: 2;
+    }
+
+}
