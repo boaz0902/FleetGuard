@@ -84,6 +84,8 @@ The public FleetGuard site includes the fleet showcase, booking-request steps, A
 
 Set public business details in the environment using `FLEETGUARD_PHONE`, `FLEETGUARD_EMAIL`, `FLEETGUARD_ADDRESS`, `FLEETGUARD_BUSINESS_HOURS`, and `FLEETGUARD_MAPS_URL`. Optional social profile URLs use `FLEETGUARD_SOCIAL_FACEBOOK`, `FLEETGUARD_SOCIAL_INSTAGRAM`, and `FLEETGUARD_SOCIAL_TIKTOK`. All values are optional. When unset, the site displays “To be added”; map and social links are rendered only for HTTP or HTTPS URLs. These settings are read from `config/fleetguard.php`.
 
+When serving the site through an HTTPS tunnel or reverse proxy, Laravel trusts forwarded host and protocol headers only from `TRUSTED_PROXIES` (loopback addresses by default for local development). Set this to the proxy addresses that connect directly to Laravel; do not use `*` on a publicly reachable deployment.
+
 The public navbar links to section anchors on the home page and to the corresponding home-page anchor from other customer-facing pages. Customer account actions reflect sign-in and email-verification state; administrator and manager sessions are not given a public admin-portal link.
 
 ## Testimonials foundation

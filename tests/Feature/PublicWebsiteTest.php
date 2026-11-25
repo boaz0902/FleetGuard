@@ -15,6 +15,17 @@ class PublicWebsiteTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_assets_use_https_forwarded_by_a_trusted_tunnel_proxy(): void
+    {
+        $this->withHeaders([
+            'X-Forwarded-Host' => 'fleetguard-tunnel.test',
+            'X-Forwarded-Proto' => 'https',
+        ])->get('/')
+            ->assertOk()
+            ->assertSee('https://fleetguard-tunnel.test/build/assets/', false)
+            ->assertDontSee('http://localhost/build/assets/', false);
+    }
+
     public function test_homepage_has_distinct_sections_and_navigation_targets_in_order(): void
     {
         $response = $this->get(route('home'))->assertOk();
