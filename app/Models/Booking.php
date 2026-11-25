@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Booking extends Model
@@ -24,9 +26,20 @@ class Booking extends Model
         'rental_duration_days',
         'daily_rate_snapshot',
         'estimated_total',
+        'location_fee_snapshot',
+        'location_fee_confirmed',
         'customer_notes',
+        'license_front_path',
+        'license_back_path',
+        'license_selfie_path',
         'status',
         'admin_remarks',
+    ];
+
+    protected $hidden = [
+        'license_front_path',
+        'license_back_path',
+        'license_selfie_path',
     ];
 
     protected $casts = [
@@ -36,6 +49,8 @@ class Booking extends Model
         'checked_in_at' => 'datetime',
         'daily_rate_snapshot' => 'decimal:2',
         'estimated_total' => 'decimal:2',
+        'location_fee_snapshot' => 'decimal:2',
+        'location_fee_confirmed' => 'decimal:2',
     ];
 
     public const STATUS_PENDING = 'pending';
@@ -58,6 +73,16 @@ class Booking extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function legalPolicyAcceptances(): HasMany
+    {
+        return $this->hasMany(LegalPolicyAcceptance::class);
+    }
+
+    public function testimonial(): HasOne
+    {
+        return $this->hasOne(Testimonial::class);
     }
 
     public function auditLogs(): MorphMany

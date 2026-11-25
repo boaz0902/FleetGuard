@@ -162,9 +162,9 @@ a.admin-nav-item:hover,
 }
 
 .admin-nav-item.is-active {
-    box-shadow: inset 0 0 0 1px rgb(120 186 255 / 10%);
     background: linear-gradient(110deg, #1d3348, #203b54);
     color: #fff;
+    box-shadow: inset 0 0 0 1px rgb(120 186 255 / 10%);
 }
 
 .admin-nav-item.is-active::before {
@@ -968,6 +968,7 @@ a.admin-nav-item:hover,
     .admin-main {
         height: auto;
         overflow: visible;
+        padding-top: calc(70px + env(safe-area-inset-top));
     }
 
     .admin-sidebar {
@@ -975,10 +976,10 @@ a.admin-nav-item:hover,
         inset: 0 auto 0 0;
         width: min(320px, 88vw);
         height: 100vh;
-        padding: calc(22px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
         height: 100dvh;
         min-height: 0;
         overflow: hidden;
+        padding: calc(22px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
         transform: translateX(-102%);
         transition: transform 240ms cubic-bezier(0.2, 0.7, 0.25, 1);
         box-shadow: 20px 0 48px rgb(7 13 20 / 24%);
@@ -1011,12 +1012,12 @@ a.admin-nav-item:hover,
     .admin-shell.is-sidebar-open .admin-sidebar-backdrop {
         position: fixed;
         z-index: 19;
-        -webkit-backdrop-filter: blur(3px);
-        backdrop-filter: blur(3px);
         inset: 0;
         display: block;
         border: 0;
         background: rgb(10 17 24 / 52%);
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
     }
 
     .admin-shell.is-sidebar-collapsed .admin-brand {
@@ -1046,20 +1047,29 @@ a.admin-nav-item:hover,
     }
 
     .admin-topbar {
-        position: sticky;
+        position: fixed;
         z-index: 15;
         top: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
         min-height: 70px;
         gap: 10px;
         border-bottom-color: rgb(228 233 238 / 90%);
         background: rgb(255 255 255 / 94%);
-        padding-block: 10px;
+        padding: calc(10px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
         padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
         -webkit-backdrop-filter: blur(14px);
-        min-width: 0;
-        flex: 1 1 auto;
         backdrop-filter: blur(14px);
         box-shadow: 0 5px 18px rgb(16 24 32 / 4%);
+    }
+
+    .admin-topbar-heading {
+        min-width: 0;
+        flex: 1 1 auto;
+        gap: 11px;
+    }
+
     .admin-topbar-page-copy {
         flex: 1 1 auto;
     }
@@ -1067,12 +1077,6 @@ a.admin-nav-item:hover,
     .admin-menu-toggle {
         border-radius: 12px;
         box-shadow: 0 2px 6px rgb(16 24 32 / 5%);
-    }
-
-    }
-
-    .admin-topbar-heading {
-        gap: 11px;
     }
 
     .admin-topbar h1 {
@@ -1087,26 +1091,6 @@ a.admin-nav-item:hover,
     }
 
     .admin-topbar-description {
-    .admin-topbar {
-        min-height: 64px;
-        gap: 8px;
-        padding-inline: max(13px, env(safe-area-inset-left)) max(13px, env(safe-area-inset-right));
-    }
-
-    .admin-topbar-page-icon,
-    .admin-breadcrumb {
-        display: none;
-    }
-
-    .admin-topbar-heading {
-        gap: 9px;
-    }
-
-    .admin-topbar-page-copy h1 {
-        max-width: 100%;
-        font-size: 16px;
-    }
-
         display: none;
     }
 
@@ -1125,6 +1109,30 @@ a.admin-nav-item:hover,
 }
 
 @media (max-width: 560px) {
+    .admin-main {
+        padding-top: calc(64px + env(safe-area-inset-top));
+    }
+
+    .admin-topbar {
+        min-height: calc(64px + env(safe-area-inset-top));
+        gap: 8px;
+        padding: calc(10px + env(safe-area-inset-top)) max(13px, env(safe-area-inset-right)) 10px max(13px, env(safe-area-inset-left));
+    }
+
+    .admin-topbar-page-icon,
+    .admin-breadcrumb {
+        display: none;
+    }
+
+    .admin-topbar-heading {
+        gap: 9px;
+    }
+
+    .admin-topbar-page-copy h1 {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
     .admin-topbar-meta {
         gap: 0;
     }
@@ -1144,8 +1152,17 @@ a.admin-nav-item:hover,
         gap: 15px;
     }
 
+    .admin-page-intro > div {
+        min-width: 0;
+    }
+
     .admin-page-intro h2 {
         font-size: 25px;
+    }
+
+    .admin-page-intro > .admin-primary-link {
+        width: 100%;
+        min-height: 46px;
     }
 
     .admin-metrics {
@@ -1154,11 +1171,19 @@ a.admin-nav-item:hover,
     }
 
     .admin-metric-card {
+        display: flex;
+        flex-direction: column;
         padding: 13px;
     }
 
     .admin-metric-heading {
+        align-items: flex-start;
         font-size: 10px;
+    }
+
+    .admin-metric-heading > span:first-child {
+        min-width: 0;
+        line-height: 1.35;
     }
 
     .admin-metric-icon {
@@ -1172,6 +1197,8 @@ a.admin-nav-item:hover,
 
     .admin-metric-card > small {
         font-size: 9px;
+        line-height: 1.4;
+        white-space: normal;
     }
 
     .admin-panel {
@@ -1184,6 +1211,10 @@ a.admin-nav-item:hover,
 
     .admin-chart-columns {
         gap: 4px;
+    }
+
+    .admin-chart {
+        height: 210px;
     }
 
     .admin-fleet-list {
@@ -1258,6 +1289,8 @@ a.admin-nav-item:hover,
 
     .admin-page-footer {
         font-size: 9px;
+        line-height: 1.5;
+        text-align: left;
     }
 }
 
@@ -1268,6 +1301,10 @@ a.admin-nav-item:hover,
 
     .admin-metric-card {
         padding: 11px;
+    }
+
+    .admin-panel {
+        padding-inline: 12px;
     }
 
     .admin-metric-heading {

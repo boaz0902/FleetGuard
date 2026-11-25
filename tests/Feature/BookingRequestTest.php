@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\LegalPolicy;
+use App\Models\LegalPolicyAcceptance;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleUnavailability;
@@ -12,8 +14,10 @@ use Carbon\Carbon;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class BookingRequestTest extends TestCase
@@ -167,6 +171,48 @@ class BookingRequestTest extends TestCase
         $this->assertDatabaseCount('bookings', 0);
     }
 
+    public function test_booking_identity_photos_are_optional_private_and_visible_only_to_booking_reviewers(): void
+    {
+        Storage::fake('local');
+
+        $this->from('/')->post('/bookings', $this->bookingPayload([
+            'license_front' => UploadedFile::fake()->image('license-front.jpg'),
+            'license_back' => UploadedFile::fake()->image('license-back.png'),
+            'license_selfie' => UploadedFile::fake()->image('license-selfie.webp'),
+        ]))->assertRedirect();
+
+        $booking = Booking::query()->firstOrFail();
+        $this->assertNotNull($booking->license_front_path);
+        $this->assertNotNull($booking->license_back_path);
+        $this->assertNotNull($booking->license_selfie_path);
+        $this->assertArrayNotHasKey('license_front_path', $booking->toArray());
+        Storage::disk('local')->assertExists($booking->license_front_path);
+
+        $admin = $this->userWithRole('admin');
+        $this->actingAs($admin)
+            ->get(route('admin.bookings.show', $booking))
+            ->assertOk()
+            ->assertSee('Identity documents')
+            ->assertSee('Driver’s license · front');
+        $this->get(route('admin.bookings.documents.show', [$booking, 'license-front']))
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+        $customer = $this->userWithRole('customer');
+        $this->actingAs($customer)
+            ->get(route('admin.bookings.documents.show', [$booking, 'license-front']))
+            ->assertForbidden();
+    }
+
+    public function test_booking_rejects_non_image_identity_document_uploads(): void
+    {
+        $this->from('/')->post('/bookings', $this->bookingPayload([
+            'license_front' => UploadedFile::fake()->createWithContent('license.svg', '<svg></svg>'),
+        ]))->assertSessionHasErrors('license_front');
+
+        $this->assertDatabaseCount('bookings', 0);
+    }
+
     public function test_pending_bookings_can_overlap_submissions(): void
     {
         $this->createBooking(['status' => Booking::STATUS_PENDING]);
@@ -180,6 +226,7 @@ class BookingRequestTest extends TestCase
     public function test_approved_and_ongoing_bookings_block_overlapping_submissions(): void
     {
         foreach ([Booking::STATUS_APPROVED, Booking::STATUS_ONGOING] as $status) {
+            LegalPolicyAcceptance::query()->delete();
             Booking::query()->delete();
             Customer::query()->delete();
             $this->createBooking(['status' => $status]);
@@ -202,6 +249,7 @@ class BookingRequestTest extends TestCase
             'return_date' => '2026-12-05',
         ]))->assertRedirect();
 
+        LegalPolicyAcceptance::query()->delete();
         Booking::query()->delete();
         Customer::query()->delete();
 
@@ -241,6 +289,43 @@ class BookingRequestTest extends TestCase
             ->assertJsonMissingPath('data.0.email');
     }
 
+    public function test_public_vehicle_schedule_lists_confirmed_bookings_and_maintenance_without_private_details(): void
+    {
+        $this->createBooking([
+            'booking_reference' => 'PRIVATE-REFERENCE',
+            'status' => Booking::STATUS_APPROVED,
+            'pickup_datetime' => '2026-12-01 09:00:00',
+            'return_datetime' => '2026-12-03 09:00:00',
+        ]);
+        $this->createBooking([
+            'status' => Booking::STATUS_PENDING,
+            'pickup_datetime' => '2026-12-07 09:00:00',
+            'return_datetime' => '2026-12-08 09:00:00',
+        ]);
+        $this->createUnavailability([
+            'start_datetime' => '2026-12-05 08:00:00',
+            'end_datetime' => '2026-12-06 17:00:00',
+            'reason' => 'Internal brake inspection',
+        ]);
+
+        $this->getJson(route('vehicles.schedule', 'toyota-vios'))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'available')
+            ->assertJsonPath('data.timezone', 'Asia/Manila')
+            ->assertJsonPath('data.days_ahead', 90)
+            ->assertJsonCount(2, 'data.periods')
+            ->assertJsonPath('data.periods.0.type', 'booking')
+            ->assertJsonPath('data.periods.0.label', 'Booked')
+            ->assertJsonPath('data.periods.0.start', 'Dec 1, 2026 · 9:00 AM')
+            ->assertJsonPath('data.periods.0.end', 'Dec 3, 2026 · 9:00 AM')
+            ->assertJsonPath('data.periods.1.type', 'maintenance')
+            ->assertJsonPath('data.periods.1.label', 'Maintenance')
+            ->assertJsonMissingPath('data.periods.0.booking_reference')
+            ->assertJsonMissingPath('data.periods.0.customer')
+            ->assertDontSee('PRIVATE-REFERENCE')
+            ->assertDontSee('Internal brake inspection');
+    }
+
     public function test_only_approved_and_ongoing_bookings_block_availability(): void
     {
         foreach ([
@@ -251,6 +336,7 @@ class BookingRequestTest extends TestCase
             Booking::STATUS_REJECTED => true,
             Booking::STATUS_COMPLETED => true,
         ] as $status => $isAvailable) {
+            LegalPolicyAcceptance::query()->delete();
             Booking::query()->delete();
             Customer::query()->delete();
             $this->createBooking(['status' => $status]);
@@ -324,6 +410,7 @@ class BookingRequestTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('vehicle_id');
 
+        LegalPolicyAcceptance::query()->delete();
         Booking::query()->delete();
         Customer::query()->delete();
         $this->createUnavailability();
@@ -360,7 +447,7 @@ class BookingRequestTest extends TestCase
             ->assertJsonValidationErrors('status');
     }
 
-    public function test_calendar_is_limited_to_booking_review_roles_and_omits_customer_details(): void
+    public function test_calendar_shows_customer_names_and_preserves_its_range_when_opening_a_reservation(): void
     {
         $manager = $this->userWithRole('manager');
         $staff = $this->userWithRole('staff');
@@ -371,10 +458,16 @@ class BookingRequestTest extends TestCase
             ->get(route('admin.calendar.index', ['start_date' => '2026-12-01']))
             ->assertOk()
             ->assertSee($booking->booking_reference)
-            ->assertSee(route('bookings.show', $booking), false)
+            ->assertSee(route('admin.bookings.show', ['booking' => $booking, 'calendar_start_date' => '2026-12-01']), false)
+            ->assertSee($booking->customer->full_name)
             ->assertSee('width: 14.2857%;', false)
             ->assertSee('Approved')
             ->assertDontSee('private-calendar@example.com');
+
+        $this->get(route('admin.bookings.show', ['booking' => $booking, 'calendar_start_date' => '2026-12-01']))
+            ->assertOk()
+            ->assertSee(route('admin.calendar.index', ['start_date' => '2026-12-01']), false)
+            ->assertSee('Back to availability calendar');
 
         $this->actingAs($staff)->get(route('admin.calendar.index'))->assertForbidden();
         $this->app['auth']->logout();
@@ -419,7 +512,8 @@ class BookingRequestTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.calendar.index', ['start_date' => '2026-12-01']))
             ->assertOk()
-            ->assertSee('Add vehicle maintenance period')
+            ->assertSee('Schedule vehicle maintenance')
+            ->assertSee('class="admin-maintenance-form"', false)
             ->assertSee('Scheduled service')
             ->assertSee('calendar-state--maintenance', false)
             ->assertSee('Remove maintenance');
@@ -630,6 +724,12 @@ class BookingRequestTest extends TestCase
 
     private function bookingPayload(array $overrides = []): array
     {
+        $policyVersions = LegalPolicy::query()
+            ->whereIn('slug', LegalPolicy::bookingAgreementSlugs())
+            ->get()
+            ->mapWithKeys(fn (LegalPolicy $policy): array => [$policy->slug => $policy->currentPublishedVersion?->id])
+            ->all();
+
         return array_replace([
             'vehicle_id' => 'toyota-vios',
             'full_name' => 'Jane Doe',
@@ -642,6 +742,8 @@ class BookingRequestTest extends TestCase
             'return_date' => '2026-12-03',
             'return_time' => '09:00',
             'customer_notes' => 'Need a reliable sedan for the weekend.',
+            'agreements' => array_fill_keys(LegalPolicy::bookingAgreementSlugs(), true),
+            'policy_versions' => $policyVersions,
         ], $overrides);
     }
 

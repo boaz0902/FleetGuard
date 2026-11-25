@@ -31,7 +31,7 @@
         ];
     @endphp
 
-    <main class="admin-customer-details {{ $canEdit ? 'admin-customer-details--editable' : '' }}" id="main-content">
+    <main class="admin-customer-details" id="main-content">
         @if (session('status'))
             <div class="admin-customers-flash" role="status">
                 <i class="bi bi-check-circle" aria-hidden="true"></i>
@@ -53,7 +53,15 @@
                 <span class="admin-customer-avatar admin-customer-avatar--large" aria-hidden="true">{{ $customer->initials() }}</span>
                 <div class="admin-customer-profile-heading">
                     <p class="admin-customers-eyebrow">Customer #{{ $customer->id }}</p>
-                    <h2>{{ $customer->full_name }}</h2>
+                    <div class="admin-customer-name-line">
+                        <h2>{{ $customer->full_name }}</h2>
+                        @if ($customer->user?->hasVerifiedEmail())
+                            <span class="admin-customer-verified-badge" aria-label="Customer email verified">
+                                <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+                                Verified
+                            </span>
+                        @endif
+                    </div>
                     <span class="admin-customer-status admin-customer-status--{{ $customer->status }}">
                         <i class="bi bi-{{ $customer->status === \App\Models\Customer::STATUS_BLOCKED ? 'slash-circle' : 'check-circle' }}" aria-hidden="true"></i>
                         {{ ucfirst($customer->status) }}
@@ -61,11 +69,6 @@
                     <span>Record created {{ $customer->created_at?->timezone('Asia/Manila')->format('M d, Y') }}</span>
                 </div>
                 <div class="admin-customer-banner-actions">
-                    @if ($canEdit)
-                        <a class="admin-customer-primary-link admin-customer-banner-action" href="{{ route('admin.customers.edit', $customer) }}">
-                            <i class="bi bi-pencil" aria-hidden="true"></i><span>Edit customer</span>
-                        </a>
-                    @endif
                     @if ($canManageStatus && $customer->status === \App\Models\Customer::STATUS_ACTIVE)
                         <button class="admin-customer-block-button" type="button" data-customer-dialog-open="customer-block-dialog">
                             <i class="bi bi-slash-circle" aria-hidden="true"></i><span>Block customer</span>
@@ -132,7 +135,7 @@
                             <div><dt>Account association</dt><dd>{{ $customer->user_id ? 'Linked account' : 'No linked account' }}</dd></div>
                             <div><dt>Customer record created</dt><dd>{{ $customer->created_at?->timezone('Asia/Manila')->format('M d, Y · g:i A') }}</dd></div>
                         </dl>
-                        @if (! $canEdit)
+                        @if (! $canViewContact)
                             <p class="admin-customer-privacy-note"><i class="bi bi-shield-lock" aria-hidden="true"></i>Contact details are masked for view-only access.</p>
                         @endif
                     </section>
@@ -303,12 +306,6 @@
             </div>
         </section>
 
-        @if ($canEdit)
-            <div class="admin-customer-sticky-actions">
-                <a class="admin-customer-secondary-link" href="{{ route('admin.customers.index') }}">Back</a>
-                <a class="admin-customer-primary-link" href="{{ route('admin.customers.edit', $customer) }}"><i class="bi bi-pencil" aria-hidden="true"></i><span>Edit customer</span></a>
-            </div>
-        @endif
         @if ($canManageStatus)
             <dialog class="admin-customer-status-dialog" id="customer-block-dialog" aria-labelledby="customer-block-title" @if ($errors->has('reason')) data-dialog-open-on-load @endif>
                 <div class="admin-customer-status-dialog-heading">

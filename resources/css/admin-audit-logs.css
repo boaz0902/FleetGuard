@@ -184,7 +184,7 @@
 
 .admin-audit-filters {
     display: grid;
-    grid-template-columns: minmax(200px, 1.7fr) repeat(4, minmax(120px, 1fr)) auto;
+    grid-template-columns: minmax(190px, 1.8fr) repeat(4, minmax(105px, 1fr)) auto;
     align-items: end;
     gap: 11px;
 }
@@ -604,7 +604,7 @@
 
 @media (max-width: 1050px) {
     .admin-audit-filters {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .admin-audit-search {

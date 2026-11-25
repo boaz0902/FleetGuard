@@ -139,6 +139,85 @@
                         </div>
                     </section>
 
+                    <section class="admin-settings-card" aria-labelledby="settings-google-reviews-title">
+                        <div class="admin-settings-card-heading">
+                            <span class="admin-settings-card-icon"><i class="bi bi-google" aria-hidden="true"></i></span>
+                            <span>
+                                <h2 id="settings-google-reviews-title">Google Reviews</h2>
+                                <p>Link your business profile and optionally show figures entered by your team.</p>
+                            </span>
+                        </div>
+                        <div class="admin-settings-field-grid">
+                            <label class="admin-settings-field">
+                                <span>Business profile display name</span>
+                                <span class="admin-settings-input-wrap">
+                                    <i class="bi bi-building" aria-hidden="true"></i>
+                                    <input type="text" name="google_business_name" value="{{ old('google_business_name', $values['google_business_name'] ?? '') }}" maxlength="120" placeholder="As shown on Google" aria-invalid="{{ $errors->has('google_business_name') ? 'true' : 'false' }}" aria-describedby="google-business-name-help{{ $errors->has('google_business_name') ? ' google-business-name-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
+                                </span>
+                                <small id="google-business-name-help">Leave empty to use the main business name.</small>
+                                @error('google_business_name')<small class="admin-settings-error" id="google-business-name-error">{{ $message }}</small>@enderror
+                            </label>
+                            <label class="admin-settings-field">
+                                <span>Read-all Google Reviews URL</span>
+                                <span class="admin-settings-input-wrap">
+                                    <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                                    <input type="url" name="google_reviews_url" value="{{ old('google_reviews_url', $values['google_reviews_url'] ?? '') }}" maxlength="2000" placeholder="https://..." aria-invalid="{{ $errors->has('google_reviews_url') ? 'true' : 'false' }}" aria-describedby="google-reviews-url-help{{ $errors->has('google_reviews_url') ? ' google-reviews-url-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
+                                </span>
+                                <small id="google-reviews-url-help">Use the HTTPS profile or reviews link copied from Google.</small>
+                                <small class="admin-settings-detection" aria-live="polite">{{ $googleReviewLinks['read']['valid'] ? ($googleReviewLinks['read']['url'] ? 'Google Maps link ready.' : 'Leave empty to hide this link.') : $googleReviewLinks['read']['error'] }}</small>
+                                @error('google_reviews_url')<small class="admin-settings-error" id="google-reviews-url-error">{{ $message }}</small>@enderror
+                            </label>
+                            <label class="admin-settings-field">
+                                <span>Write-a-review URL</span>
+                                <span class="admin-settings-input-wrap">
+                                    <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                    <input type="url" name="google_write_review_url" value="{{ old('google_write_review_url', $values['google_write_review_url'] ?? '') }}" maxlength="2000" placeholder="https://..." aria-invalid="{{ $errors->has('google_write_review_url') ? 'true' : 'false' }}" aria-describedby="google-write-review-url-help{{ $errors->has('google_write_review_url') ? ' google-write-review-url-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
+                                </span>
+                                <small id="google-write-review-url-help">Optional. Paste the direct link customers can use to write a review. If you enter both a URL and Place ID, this URL takes precedence.</small>
+                                <small class="admin-settings-detection" aria-live="polite">{{ $googleReviewLinks['write']['valid'] ? ($googleReviewLinks['write']['url'] ? 'Google review link ready.' : 'Leave empty to hide this link.') : $googleReviewLinks['write']['error'] }}</small>
+                                @error('google_write_review_url')<small class="admin-settings-error" id="google-write-review-url-error">{{ $message }}</small>@enderror
+                            </label>
+                            <label class="admin-settings-field">
+                                <span>Google Place ID</span>
+                                <span class="admin-settings-input-wrap">
+                                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                    <input type="text" name="google_place_id" value="{{ old('google_place_id', $values['google_place_id'] ?? '') }}" maxlength="256" placeholder="Place ID from your Google Business Profile" aria-invalid="{{ $errors->has('google_place_id') ? 'true' : 'false' }}" aria-describedby="google-place-id-help{{ $errors->has('google_place_id') ? ' google-place-id-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
+                                </span>
+                                <small id="google-place-id-help">Used to create Google’s standard write-a-review link when a direct write URL is not provided.</small>
+                                @error('google_place_id')<small class="admin-settings-error" id="google-place-id-error">{{ $message }}</small>@enderror
+                            </label>
+                            <label class="admin-settings-field">
+                                <span>Business-entered Google rating</span>
+                                <span class="admin-settings-input-wrap">
+                                    <i class="bi bi-star" aria-hidden="true"></i>
+                                    <input type="number" name="google_rating" value="{{ old('google_rating', $values['google_rating'] ?? '') }}" min="1" max="5" step="0.1" placeholder="e.g. 4.8" aria-invalid="{{ $errors->has('google_rating') ? 'true' : 'false' }}" aria-describedby="google-rating-help{{ $errors->has('google_rating') ? ' google-rating-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
+                                </span>
+                                <small id="google-rating-help">Enter a current value yourself. It will be clearly labelled as manually entered, not live Google data.</small>
+                                @error('google_rating')<small class="admin-settings-error" id="google-rating-error">{{ $message }}</small>@enderror
+                            </label>
+                            <label class="admin-settings-field">
+                                <span>Business-entered review count</span>
+                                <span class="admin-settings-input-wrap">
+                                    <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+                                    <input type="number" name="google_review_count" value="{{ old('google_review_count', $values['google_review_count'] ?? '') }}" min="0" max="100000000" step="1" placeholder="e.g. 120" aria-invalid="{{ $errors->has('google_review_count') ? 'true' : 'false' }}" aria-describedby="google-review-count-help{{ $errors->has('google_review_count') ? ' google-review-count-error' : '' }}" {{ $canManageSettings ? '' : 'disabled' }}>
+                                </span>
+                                <small id="google-review-count-help">Enter a current value yourself. It will be clearly labelled as manually entered, not live Google data.</small>
+                                @error('google_review_count')<small class="admin-settings-error" id="google-review-count-error">{{ $message }}</small>@enderror
+                            </label>
+                            <div class="admin-settings-field admin-settings-google-visibility">
+                                <span>Show figures on the homepage</span>
+                                <input type="hidden" name="show_google_rating" value="0">
+                                <label><input type="checkbox" name="show_google_rating" value="1" @checked((string) old('show_google_rating', $values['show_google_rating'] ?? '0') === '1') {{ $canManageSettings ? '' : 'disabled' }}> Show the entered rating</label>
+                                <input type="hidden" name="show_google_review_count" value="0">
+                                <label><input type="checkbox" name="show_google_review_count" value="1" @checked((string) old('show_google_review_count', $values['show_google_review_count'] ?? '0') === '1') {{ $canManageSettings ? '' : 'disabled' }}> Show the entered review count</label>
+                            </div>
+                            <div class="admin-settings-readonly admin-settings-field--full" role="note">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <span>Live Google review imports are deferred. Google Places content cannot be stored for the requested cache and stale-review behavior. This form does not request or expose API keys.</span>
+                            </div>
+                        </div>
+                    </section>
+
                     <section class="admin-settings-card" aria-labelledby="settings-social-title">
                         <div class="admin-settings-card-heading">
                             <span class="admin-settings-card-icon"><i class="bi bi-link-45deg" aria-hidden="true"></i></span>

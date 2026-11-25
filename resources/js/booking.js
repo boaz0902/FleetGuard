@@ -9,9 +9,12 @@ if (experience) {
     let vehicleOptions = [...experience.querySelectorAll('[data-booking-vehicle]')];
     const tripForm = experience.querySelector('[data-booking-trip-form]');
     const customerForm = experience.querySelector('[data-booking-customer-form]');
+    const documentInputs = [...experience.querySelectorAll('[data-booking-document]')];
     const tripError = experience.querySelector('[data-trip-error]');
     const customerError = experience.querySelector('[data-customer-error]');
     const submissionError = experience.querySelector('[data-booking-submit-error]');
+    const agreementError = experience.querySelector('[data-booking-agreement-error]');
+    const agreementInputs = [...experience.querySelectorAll('[data-legal-agreement]')];
     const confirmButton = experience.querySelector('[data-booking-confirm]');
     const submitLabel = experience.querySelector('[data-booking-submit-label]');
     const searchPreference = experience.querySelector('[data-search-preference]');
@@ -49,6 +52,8 @@ if (experience) {
     let availabilityRequest = null;
     let availabilitySequence = 0;
     let availabilityTimer;
+    let requestedVehicleId = '';
+    let autoAdvanceToTripDetails = false;
 
     const getToday = () => {
         const parts = new Intl.DateTimeFormat('en-CA', {
@@ -150,6 +155,7 @@ if (experience) {
             option.dataset.transmission = String(vehicle.transmission);
             option.dataset.fuel = String(vehicle.fuel);
             option.dataset.dailyRate = String(vehicle.daily_rate);
+            option.dataset.image = '';
             option.setAttribute('aria-pressed', 'false');
 
             if (vehicle.image_url) {
@@ -163,6 +169,7 @@ if (experience) {
                     image.height = 650;
                     image.loading = 'lazy';
                     image.decoding = 'async';
+                    option.dataset.image = imageUrl.href;
                     option.append(image);
                 }
             }
@@ -281,6 +288,21 @@ if (experience) {
             availabilityStatus.textContent = result.data.length
                 ? `${result.data.length} vehicle${result.data.length === 1 ? '' : 's'} available for these dates.`
                 : 'No vehicles are available for this date and time range.';
+
+            if (autoAdvanceToTripDetails) {
+                const requestedVehicle = vehicleOptions.find(
+                    (option) => option.dataset.vehicleId === requestedVehicleId,
+                );
+                autoAdvanceToTripDetails = false;
+
+                if (requestedVehicle) {
+                    setVehicle(requestedVehicleId);
+                    showBooking(1);
+                } else {
+                    availabilityStatus.textContent =
+                        'The selected vehicle is no longer available for these dates. Choose another available vehicle or change your dates.';
+                }
+            }
         } catch (error) {
             if (error.name === 'AbortError' || sequence !== availabilitySequence) {
                 return;
@@ -401,8 +423,21 @@ if (experience) {
             return;
         }
 
-        experience.querySelector('[data-review-image]').src = vehicle.dataset.image;
-        experience.querySelector('[data-review-image]').alt = `Illustrative sample ${vehicle.dataset.category.toLowerCase()} vehicle`;
+        const reviewImage = experience.querySelector('[data-review-image]');
+        const reviewImagePlaceholder = experience.querySelector('[data-review-image-placeholder]');
+
+        if (vehicle.dataset.image) {
+            reviewImage.src = vehicle.dataset.image;
+            reviewImage.alt = vehicle.dataset.name;
+            reviewImage.hidden = false;
+            reviewImagePlaceholder.hidden = true;
+        } else {
+            reviewImage.removeAttribute('src');
+            reviewImage.alt = '';
+            reviewImage.hidden = true;
+            reviewImagePlaceholder.hidden = false;
+        }
+
         experience.querySelector('[data-review-category]').textContent = vehicle.dataset.category;
         experience.querySelector('[data-review-vehicle]').textContent = vehicle.dataset.name;
         experience.querySelector('[data-review-specs]').textContent =
@@ -417,6 +452,9 @@ if (experience) {
         experience.querySelector('[data-review-name]').textContent = state.fullName;
         experience.querySelector('[data-review-email]').textContent = state.email;
         experience.querySelector('[data-review-mobile]').textContent = state.mobile;
+        const documentCount = documentInputs.filter((input) => input.files?.length).length;
+        experience.querySelector('[data-review-documents]').textContent = `${documentCount} of ${documentInputs.length} added`;
+        experience.querySelector('[data-review-documents-row]').hidden = documentCount === 0;
         experience.querySelector('[data-review-notes]').textContent = state.notes || '—';
         experience.querySelector('[data-review-notes-row]').hidden = !state.notes;
         experience.querySelector('[data-review-total]').textContent = moneyFormat.format(estimate());
@@ -490,7 +528,15 @@ if (experience) {
             'return_date',
             'return_time',
         ]);
-        const customerFields = new Set(['full_name', 'email', 'mobile_number', 'customer_notes']);
+        const customerFields = new Set([
+            'full_name',
+            'email',
+            'mobile_number',
+            'customer_notes',
+            'license_front',
+            'license_back',
+            'license_selfie',
+        ]);
         const tripMessages = Object.entries(errors)
             .filter(([field]) => tripFields.has(field))
             .flatMap(([, fieldMessages]) => fieldMessages);
@@ -511,6 +557,10 @@ if (experience) {
         } else if (customerMessages.length > 0) {
             customerError.textContent = customerMessages.join(' ');
             presentStep(2, { scroll: true });
+        } else if (Object.keys(errors).some((field) => field.startsWith('agreements.') || field.startsWith('policy_versions.'))) {
+            agreementError.textContent = messages.join(' ') || 'Review and accept each required policy before submitting.';
+            presentStep(3, { scroll: true });
+            agreementInputs.find((input) => !input.checked)?.focus();
         } else if (errors.vehicle_id) {
             presentStep(0, { scroll: true });
         } else if (messages.length === 0) {
@@ -522,6 +572,27 @@ if (experience) {
         if (isSubmitting || state.bookingReference) {
             return;
         }
+
+        const missingAgreement = agreementInputs.find((input) => !input.checked);
+
+        if (missingAgreement) {
+            agreementError.textContent = 'Check all three required agreements before submitting your booking request.';
+            missingAgreement.focus();
+            return;
+        }
+
+        agreementError.textContent = '';
+        const agreements = {};
+        const policyVersions = {};
+
+        agreementInputs.forEach((input) => {
+            const slugs = input.dataset.policySlugs.split(',');
+            const versionIds = input.dataset.policyVersionIds.split(',');
+            slugs.forEach((slug, index) => {
+                agreements[slug] = true;
+                policyVersions[slug] = versionIds[index];
+            });
+        });
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
@@ -538,6 +609,29 @@ if (experience) {
 
         try {
             let response;
+            const payload = new FormData();
+            const bookingFields = {
+                vehicle_id: state.vehicleId,
+                full_name: state.fullName,
+                email: state.email,
+                mobile_number: state.mobile.replace(/[ .]/g, ''),
+                pickup_location: state.pickupLocation,
+                pickup_date: state.pickupDate,
+                pickup_time: state.pickupTime,
+                return_location: state.returnLocation,
+                return_date: state.returnDate,
+                return_time: state.returnTime,
+                customer_notes: state.notes,
+            };
+
+            Object.entries(bookingFields).forEach(([key, value]) => payload.append(key, value));
+            Object.entries(agreements).forEach(([slug, value]) => payload.append(`agreements[${slug}]`, String(value)));
+            Object.entries(policyVersions).forEach(([slug, value]) => payload.append(`policy_versions[${slug}]`, value));
+            documentInputs.forEach((input) => {
+                if (input.files?.[0]) {
+                    payload.append(input.name, input.files[0]);
+                }
+            });
 
             try {
                 response = await fetch(experience.dataset.bookingUrl, {
@@ -545,23 +639,10 @@ if (experience) {
                     credentials: 'same-origin',
                     headers: {
                         Accept: 'application/json',
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                         'X-Requested-With': 'XMLHttpRequest',
                     },
-                    body: JSON.stringify({
-                        vehicle_id: state.vehicleId,
-                        full_name: state.fullName,
-                        email: state.email,
-                        mobile_number: state.mobile.replace(/[ .]/g, ''),
-                        pickup_location: state.pickupLocation,
-                        pickup_date: state.pickupDate,
-                        pickup_time: state.pickupTime,
-                        return_location: state.returnLocation,
-                        return_date: state.returnDate,
-                        return_time: state.returnTime,
-                        customer_notes: state.notes,
-                    }),
+                    body: payload,
                 });
             } catch {
                 submissionError.textContent = 'We could not reach the booking service. Your details are still here; check your connection and try again.';
@@ -659,6 +740,64 @@ if (experience) {
                 ? 'Return date cannot be earlier than the pickup date.'
                 : '',
         );
+        updateTimeConstraints();
+    }
+
+    function getCurrentTime() {
+        const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Manila',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23',
+        }).formatToParts(new Date());
+        const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+
+        return `${values.hour}:${values.minute}`;
+    }
+
+    function updateTimeConstraints() {
+        const pickupIsToday = pickupDate.value === getToday();
+        const sameRentalDay = Boolean(
+            pickupDate.value
+            && returnDate.value
+            && pickupDate.value === returnDate.value,
+        );
+        const currentTime = getCurrentTime();
+
+        [...pickupTime.options].forEach((option) => {
+            option.disabled = Boolean(option.value && pickupIsToday && option.value <= currentTime);
+        });
+
+        if (pickupTime.selectedOptions[0]?.disabled) {
+            pickupTime.value = '';
+        }
+
+        [...returnTime.options].forEach((option) => {
+            option.disabled = Boolean(
+                option.value
+                && sameRentalDay
+                && pickupTime.value
+                && option.value <= pickupTime.value,
+            );
+        });
+
+        if (returnTime.selectedOptions[0]?.disabled) {
+            returnTime.value = '';
+        }
+
+        pickupTime.setCustomValidity(
+            pickupIsToday && pickupTime.value && pickupTime.value <= currentTime
+                ? 'Choose a pickup time that has not passed.'
+                : '',
+        );
+        returnTime.setCustomValidity(
+            sameRentalDay
+            && pickupTime.value
+            && returnTime.value
+            && returnTime.value <= pickupTime.value
+                ? 'Return time must be later than pickup time.'
+                : '',
+        );
     }
 
     setRentalDates({});
@@ -674,8 +813,9 @@ if (experience) {
             setRentalDates({ pickup: details.pickupDate, returned: details.returnDate });
         }
 
-        pickupTime.value = '09:00';
-        returnTime.value = '18:00';
+        pickupTime.value = details.pickupTime || '09:00';
+        returnTime.value = details.returnTime || '18:00';
+        updateReturnDateMinimum();
 
         if (details.vehicleCategory && details.vehicleCategory !== 'any') {
             const categoryLabel = {
@@ -693,6 +833,32 @@ if (experience) {
 
         searchPreference.hidden = true;
     };
+
+    const pageParams = new URLSearchParams(window.location.search);
+    if (
+        pageParams.get('pickup_date')
+        || pageParams.get('return_date')
+        || pageParams.get('pickup_location')
+        || pageParams.get('vehicle')
+    ) {
+        populateFromSearch({
+            pickupLocation: pageParams.get('pickup_location') || '',
+            pickupDate: pageParams.get('pickup_date') || '',
+            pickupTime: pageParams.get('pickup_time') || '',
+            returnDate: pageParams.get('return_date') || '',
+            returnTime: pageParams.get('return_time') || '',
+            vehicleCategory: pageParams.get('category') || 'any',
+        });
+
+        const requestedVehicle = pageParams.get('vehicle');
+        if (requestedVehicle) {
+            requestedVehicleId = requestedVehicle;
+            autoAdvanceToTripDetails = true;
+            window.requestAnimationFrame(() => {
+                scheduleAvailabilitySearch();
+            });
+        }
+    }
 
     const showBooking = (step = 0) => {
         presentStep(step, { scroll: true });
@@ -736,7 +902,6 @@ if (experience) {
     tripForm.addEventListener('change', () => {
         tripError.textContent = '';
         submissionError.textContent = '';
-        updateReturnDateMinimum();
     });
 
     tripForm.addEventListener('submit', (event) => {
@@ -761,6 +926,19 @@ if (experience) {
     customerForm.addEventListener('input', () => {
         customerError.textContent = '';
         submissionError.textContent = '';
+    });
+
+    documentInputs.forEach((input) => {
+        input.addEventListener('change', () => {
+            const fileName = input.closest('.booking-identity-upload')?.querySelector('[data-booking-document-name]');
+
+            if (fileName) {
+                fileName.textContent = input.files?.[0]?.name ?? 'Choose a photo';
+            }
+
+            customerError.textContent = '';
+            submissionError.textContent = '';
+        });
     });
 
     customerForm.addEventListener('submit', (event) => {

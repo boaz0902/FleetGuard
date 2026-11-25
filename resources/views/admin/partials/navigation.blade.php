@@ -62,6 +62,24 @@
                 <i class="bi bi-people" aria-hidden="true"></i>
                 <span class="admin-nav-label">Customers</span>
             </a>
+            @can('viewAny', \App\Models\LegalPolicy::class)
+                <a class="admin-nav-item {{ request()->routeIs('admin.legal-policies.*') ? 'is-active' : '' }}"
+                   href="{{ route('admin.legal-policies.index') }}"
+                   @if (request()->routeIs('admin.legal-policies.*')) aria-current="page" @endif
+                   title="Legal & Policies">
+                    <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                    <span class="admin-nav-label">Legal &amp; Policies</span>
+                </a>
+            @endcan
+            @can('viewAny', \App\Models\Testimonial::class)
+                <a class="admin-nav-item {{ request()->routeIs('admin.testimonials.*') ? 'is-active' : '' }}"
+                   href="{{ route('admin.testimonials.index') }}"
+                   @if (request()->routeIs('admin.testimonials.*')) aria-current="page" @endif
+                   title="Customer reviews">
+                    <i class="bi bi-chat-quote" aria-hidden="true"></i>
+                    <span class="admin-nav-label">Customer Reviews</span>
+                </a>
+            @endcan
             @can('viewAny', \App\Models\AuditLog::class)
                 <a class="admin-nav-item {{ request()->routeIs('admin.reports.*') ? 'is-active' : '' }}"
                    href="{{ route('admin.reports.index') }}"

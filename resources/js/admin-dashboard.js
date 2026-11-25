@@ -1,8 +1,4 @@
-const adminFilterForms = document.querySelectorAll(
-    'form.admin-bookings-filters, form.admin-fleet-filters, form.admin-customers-filters, '
-    + 'form.admin-rentals-filters, form.admin-testimonials-filters, form.admin-message-filters, '
-    + 'form.admin-audit-filters, form.admin-report-filter-form',
-);
+const adminFilterForms = document.querySelectorAll('form.admin-bookings-filters');
 const mobileAdminFilters = window.matchMedia('(max-width: 760px)');
 
 adminFilterForms.forEach((form) => {
@@ -45,6 +41,40 @@ adminFilterForms.forEach((form) => {
 
     updateDisclosure();
     mobileAdminFilters.addEventListener('change', updateDisclosure);
+});
+
+document.querySelectorAll('[data-maintenance-form]').forEach((form) => {
+    const start = form.querySelector('[data-maintenance-start]');
+    const end = form.querySelector('[data-maintenance-end]');
+
+    if (!(start instanceof HTMLInputElement) || !(end instanceof HTMLInputElement)) {
+        return;
+    }
+
+    const oneHourAfter = (value) => {
+        const [date, time] = value.split('T');
+        const [year, month, day] = date.split('-').map(Number);
+        const [hour, minute] = time.split(':').map(Number);
+        const nextHour = new Date(Date.UTC(year, month - 1, day, hour + 1, minute));
+        const pad = (part) => String(part).padStart(2, '0');
+
+        return `${nextHour.getUTCFullYear()}-${pad(nextHour.getUTCMonth() + 1)}-${pad(nextHour.getUTCDate())}T${pad(nextHour.getUTCHours())}:${pad(nextHour.getUTCMinutes())}`;
+    };
+
+    const updateEndMinimum = () => {
+        if (!start.value) {
+            return;
+        }
+
+        end.min = start.value;
+        if (!end.value || end.value <= start.value) {
+            end.value = oneHourAfter(start.value);
+        }
+    };
+
+    start.addEventListener('input', updateEndMinimum);
+    start.addEventListener('change', updateEndMinimum);
+    updateEndMinimum();
 });
 
 const adminShell = document.querySelector('[data-admin-shell]');
@@ -211,28 +241,40 @@ const fleetViewButtons = document.querySelectorAll('[data-fleet-view-toggle]');
 if (fleetViewButtons.length > 0) {
     const viewPanels = document.querySelectorAll('[data-fleet-view-panel]');
     const viewStorageKey = 'admin-fleet-inventory-view';
+    const compactFleetLayout = window.matchMedia('(max-width: 800px)');
+    const preferredFleetView = () => {
+        const storedView = window.localStorage.getItem(viewStorageKey);
+
+        return ['table', 'grid'].includes(storedView) ? storedView : 'table';
+    };
 
     const setFleetView = (view, persist = true) => {
+        const activeView = compactFleetLayout.matches ? 'grid' : view;
+
         viewPanels.forEach((panel) => {
-            panel.hidden = panel.dataset.fleetViewPanel !== view;
+            panel.hidden = panel.dataset.fleetViewPanel !== activeView;
         });
         fleetViewButtons.forEach((button) => {
-            button.setAttribute('aria-pressed', String(button.dataset.fleetViewToggle === view));
+            button.setAttribute('aria-pressed', String(button.dataset.fleetViewToggle === activeView));
         });
 
-        if (persist) {
-            window.localStorage.setItem(viewStorageKey, view);
+        if (persist && !compactFleetLayout.matches) {
+            window.localStorage.setItem(viewStorageKey, activeView);
         }
     };
 
-    const storedView = window.localStorage.getItem(viewStorageKey);
-    setFleetView(
-        ['table', 'grid'].includes(storedView) ? storedView : 'table',
-        false,
-    );
+    setFleetView(preferredFleetView(), false);
 
     fleetViewButtons.forEach((button) => {
-        button.addEventListener('click', () => setFleetView(button.dataset.fleetViewToggle));
+        button.addEventListener('click', () => {
+            if (!compactFleetLayout.matches) {
+                setFleetView(button.dataset.fleetViewToggle);
+            }
+        });
+    });
+
+    compactFleetLayout.addEventListener('change', (event) => {
+        setFleetView(event.matches ? 'grid' : preferredFleetView(), false);
     });
 }
 
@@ -328,16 +370,39 @@ document.querySelectorAll('[data-fleet-tabs]').forEach((tabList) => {
 const fleetImageSelect = document.querySelector('[data-fleet-image-select]');
 const fleetImagePreview = document.querySelector('[data-fleet-image-preview-img]');
 const fleetImagePlaceholder = document.querySelector('[data-fleet-image-placeholder]');
+const fleetImageUpload = document.querySelector('[data-fleet-image-upload]');
 
 if (fleetImageSelect && fleetImagePreview && fleetImagePlaceholder) {
+    let uploadPreviewUrl = '';
     const updateFleetImagePreview = () => {
-        const previewUrl = fleetImageSelect.selectedOptions[0]?.dataset.previewUrl ?? '';
+        const previewUrl = uploadPreviewUrl || fleetImageSelect.selectedOptions[0]?.dataset.previewUrl || '';
         fleetImagePreview.src = previewUrl;
         fleetImagePreview.hidden = previewUrl === '';
         fleetImagePlaceholder.hidden = previewUrl !== '';
     };
 
-    fleetImageSelect.addEventListener('change', updateFleetImagePreview);
+    fleetImageSelect.addEventListener('change', () => {
+        if (fleetImageUpload) {
+            fleetImageUpload.value = '';
+            if (uploadPreviewUrl) {
+                URL.revokeObjectURL(uploadPreviewUrl);
+                uploadPreviewUrl = '';
+            }
+        }
+        updateFleetImagePreview();
+    });
+
+    fleetImageUpload?.addEventListener('change', () => {
+        if (uploadPreviewUrl) {
+            URL.revokeObjectURL(uploadPreviewUrl);
+        }
+        uploadPreviewUrl = fleetImageUpload.files?.[0] ? URL.createObjectURL(fleetImageUpload.files[0]) : '';
+        if (uploadPreviewUrl) {
+            fleetImageSelect.value = '';
+        }
+        updateFleetImagePreview();
+    });
+
     updateFleetImagePreview();
 }
 
@@ -1103,3 +1168,249 @@ document.querySelectorAll('[data-customer-note-input]').forEach((input) => {
     input.addEventListener('input', updateCount);
     updateCount();
 });
+
+const calendarAgenda = document.querySelector('[data-calendar-agenda]');
+const calendarSheet = document.querySelector('[data-calendar-mobile-sheet]');
+
+if (calendarSheet) {
+    const sheetTitle = calendarSheet.querySelector('[data-calendar-sheet-title]');
+    const sheetContent = calendarSheet.querySelector('[data-calendar-sheet-content]');
+    const sheetClose = calendarSheet.querySelector('[data-calendar-sheet-close]');
+    const legendOpen = document.querySelector('[data-calendar-legend-open]');
+    const legendTemplate = document.querySelector('[data-calendar-legend-template]');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let returnFocus = null;
+    let closeTimer = null;
+
+    const openCalendarSheet = (title, content, trigger) => {
+        if (!sheetTitle || !sheetContent) {
+            return;
+        }
+
+        window.clearTimeout(closeTimer);
+        calendarSheet.classList.remove('is-closing', 'is-visible');
+        sheetTitle.textContent = title;
+        sheetContent.replaceChildren(content);
+
+        if (!calendarSheet.open) {
+            calendarSheet.showModal();
+        }
+
+        if (trigger?.isConnected) {
+            returnFocus = trigger;
+        }
+
+        window.requestAnimationFrame(() => {
+            if (calendarSheet.open) {
+                calendarSheet.classList.add('is-visible');
+            }
+        });
+        sheetClose?.focus();
+    };
+
+    const closeCalendarSheet = () => {
+        if (!calendarSheet.open) {
+            return;
+        }
+
+        window.clearTimeout(closeTimer);
+
+        if (reduceMotion.matches) {
+            calendarSheet.close();
+            return;
+        }
+
+        calendarSheet.classList.remove('is-visible');
+        calendarSheet.classList.add('is-closing');
+        closeTimer = window.setTimeout(() => {
+            if (calendarSheet.open) {
+                calendarSheet.close();
+            }
+        }, 240);
+    };
+
+    const makeDetail = (label, value) => {
+        if (!value) {
+            return null;
+        }
+
+        const row = document.createElement('div');
+        const term = document.createElement('dt');
+        const description = document.createElement('dd');
+        term.textContent = label;
+        description.textContent = value;
+        row.append(term, description);
+        return row;
+    };
+
+    const eventDetails = (button) => {
+        const detailPanel = document.createElement('div');
+        const status = document.createElement('span');
+        const statusIcon = document.createElement('i');
+        const details = document.createElement('dl');
+        const isMaintenance = button.dataset.calendarKind === 'maintenance';
+        const statusKey = button.dataset.calendarStatusKey || 'approved';
+
+        detailPanel.className = 'admin-calendar-event-details';
+        status.className = `admin-calendar-agenda-status calendar-agenda-status--${statusKey}`;
+        statusIcon.className = `bi bi-${button.dataset.calendarIcon || 'calendar-check'}`;
+        statusIcon.setAttribute('aria-hidden', 'true');
+        status.append(statusIcon, document.createTextNode(button.dataset.calendarStatusLabel || 'Booking'));
+        [
+            makeDetail(isMaintenance ? 'Reason' : 'Reference', isMaintenance
+                ? (button.dataset.calendarReason || button.dataset.calendarReference)
+                : button.dataset.calendarReference),
+            makeDetail('Vehicle', button.dataset.calendarVehicle),
+            makeDetail('Pickup', button.dataset.calendarStart),
+            makeDetail('Return', button.dataset.calendarEnd),
+            makeDetail('Customer', button.dataset.calendarCustomer),
+        ].filter(Boolean).forEach((row) => details.append(row));
+
+        detailPanel.append(status, details);
+        return detailPanel;
+    };
+
+    const openEventDetails = (button, trigger) => {
+        const reference = button.dataset.calendarReference || 'Booking details';
+        const title = button.dataset.calendarKind === 'maintenance' ? 'Maintenance details' : reference;
+        openCalendarSheet(title, eventDetails(button), trigger);
+    };
+
+    const updateCalendarDate = (date) => {
+        if (!calendarAgenda) {
+            return;
+        }
+
+        calendarAgenda.dataset.selectedDate = date;
+        let booked = 0;
+        let maintenance = 0;
+        let available = 0;
+
+        calendarAgenda.querySelectorAll('[data-calendar-date]').forEach((button) => {
+            const selected = button.dataset.calendarDate === date;
+            button.classList.toggle('is-selected', selected);
+            button.setAttribute('aria-pressed', String(selected));
+        });
+
+        calendarAgenda.querySelectorAll('[data-calendar-vehicle-card]').forEach((card) => {
+            const schedule = card.querySelector('[data-calendar-vehicle-schedule]');
+            const dateGroup = Array.from(schedule?.content.querySelectorAll('[data-calendar-date-group]') || [])
+                .find((group) => group.dataset.calendarDateGroup === date);
+            const selectedEvents = card.querySelector('[data-calendar-selected-events]');
+            const dateList = dateGroup?.querySelector('[data-calendar-date-list]');
+            const nodes = dateList ? Array.from(dateList.children, (node) => node.cloneNode(true)) : [];
+            const eventButtons = dateList?.querySelectorAll('[data-calendar-agenda-event]') || [];
+            let hasBooking = false;
+            let hasMaintenance = false;
+
+            eventButtons.forEach((eventButton) => {
+                if (eventButton.dataset.calendarKind === 'maintenance') {
+                    hasMaintenance = true;
+                } else {
+                    hasBooking = true;
+                }
+            });
+
+            if (hasMaintenance) {
+                maintenance++;
+            } else if (hasBooking) {
+                booked++;
+            } else {
+                available++;
+            }
+
+            selectedEvents?.replaceChildren(...nodes);
+            card.querySelectorAll('[data-calendar-strip-date]').forEach((day) => {
+                day.classList.toggle('is-selected', day.dataset.calendarStripDate === date);
+            });
+        });
+
+        ['booked', 'available', 'maintenance'].forEach((key) => {
+            const value = { booked, available, maintenance }[key];
+            const output = calendarAgenda.querySelector(`[data-calendar-summary="${key}"]`);
+            if (output) {
+                output.textContent = String(value);
+            }
+        });
+
+        const strip = calendarAgenda.querySelector('.admin-calendar-date-strip');
+        const selectedChip = strip?.querySelector('.admin-calendar-date-chip.is-selected');
+
+        if (strip && selectedChip) {
+            const stripBounds = strip.getBoundingClientRect();
+            const chipBounds = selectedChip.getBoundingClientRect();
+            strip.scrollLeft += chipBounds.left - stripBounds.left - ((strip.clientWidth - chipBounds.width) / 2);
+        }
+    };
+
+    if (calendarAgenda) {
+        calendarAgenda.addEventListener('click', (event) => {
+            const target = event.target instanceof Element ? event.target : null;
+            const dateButton = target?.closest('[data-calendar-date]');
+            if (dateButton) {
+                updateCalendarDate(dateButton.dataset.calendarDate);
+                return;
+            }
+
+            const eventButton = target?.closest('[data-calendar-agenda-event]');
+            if (eventButton) {
+                if (eventButton.tagName !== 'A') {
+                    openEventDetails(eventButton, eventButton);
+                }
+                return;
+            }
+
+            const vehicleButton = target?.closest('[data-calendar-vehicle-open]');
+            if (!vehicleButton) {
+                return;
+            }
+
+            const schedule = vehicleButton.closest('[data-calendar-vehicle-card]')
+                ?.querySelector('[data-calendar-vehicle-schedule]');
+
+            if (schedule) {
+                openCalendarSheet(
+                    `${vehicleButton.dataset.calendarVehicleName} · 14-day schedule`,
+                    schedule.content.cloneNode(true),
+                    vehicleButton,
+                );
+            }
+        });
+
+        updateCalendarDate(calendarAgenda.dataset.selectedDate);
+    }
+
+    sheetContent?.addEventListener('click', (event) => {
+        const target = event.target instanceof Element ? event.target : null;
+        const eventButton = target?.closest('[data-calendar-agenda-event]');
+        if (eventButton && eventButton.tagName !== 'A') {
+            openEventDetails(eventButton, returnFocus);
+        }
+    });
+
+    legendOpen?.addEventListener('click', () => {
+        if (legendTemplate) {
+            openCalendarSheet('Timeline legend', legendTemplate.content.cloneNode(true), legendOpen);
+        }
+    });
+
+    sheetClose?.addEventListener('click', closeCalendarSheet);
+    calendarSheet.addEventListener('click', (event) => {
+        if (event.target === calendarSheet) {
+            closeCalendarSheet();
+        }
+    });
+    calendarSheet.addEventListener('cancel', (event) => {
+        event.preventDefault();
+        closeCalendarSheet();
+    });
+    calendarSheet.addEventListener('close', () => {
+        window.clearTimeout(closeTimer);
+        calendarSheet.classList.remove('is-visible', 'is-closing');
+
+        if (returnFocus?.isConnected) {
+            returnFocus.focus();
+        }
+        returnFocus = null;
+    });
+}

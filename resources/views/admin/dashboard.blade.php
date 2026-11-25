@@ -167,10 +167,10 @@
                                 @forelse ($recentReservations as $reservation)
                                     <tr>
                                         <td data-label="Reference"><span class="admin-booking-reference">{{ $reservation->booking_reference }}</span></td>
-                                        <td data-label="Customer">{{ $reservation->customer?->full_name ?? 'Customer record' }}</td>
-                                        <td data-label="Vehicle">{{ $reservation->vehicle?->name ?? 'Vehicle' }}</td>
-                                        <td data-label="Pickup">{{ $reservation->pickup_datetime->timezone('Asia/Manila')->format('M d, Y') }}</td>
-                                        <td data-label="Return">{{ $reservation->return_datetime->timezone('Asia/Manila')->format('M d, Y') }}</td>
+                                        <td data-label="Customer"><span class="admin-reservation-customer">{{ $reservation->customer?->full_name ?? 'Customer record' }}</span></td>
+                                        <td data-label="Vehicle"><span class="admin-reservation-vehicle">{{ $reservation->vehicle?->name ?? 'Vehicle' }}</span></td>
+                                        <td data-label="Pickup"><time class="admin-reservation-date" datetime="{{ $reservation->pickup_datetime->toIso8601String() }}">{{ $reservation->pickup_datetime->timezone('Asia/Manila')->format('M d, Y') }}</time></td>
+                                        <td data-label="Return"><time class="admin-reservation-date" datetime="{{ $reservation->return_datetime->toIso8601String() }}">{{ $reservation->return_datetime->timezone('Asia/Manila')->format('M d, Y') }}</time></td>
                                         <td data-label="Status">
                                             <span class="admin-status-badge admin-status--{{ $reservation->status }}">{{ ucfirst($reservation->status) }}</span>
                                         </td>

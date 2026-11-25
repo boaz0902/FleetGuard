@@ -9,6 +9,7 @@ use App\Services\BookingStatusTransitionService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -250,7 +251,7 @@ class BookingManagementController extends Controller
         $this->authorize('review', Booking::class);
 
         $booking->load([
-            'customer',
+            'customer.user',
             'vehicle',
             'auditLogs' => fn ($query) => $query
                 ->with('user')
@@ -271,6 +272,26 @@ class BookingManagementController extends Controller
             'booking' => $booking,
             'allowedTransitions' => $allowedTransitions,
         ]);
+    }
+
+    public function document(Booking $booking, string $document)
+    {
+        $this->authorize('review', Booking::class);
+
+        $path = match ($document) {
+            'license-front' => $booking->license_front_path,
+            'license-back' => $booking->license_back_path,
+            'license-selfie' => $booking->license_selfie_path,
+            default => null,
+        };
+
+        abort_unless(is_string($path) && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path, null, [
+            'Cache-Control' => 'private, no-store, max-age=0',
+            'Referrer-Policy' => 'no-referrer',
+            'X-Content-Type-Options' => 'nosniff',
+        ], 'inline');
     }
 
     public function updateStatus(

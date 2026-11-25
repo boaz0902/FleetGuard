@@ -229,11 +229,6 @@
                                         <a class="admin-customer-action-link" href="{{ route('admin.customers.show', $customer) }}" aria-label="View {{ $customer->full_name }} customer record">
                                             <i class="bi bi-eye" aria-hidden="true"></i><span>Details</span>
                                         </a>
-                                        @if ($canEdit)
-                                            <a class="admin-customer-action-link" href="{{ route('admin.customers.edit', $customer) }}" aria-label="Edit {{ $customer->full_name }}">
-                                                <i class="bi bi-pencil" aria-hidden="true"></i><span>Edit</span>
-                                            </a>
-                                        @endif
                                     </span>
                                 </td>
                             </tr>
@@ -284,9 +279,6 @@
                         </dl>
                         <footer>
                             <a class="admin-customer-secondary-link" href="{{ route('admin.customers.show', $customer) }}"><i class="bi bi-eye" aria-hidden="true"></i><span>View details</span></a>
-                            @if ($canEdit)
-                                <a class="admin-customer-primary-link" href="{{ route('admin.customers.edit', $customer) }}"><i class="bi bi-pencil" aria-hidden="true"></i><span>Edit</span></a>
-                            @endif
                         </footer>
                     </article>
                 @empty

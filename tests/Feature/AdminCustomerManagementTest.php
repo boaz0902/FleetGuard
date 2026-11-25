@@ -55,7 +55,8 @@ class AdminCustomerManagementTest extends TestCase
             ->assertOk()
             ->assertSee('alex.customer@example.test')
             ->assertSee('09171234567')
-            ->assertSee(route('admin.customers.edit', $customer), false);
+            ->assertSee(route('admin.customers.show', $customer), false)
+            ->assertDontSee('aria-label="Edit Alex Customer"', false);
 
         foreach ([$manager, $staff] as $viewer) {
             $this->actingAs($viewer)
@@ -66,7 +67,7 @@ class AdminCustomerManagementTest extends TestCase
                 ->assertSee('•••• 4567')
                 ->assertDontSee('alex.customer@example.test')
                 ->assertDontSee('09171234567')
-                ->assertDontSee(route('admin.customers.edit', $customer), false);
+                ->assertDontSee('aria-label="Edit Alex Customer"', false);
         }
 
         $this->actingAs($staff)
@@ -390,108 +391,44 @@ class AdminCustomerManagementTest extends TestCase
             ->assertDontSee('rental@example.test');
     }
 
-    public function test_admin_can_edit_supported_fields_and_audit_without_changing_booking_snapshots(): void
+    public function test_customer_profile_is_read_only_for_admins_and_verified_accounts_are_badged(): void
     {
         $admin = $this->userWithRole('admin');
+        $verifiedUser = $this->userWithRole('customer');
+        $verifiedUser->markEmailAsVerified();
         $customer = $this->customer([
-            'full_name' => 'Before Update',
-            'email' => 'before@example.test',
-            'mobile_number' => '09171234567',
+            'full_name' => 'Verified Customer',
+            'user_id' => $verifiedUser->id,
         ]);
-        $booking = $this->booking($customer, [
-            'daily_rate_snapshot' => '2500.00',
-            'estimated_total' => '7500.00',
-        ]);
+        $originalName = $customer->full_name;
 
         $this->actingAs($admin)
-            ->put(route('admin.customers.update', $customer), [
-                'full_name' => 'After Update',
-                'email' => 'AFTER@example.test',
-                'mobile_number' => '+639171234567',
-            ])
-            ->assertRedirect(route('admin.customers.show', $customer))
-            ->assertSessionHas('status', 'Customer profile updated.');
-
-        $this->assertDatabaseHas('customers', [
-            'id' => $customer->id,
-            'full_name' => 'After Update',
-            'email' => 'after@example.test',
-            'mobile_number' => '+639171234567',
-        ]);
-        $this->assertDatabaseHas('bookings', [
-            'id' => $booking->id,
-            'customer_id' => $customer->id,
-            'daily_rate_snapshot' => '2500.00',
-            'estimated_total' => '7500.00',
-        ]);
-
-        $audit = AuditLog::query()
-            ->where('action', 'customer_updated')
-            ->where('subject_type', Customer::class)
-            ->where('subject_id', (string) $customer->id)
-            ->firstOrFail();
-
-        $this->assertSame($admin->id, $audit->user_id);
-        $this->assertSame('before@example.test', $audit->changes['email']['from']);
-        $this->assertSame('after@example.test', $audit->changes['email']['to']);
-        $this->assertSame('After Update', $audit->changes['full_name']['to']);
-
-        $this->actingAs($admin)
-            ->get(route('admin.customers.show', $customer).'?tab=activity')
+            ->get(route('admin.customers.show', $customer))
             ->assertOk()
-            ->assertSee('Customer profile updated');
-    }
+            ->assertSee('admin-customer-verified-badge', false)
+            ->assertSee('Verified')
+            ->assertDontSee('Edit customer');
 
-    public function test_customer_edit_validation_and_admin_only_authorization(): void
-    {
-        $customer = $this->customer();
-        $duplicate = $this->customer();
-        $manager = $this->userWithRole('manager');
-        $admin = $this->userWithRole('admin');
+        $this->get('/admin/customers/'.$customer->id.'/edit')->assertNotFound();
+        $this->put('/admin/customers/'.$customer->id, [
+            'full_name' => 'Changed by admin',
+            'email' => 'changed@example.test',
+            'mobile_number' => '09170000000',
+        ])->assertNotFound();
 
-        $this->actingAs($manager)
-            ->get(route('admin.customers.edit', $customer))
-            ->assertForbidden();
-
-        $this->actingAs($manager)
-            ->put(route('admin.customers.update', $customer), [
-                'full_name' => 'Changed Name',
-                'email' => $customer->email,
-                'mobile_number' => $customer->mobile_number,
-            ])
-            ->assertForbidden();
-
-        $this->actingAs($admin)
-            ->from(route('admin.customers.edit', $customer))
-            ->put(route('admin.customers.update', $customer), [
-                'full_name' => 'Valid Name',
-                'email' => $duplicate->email,
-                'mobile_number' => 'invalid-phone',
-            ])
-            ->assertSessionHasErrors(['email', 'mobile_number']);
-
-        $this->assertSame(0, AuditLog::query()->where('action', 'customer_updated')->count());
-        $this->assertSame(0, $customer->fresh()->bookings()->count());
-    }
-
-    public function test_no_change_does_not_create_a_customer_audit_entry(): void
-    {
-        $admin = $this->userWithRole('admin');
-        $customer = $this->customer();
-
-        $this->actingAs($admin)
-            ->put(route('admin.customers.update', $customer), [
-                'full_name' => $customer->full_name,
-                'email' => $customer->email,
-                'mobile_number' => $customer->mobile_number,
-            ])
-            ->assertSessionHas('status', 'No changes were made to the customer record.');
-
+        $this->assertSame($originalName, $customer->fresh()->full_name);
         $this->assertDatabaseMissing('audit_logs', [
             'action' => 'customer_updated',
             'subject_type' => Customer::class,
             'subject_id' => (string) $customer->id,
         ]);
+
+        $unverifiedUser = $this->userWithRole('customer');
+        $unverifiedUser->forceFill(['email_verified_at' => null])->save();
+        $unverifiedCustomer = $this->customer(['user_id' => $unverifiedUser->id]);
+        $this->get(route('admin.customers.show', $unverifiedCustomer))
+            ->assertOk()
+            ->assertDontSee('admin-customer-verified-badge', false);
     }
 
     private function userWithRole(string $role): User

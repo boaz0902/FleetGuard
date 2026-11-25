@@ -25,6 +25,21 @@
             <a href="{{ $onHomePage ? '#contact' : route('home').'#contact' }}">Contact</a>
         </nav>
 
+        <nav class="public-footer-legal" aria-label="Legal and policies">
+            <h2>Legal &amp; Policies</h2>
+            @foreach ([
+                'terms-and-conditions' => 'Terms & Conditions',
+                'privacy-policy' => 'Privacy Policy',
+                'rental-policy' => 'Rental Policy',
+                'cancellation-policy' => 'Cancellation Policy',
+                'refund-policy' => 'Refund Policy',
+                'late-return-policy' => 'Late Return Policy',
+                'damage-accident-policy' => 'Damage & Accident Policy',
+            ] as $slug => $title)
+                <a href="{{ route('legal.show', $slug) }}">{{ $title }}</a>
+            @endforeach
+        </nav>
+
         <div class="public-footer-account">
             <h2>Account</h2>
             @auth

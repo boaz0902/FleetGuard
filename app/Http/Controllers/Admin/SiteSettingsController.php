@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
+use App\Services\GoogleReviewLink;
 use App\Services\MapLink;
 use App\Services\SiteSettings as SiteSettingsService;
 use App\Services\SocialProfile;
@@ -18,6 +19,7 @@ class SiteSettingsController extends Controller
 {
     public function __construct(
         private readonly MapLink $mapLink,
+        private readonly GoogleReviewLink $googleReviewLink,
         private readonly SocialProfile $socialProfile,
         private readonly TextMessageNumber $textMessageNumber,
         private readonly SiteSettingsService $siteSettings,
@@ -42,6 +44,20 @@ class SiteSettingsController extends Controller
             'values' => $values,
             'mapPreview' => $this->mapLink->parse(is_string($mapValue) ? $mapValue : null, is_string($address) ? $address : null),
             'socialPreview' => $this->parseSocialValues($socialValues),
+            'googleReviewLinks' => [
+                'read' => $this->googleReviewLink->parse(
+                    is_string(old('google_reviews_url', $values['google_reviews_url']))
+                        ? old('google_reviews_url', $values['google_reviews_url'])
+                        : null,
+                    'read',
+                ),
+                'write' => $this->googleReviewLink->parse(
+                    is_string(old('google_write_review_url', $values['google_write_review_url']))
+                        ? old('google_write_review_url', $values['google_write_review_url'])
+                        : null,
+                    'write',
+                ),
+            ],
             'textPreview' => $this->textMessageNumber->parse(
                 is_string(old('text_number', $values['text_number']))
                     ? (old('text_number', $values['text_number']) ?: $values['phone'])
@@ -64,6 +80,14 @@ class SiteSettingsController extends Controller
             'maps_url' => ['present', 'nullable', 'string', 'max:5000'],
             'text_number' => ['sometimes', 'nullable', 'string', 'max:50'],
             'social' => ['required', 'array:'.implode(',', $this->socialPlatforms())],
+            'google_business_name' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'google_reviews_url' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'google_write_review_url' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'google_place_id' => ['sometimes', 'nullable', 'string', 'max:256', 'regex:/^[A-Za-z0-9_-]{20,256}$/'],
+            'google_rating' => ['sometimes', 'nullable', 'numeric', 'between:1,5', 'regex:/^\d(?:\.\d)?$/'],
+            'google_review_count' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000000'],
+            'show_google_rating' => ['sometimes', 'boolean'],
+            'show_google_review_count' => ['sometimes', 'boolean'],
         ];
         foreach ($this->socialPlatforms() as $platform) {
             $rules['social.'.$platform] = [$platform === 'messenger' ? 'sometimes' : 'present', 'nullable', 'string', 'max:500'];
@@ -72,11 +96,18 @@ class SiteSettingsController extends Controller
         $validator = Validator::make($request->all(), $rules);
 
         $validator->after(function ($validator) use ($request): void {
-            foreach (['name', 'tagline', 'phone', 'email', 'address', 'business_hours', 'maps_url', 'text_number'] as $key) {
+            foreach (['name', 'tagline', 'phone', 'email', 'address', 'business_hours', 'maps_url', 'text_number', 'google_business_name', 'google_reviews_url', 'google_write_review_url', 'google_place_id'] as $key) {
                 $this->rejectControlCharacters($validator, $key, $request->input($key));
             }
-            foreach (['name', 'tagline', 'phone', 'email', 'address', 'business_hours'] as $key) {
+            foreach (['name', 'tagline', 'phone', 'email', 'address', 'business_hours', 'google_business_name'] as $key) {
                 $this->rejectMarkup($validator, $key, $request->input($key));
+            }
+
+            foreach (['google_reviews_url' => 'read', 'google_write_review_url' => 'write'] as $key => $kind) {
+                $value = $request->input($key);
+                if (is_string($value) && ! $this->googleReviewLink->parse($value, $kind)['valid']) {
+                    $validator->errors()->add($key, 'Enter a secure Google Maps profile or review link.');
+                }
             }
 
             foreach ($this->socialPlatforms() as $platform) {
@@ -120,6 +151,17 @@ class SiteSettingsController extends Controller
         foreach ($this->socialPlatforms() as $platform) {
             $profile = $this->socialProfile->parse($platform, $validated['social'][$platform] ?? null);
             $updates['social_'.$platform] = $profile['url'];
+        }
+
+        foreach (['google_business_name', 'google_place_id', 'google_rating', 'google_review_count', 'show_google_rating', 'show_google_review_count'] as $key) {
+            if (array_key_exists($key, $validated)) {
+                $updates[$key] = (string) $validated[$key];
+            }
+        }
+        foreach (['google_reviews_url' => 'read', 'google_write_review_url' => 'write'] as $key => $kind) {
+            if (array_key_exists($key, $validated)) {
+                $updates[$key] = $this->googleReviewLink->parse($validated[$key], $kind)['url'];
+            }
         }
 
         $this->siteSettings->update($updates, $request->user());
@@ -192,7 +234,11 @@ class SiteSettingsController extends Controller
 
     private function currentValues($settings): array
     {
-        $keys = ['name', 'tagline', 'phone', 'email', 'address', 'business_hours', 'maps_url', 'text_number'];
+        $keys = [
+            'name', 'tagline', 'phone', 'email', 'address', 'business_hours', 'maps_url', 'text_number',
+            'google_business_name', 'google_reviews_url', 'google_write_review_url', 'google_place_id', 'google_rating',
+            'google_review_count', 'show_google_rating', 'show_google_review_count',
+        ];
         $values = [];
 
         foreach ($keys as $key) {

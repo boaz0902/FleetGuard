@@ -40,7 +40,7 @@
                 </p>
 
                 <div class="hero-actions" data-reveal>
-                    <a class="button button-primary" href="#fleet">
+                    <a class="button button-primary" href="{{ route('fleet') }}">
                         Explore our fleet
                         <i class="bi bi-arrow-right button-arrow" aria-hidden="true"></i>
                     </a>
@@ -122,22 +122,60 @@
             </section>
         </section>
 
-        <section class="trust-strip" aria-label="Placeholder service highlights">
+        <section class="trust-strip" aria-label="Service highlights">
             <ul>
-                <li><i class="bi bi-patch-check" aria-hidden="true"></i><span>Insured &amp; maintained <small>(placeholder)</small></span></li>
-                <li><i class="bi bi-clock-history" aria-hidden="true"></i><span>Flexible pickup <small>(placeholder)</small></span></li>
-                <li><i class="bi bi-receipt" aria-hidden="true"></i><span>Transparent rates <small>(placeholder)</small></span></li>
-                <li><i class="bi bi-headset" aria-hidden="true"></i><span>Local support <small>(placeholder)</small></span></li>
+                <li><i class="bi bi-patch-check" aria-hidden="true"></i><span>Insured &amp; maintained</span></li>
+                <li><i class="bi bi-clock-history" aria-hidden="true"></i><span>Flexible pickup</span></li>
+                <li><i class="bi bi-receipt" aria-hidden="true"></i><span>Transparent rates</span></li>
+                <li><i class="bi bi-headset" aria-hidden="true"></i><span>Local support</span></li>
             </ul>
         </section>
 
-        @include('sections.fleet-showcase', ['vehicles' => config('sample_fleet')])
+        <section class="featured-fleet" id="fleet" aria-labelledby="featured-fleet-title">
+            <div class="featured-fleet-heading">
+                <div>
+                    <p class="fleet-eyebrow homepage-section-label"><span><strong>01</strong> / Featured vehicles</span></p>
+                    <h2 id="featured-fleet-title">Find your perfect ride.</h2>
+                </div>
+                <a class="button button-secondary" href="{{ route('fleet') }}">Browse the full fleet <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <div class="featured-fleet-grid">
+                @foreach ($vehicles->take(4) as $vehicle)
+                    <article class="featured-fleet-card">
+                        <a class="featured-fleet-image" href="{{ route('fleet.show', $vehicle['id']) }}" aria-label="View {{ $vehicle['name'] }} details">
+                            @if ($vehicle['image'])
+                                <img src="{{ asset($vehicle['image']) }}" alt="{{ $vehicle['name'] }}" width="1000" height="650" loading="lazy">
+                            @else
+                                <span class="featured-fleet-fallback" aria-hidden="true"><i class="bi bi-car-front"></i></span>
+                            @endif
+                            <span class="featured-fleet-image-shade" aria-hidden="true"></span>
+                            <span class="featured-fleet-index" aria-hidden="true">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }} <i></i> FLEETGUARD COLLECTION</span>
+                        </a>
+                        <div class="featured-fleet-card-body">
+                            <div class="featured-fleet-card-meta">
+                                <p>{{ strtoupper($vehicle['category_label']) }}</p>
+                                <span>Insured &amp; maintained</span>
+                            </div>
+                            <h3><a href="{{ route('fleet.show', $vehicle['id']) }}">{{ $vehicle['name'] }}</a></h3>
+                            <ul class="featured-fleet-specs" aria-label="Vehicle specifications">
+                                <li><i class="bi bi-people" aria-hidden="true"></i>{{ $vehicle['passengers'] }}</li>
+                                <li><i class="bi bi-gear-wide-connected" aria-hidden="true"></i>{{ $vehicle['transmission'] }}</li>
+                            </ul>
+                            <div class="featured-fleet-card-footer">
+                                <div class="featured-fleet-rate"><span>Daily rate</span><strong>{{ $vehicle['price'] }} <small>/ day</small></strong></div>
+                                <a class="featured-fleet-details" href="{{ route('fleet.show', $vehicle['id']) }}">View details <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                            </div>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </section>
 
         @include('sections.how-it-works')
 
-        @include('sections.booking-experience', ['vehicles' => []])
-
         @include('sections.about')
+
+        @include('sections.testimonials', ['testimonials' => $testimonials])
 
         @include('sections.faq')
 
@@ -147,7 +185,7 @@
             <p class="fleet-eyebrow homepage-section-label"><span>Make your next trip yours</span></p>
             <h2 id="closing-cta-title">Your next drive starts with a request.</h2>
             <p>Choose your dates and vehicle. FleetGuard will review availability and confirm the details with you.</p>
-            <a class="button button-primary" href="#booking">Start a booking request <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+            <a class="button button-primary" href="{{ route('booking') }}">Start a booking request <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
         </section>
     </main>
 @endsection

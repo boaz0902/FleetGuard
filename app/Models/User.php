@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Notifications\ResetCustomerPassword;
-use App\Notifications\VerifyCustomerEmail;
+use App\Services\CustomerEmailVerificationService;
 use App\Services\SafeMailDeliveryService;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -28,12 +28,15 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'email_verification_code_hash',
     ];
 
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_verification_code_expires_at' => 'datetime',
+            'email_verification_code_attempts' => 'integer',
             'password' => 'hashed',
             'role' => 'string',
         ];
@@ -76,7 +79,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function sendEmailVerificationNotification(): void
     {
-        app(SafeMailDeliveryService::class)->notify($this, new VerifyCustomerEmail);
+        app(CustomerEmailVerificationService::class)->sendCode($this);
     }
 
     public function sendPasswordResetNotification($token): void

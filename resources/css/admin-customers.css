@@ -775,6 +775,17 @@
     font-size: clamp(20px, 2vw, 26px);
 }
 
+.admin-customer-name-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-customer-name-line .admin-customer-verified-badge {
+    margin: 0;
+}
+
 .admin-customer-profile-heading > span {
     display: block;
     margin-top: 6px;
@@ -861,11 +872,13 @@
 .admin-customer-overview-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
     gap: 14px;
 }
 
 .admin-customer-detail-card {
     min-width: 0;
+    align-self: start;
     padding: 17px;
     border: 1px solid #e6ebef;
     border-radius: 12px;
@@ -1404,9 +1417,6 @@
         padding-bottom: 92px;
     }
 
-    .admin-customer-details--editable {
-        padding-bottom: 92px;
-    }
 }
 
 @media (max-width: 520px) {
@@ -1830,17 +1840,24 @@
     font-size: 17px;
 }
 
-.admin-customer-status-dialog {
-    width: min(100% - 32px, 480px);
+.admin-shell .admin-customer-status-dialog {
+    position: fixed;
+    inset: auto;
+    top: 50dvh;
+    left: 50vw;
+    width: calc(100vw - 32px);
     max-width: 480px;
-    max-height: min(90vh, 700px);
+    max-height: min(700px, calc(100dvh - 32px));
+    box-sizing: border-box;
     overflow-y: auto;
+    margin: 0;
     padding: 21px;
     border: 1px solid #dfe5ea;
     border-radius: 16px;
     background: #fff;
     color: #25323e;
     box-shadow: 0 18px 70px rgb(12 22 32 / 25%);
+    transform: translate(-50%, -50%);
 }
 
 .admin-customer-status-dialog::backdrop {

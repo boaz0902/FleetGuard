@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CancelCustomerBookingRequest;
 use App\Models\Booking;
+use App\Models\Testimonial;
 use App\Services\BookingStatusTransitionService;
 use App\Services\CustomerBookingService;
 use Carbon\Carbon;
@@ -42,13 +43,19 @@ class CustomerBookingsController extends Controller
             $query->where('status', $activeFilter);
         }
 
+        $bookingPage = $query
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(8)
+            ->withQueryString();
+
         return view('customer.bookings.index', [
             'verified' => true,
-            'bookings' => $query
-                ->orderByDesc('created_at')
-                ->orderByDesc('id')
-                ->paginate(8)
-                ->withQueryString(),
+            'bookings' => $bookingPage,
+            'bookingTestimonials' => Testimonial::query()
+                ->whereIn('booking_id', $bookingPage->getCollection()->pluck('id'))
+                ->get()
+                ->keyBy('booking_id'),
             'counts' => $bookings->statusCounts($user),
             'summary' => $bookings->summary($user, $now),
             'activeFilter' => $activeFilter,

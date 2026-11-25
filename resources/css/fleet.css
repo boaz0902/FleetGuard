@@ -135,11 +135,23 @@
 }
 
 .fleet-viewport {
+    position: relative;
     width: 100%;
     height: clamp(350px, calc(100svh - 370px), 430px);
     flex: 0 0 auto;
     min-height: 0;
     overflow: hidden;
+}
+
+.fleet-empty-state {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    margin: 0;
+    place-items: center;
+    color: #aab4bf;
+    font-size: 12px;
+    text-align: center;
 }
 
 .fleet-track {
@@ -216,6 +228,20 @@
     height: 100%;
     object-fit: cover;
     transition: transform 650ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+
+.vehicle-card-image-placeholder,
+.vehicle-dialog-image-placeholder {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    color: #89939f;
+    font-size: 48px;
+}
+
+.vehicle-dialog-image img[hidden] {
+    display: none;
 }
 
 .vehicle-card:hover .vehicle-card-image img {
@@ -547,6 +573,83 @@
     color: #aab4bf;
     font-size: 11px;
     line-height: 1.6;
+}
+
+.vehicle-dialog-availability {
+    margin-top: 20px;
+    padding: 15px 16px;
+    border: 1px solid rgb(255 255 255 / 12%);
+    background: #12171d;
+}
+
+.vehicle-dialog-availability-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vehicle-dialog-availability-heading h3 {
+    margin: 0;
+    color: #f4f6f8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.vehicle-dialog-availability-heading > span,
+.vehicle-dialog-schedule-note {
+    color: #89939f;
+    font-size: 8px;
+}
+
+.vehicle-dialog-schedule-status {
+    margin: 12px 0 0;
+    color: #bac3cc;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.vehicle-dialog-schedule-status.is-available {
+    color: #9cdbb4;
+}
+
+.vehicle-dialog-schedule-status.is-reserved,
+.vehicle-dialog-schedule-status.is-ongoing,
+.vehicle-dialog-schedule-status.is-maintenance,
+.vehicle-dialog-schedule-status.is-inactive,
+.vehicle-dialog-schedule-status.is-error {
+    color: #f0bf89;
+}
+
+.vehicle-dialog-schedule-list {
+    display: grid;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.vehicle-dialog-schedule-list li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 5px 12px;
+    padding-top: 8px;
+    border-top: 1px solid rgb(255 255 255 / 8%);
+    color: #aab4bf;
+    font-size: 9px;
+}
+
+.vehicle-dialog-schedule-list strong {
+    color: #f4f6f8;
+    font-weight: 600;
+}
+
+.vehicle-dialog-schedule-note {
+    margin: 11px 0 0;
+    line-height: 1.5;
 }
 
 .vehicle-dialog-specs {

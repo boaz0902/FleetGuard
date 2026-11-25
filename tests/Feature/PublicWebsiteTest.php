@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\User;
+use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -33,10 +34,78 @@ class PublicWebsiteTest extends TestCase
         $response->assertSee('href="#faq"', false);
         $response->assertSee('href="#contact"', false);
         $response->assertSee('href="#booking"', false);
+        $response->assertSee('Legal & Policies');
+        foreach ([
+            'terms-and-conditions',
+            'privacy-policy',
+            'rental-policy',
+            'cancellation-policy',
+            'refund-policy',
+            'late-return-policy',
+            'damage-accident-policy',
+        ] as $slug) {
+            $response->assertSee('href="'.route('legal.show', $slug).'"', false);
+        }
+        $response->assertSee('I have read and agree to the');
+        $response->assertSee('I acknowledge the');
         $response->assertSee('id="vehicle-search"', false);
         $response->assertDontSee('id="experience"', false);
         $response->assertSee('A clear path from search to request.');
         $response->assertSee('To be confirmed by FleetGuard.');
+    }
+
+    public function test_customer_fleet_uses_active_database_vehicles_and_loads_schedule_in_the_modal(): void
+    {
+        Vehicle::query()->create([
+            'id' => 'fleetguard-vios',
+            'name' => 'FleetGuard Vios',
+            'brand' => 'Toyota',
+            'model' => 'Vios',
+            'category' => 'sedan',
+            'description' => 'A fleet vehicle.',
+            'daily_rate' => '2500.00',
+            'passenger_capacity' => 5,
+            'transmission' => 'Automatic',
+            'fuel_type' => 'Gasoline',
+            'image_path' => null,
+            'status' => Vehicle::STATUS_ACTIVE,
+        ]);
+        Vehicle::query()->create([
+            'id' => 'maintenance-car',
+            'name' => 'Maintenance Car',
+            'brand' => 'Toyota',
+            'model' => 'Service',
+            'category' => 'sedan',
+            'daily_rate' => '2000.00',
+            'passenger_capacity' => 5,
+            'transmission' => 'Automatic',
+            'fuel_type' => 'Gasoline',
+            'status' => Vehicle::STATUS_MAINTENANCE,
+        ]);
+        Vehicle::query()->create([
+            'id' => 'inactive-car',
+            'name' => 'Inactive Car',
+            'brand' => 'Toyota',
+            'model' => 'Inactive',
+            'category' => 'sedan',
+            'daily_rate' => '2000.00',
+            'passenger_capacity' => 5,
+            'transmission' => 'Automatic',
+            'fuel_type' => 'Gasoline',
+            'status' => Vehicle::STATUS_INACTIVE,
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('FleetGuard Vios')
+            ->assertSee('data-schedule-url="'.route('vehicles.schedule', 'fleetguard-vios').'"', false)
+            ->assertSee('Availability schedule')
+            ->assertSee('data-dialog-schedule-status', false)
+            ->assertSee('Current rate')
+            ->assertSee('Maintenance Car')
+            ->assertDontSee('Inactive Car')
+            ->assertDontSee('Sample inventory')
+            ->assertViewHas('vehicles', fn ($vehicles) => $vehicles->count() === 2);
     }
 
     public function test_public_navigation_and_footer_follow_customer_and_staff_account_state(): void

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Vehicle;
+use App\Models\LegalPolicy;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -17,7 +18,7 @@ class StoreBookingRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'vehicle_id' => ['required', 'string', Rule::exists('vehicles', 'id')],
             'full_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255'],
@@ -29,12 +30,42 @@ class StoreBookingRequest extends FormRequest
             'return_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:pickup_date'],
             'return_time' => ['required', 'date_format:H:i'],
             'customer_notes' => ['nullable', 'string', 'max:1000'],
+            'license_front' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'license_back' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'license_selfie' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'agreements' => ['required', 'array:'.implode(',', LegalPolicy::bookingAgreementSlugs())],
+            'policy_versions' => ['required', 'array:'.implode(',', LegalPolicy::bookingAgreementSlugs())],
         ];
+
+        foreach (LegalPolicy::bookingAgreementSlugs() as $slug) {
+            $rules['agreements.'.$slug] = ['required', 'accepted'];
+            $rules['policy_versions.'.$slug] = ['required', 'integer', 'exists:legal_policy_versions,id'];
+        }
+
+        return $rules;
     }
 
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $asOf = now();
+
+            foreach (LegalPolicy::bookingAgreementSlugs() as $slug) {
+                $policy = LegalPolicy::query()->where('slug', $slug)->where('is_published', true)->first();
+                $version = $policy?->currentPublishedVersionAt($asOf);
+
+                if (! $version || (int) $this->input('policy_versions.'.$slug) !== $version->id) {
+                    $validator->errors()->add(
+                        'agreements.'.$slug,
+                        'A required policy has changed. Review the current policy and try again.',
+                    );
+                }
+            }
+
             if ($validator->errors()->isNotEmpty()) {
                 return;
             }

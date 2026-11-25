@@ -254,6 +254,16 @@
                                                     <span>Edit</span>
                                                 </a>
                                             @endcan
+                                            @can('delete', $vehicle)
+                                                <form method="POST" action="{{ route('admin.fleet.destroy', $vehicle) }}" onsubmit="return confirm('Delete this vehicle? Vehicles with booking or maintenance history cannot be deleted.')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="admin-fleet-action-link admin-fleet-delete-link" type="submit" aria-label="Delete {{ $vehicle->name }}" title="Delete vehicle">
+                                                        <i class="bi bi-trash3" aria-hidden="true"></i>
+                                                        <span>Delete</span>
+                                                    </button>
+                                                </form>
+                                            @endcan
                                         </span>
                                     </td>
                                 </tr>
@@ -299,6 +309,16 @@
                             <a class="admin-fleet-secondary-link" href="{{ route('admin.fleet.show', $vehicle) }}"><i class="bi bi-eye" aria-hidden="true"></i><span>View</span></a>
                             @can('update', $vehicle)
                                 <a class="admin-fleet-primary-link" href="{{ route('admin.fleet.edit', $vehicle) }}"><i class="bi bi-pencil" aria-hidden="true"></i><span>Edit</span></a>
+                            @endcan
+                            @can('delete', $vehicle)
+                                <form method="POST" action="{{ route('admin.fleet.destroy', $vehicle) }}" onsubmit="return confirm('Delete this vehicle? Vehicles with booking or maintenance history cannot be deleted.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="admin-fleet-secondary-link admin-fleet-delete-button" type="submit" aria-label="Delete {{ $vehicle->name }}">
+                                        <i class="bi bi-trash3" aria-hidden="true"></i>
+                                        <span>Delete</span>
+                                    </button>
+                                </form>
                             @endcan
                         </footer>
                     </article>
@@ -365,43 +385,11 @@
             @endif
 
             @can('manage', \App\Models\Vehicle::class)
-                <form class="admin-fleet-maintenance-form" method="POST" action="{{ route('admin.fleet.maintenance.store') }}">
-                    @csrf
-                    <div class="admin-fleet-maintenance-form-heading">
-                        <span class="admin-fleet-maintenance-icon"><i class="bi bi-calendar-plus" aria-hidden="true"></i></span>
-                        <div>
-                            <strong>Add maintenance period</strong>
-                            <small>Existing approved or ongoing bookings cannot be overlapped.</small>
-                        </div>
-                    </div>
-                    <div class="admin-fleet-maintenance-fields">
-                        <label>
-                            <span>Vehicle</span>
-                            <select name="vehicle_id" required>
-                                <option value="">Select a vehicle</option>
-                                @foreach ($maintenanceVehicles as $vehicle)
-                                    <option value="{{ $vehicle->id }}" @selected(old('vehicle_id') === $vehicle->id)>{{ $vehicle->name }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>
-                            <span>Start</span>
-                            <input type="datetime-local" name="start_datetime" value="{{ old('start_datetime') }}" required>
-                        </label>
-                        <label>
-                            <span>End</span>
-                            <input type="datetime-local" name="end_datetime" value="{{ old('end_datetime') }}" required>
-                        </label>
-                        <label>
-                            <span>Reason</span>
-                            <input type="text" name="reason" value="{{ old('reason') }}" maxlength="255" placeholder="e.g. Scheduled service" required>
-                        </label>
-                        <button class="admin-fleet-filter-button" type="submit">
-                            <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                            <span>Add maintenance</span>
-                        </button>
-                    </div>
-                </form>
+                @include('admin.partials.vehicle-maintenance-form', [
+                    'maintenanceVehicles' => $maintenanceVehicles,
+                    'maintenanceAction' => route('admin.fleet.maintenance.store'),
+                    'defaultVehicleId' => $maintenanceVehicles->firstWhere('id', request()->query('maintenance_vehicle'))?->id,
+                ])
             @endcan
         </section>
     </main>

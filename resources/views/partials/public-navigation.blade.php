@@ -20,7 +20,7 @@
 
         <nav class="primary-navigation" id="primary-navigation" aria-label="Main navigation" data-navigation>
             <div class="nav-primary-links">
-                <a class="nav-link" href="{{ $onHomePage ? '#fleet' : route('home').'#fleet' }}" data-section-link>
+                <a class="nav-link" href="{{ route('fleet') }}" data-section-link>
                     <i class="nav-icon bi bi-car-front" aria-hidden="true"></i><span>Our Fleet</span>
                 </a>
                 <a class="nav-link" href="{{ $onHomePage ? '#how-it-works' : route('home').'#how-it-works' }}" data-section-link>
@@ -120,7 +120,7 @@
                 @endauth
             </div>
 
-            <a class="nav-cta" href="{{ $onHomePage ? '#booking' : route('home').'#booking' }}">
+            <a class="nav-cta" href="{{ route('booking') }}">
                 <span>Book a Vehicle</span><i class="bi bi-arrow-up-right nav-arrow" aria-hidden="true"></i>
             </a>
         </nav>

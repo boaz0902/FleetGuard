@@ -17,10 +17,12 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use RuntimeException;
 
 class FleetController extends Controller
 {
@@ -223,6 +225,10 @@ class FleetController extends Controller
     {
         $this->authorize('create', Vehicle::class);
         $validated = $request->validated();
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $this->storeVehicleImage($request->file('image'));
+        }
+        unset($validated['image']);
         $baseId = Str::limit(Str::slug($validated['brand'].'-'.$validated['model']), 180, '');
         $vehicleId = ($baseId !== '' ? $baseId : 'vehicle').'-'.Str::lower(Str::random(8));
 
@@ -331,6 +337,10 @@ class FleetController extends Controller
     ): RedirectResponse {
         $this->authorize('update', $vehicle);
         $validated = $request->validated();
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $this->storeVehicleImage($request->file('image'));
+        }
+        unset($validated['image']);
 
         $hasChanges = DB::transaction(function () use ($vehicle, $validated, $availability): bool {
             $lockedVehicle = Vehicle::query()->whereKey($vehicle->id)->lockForUpdate()->firstOrFail();
@@ -393,6 +403,36 @@ class FleetController extends Controller
         return redirect()->route('admin.fleet.show', $vehicle)->with('status', $message);
     }
 
+    public function destroy(Vehicle $vehicle): RedirectResponse
+    {
+        $this->authorize('delete', $vehicle);
+
+        DB::transaction(function () use ($vehicle): void {
+            $lockedVehicle = Vehicle::query()->whereKey($vehicle->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedVehicle->bookings()->exists() || $lockedVehicle->unavailabilities()->exists()) {
+                throw ValidationException::withMessages([
+                    'vehicle' => ['This vehicle cannot be deleted because it has booking or maintenance history. Deactivate it instead.'],
+                ]);
+            }
+
+            AuditLog::query()->create([
+                'user_id' => Auth::id(),
+                'action' => 'vehicle_deleted',
+                'subject_type' => Vehicle::class,
+                'subject_id' => $lockedVehicle->id,
+                'changes' => collect($lockedVehicle->getAttributes())
+                    ->map(fn (mixed $value): array => ['from' => $value, 'to' => null])
+                    ->all(),
+                'created_at' => now(),
+            ]);
+
+            $lockedVehicle->delete();
+        });
+
+        return redirect()->route('admin.fleet.index')->with('status', 'Vehicle removed from the fleet.');
+    }
+
     private function categories(): Collection
     {
         return Vehicle::query()
@@ -407,6 +447,85 @@ class FleetController extends Controller
     {
         return collect(File::files(public_path('images/fleet')))
             ->map(fn (\SplFileInfo $file): string => 'images/fleet/'.$file->getFilename())
+            ->merge(collect(Storage::disk('public')->exists('fleet')
+                ? Storage::disk('public')->files('fleet')
+                : [])->map(fn (string $path): string => 'storage/'.$path))
             ->values();
+    }
+
+    private function storeVehicleImage(\Illuminate\Http\UploadedFile $image): string
+    {
+        $source = imagecreatefromstring($image->get());
+
+        if ($source === false) {
+            throw ValidationException::withMessages([
+                'image' => ['The selected image could not be read. Please choose another image.'],
+            ]);
+        }
+
+        $sourceWidth = imagesx($source);
+        $sourceHeight = imagesy($source);
+        $targetWidth = 1600;
+        $targetHeight = 1000;
+        $targetAspect = $targetWidth / $targetHeight;
+        $sourceAspect = $sourceWidth / $sourceHeight;
+        $cropWidth = $sourceWidth;
+        $cropHeight = $sourceHeight;
+        $cropX = 0;
+        $cropY = 0;
+
+        if ($sourceAspect > $targetAspect) {
+            $cropWidth = (int) round($sourceHeight * $targetAspect);
+            $cropX = (int) floor(($sourceWidth - $cropWidth) / 2);
+        } elseif ($sourceAspect < $targetAspect) {
+            $cropHeight = (int) round($sourceWidth / $targetAspect);
+            $cropY = (int) floor(($sourceHeight - $cropHeight) / 2);
+        }
+
+        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+
+        if ($canvas === false) {
+            imagedestroy($source);
+            throw new RuntimeException('Unable to allocate the vehicle image canvas.');
+        }
+
+        try {
+            $background = imagecolorallocate($canvas, 255, 255, 255);
+            imagefill($canvas, 0, 0, $background);
+
+            if (! imagecopyresampled(
+                $canvas,
+                $source,
+                0,
+                0,
+                $cropX,
+                $cropY,
+                $targetWidth,
+                $targetHeight,
+                $cropWidth,
+                $cropHeight,
+            )) {
+                throw new RuntimeException('Unable to resize the vehicle image.');
+            }
+
+            ob_start();
+            $encoded = imagejpeg($canvas, null, 88);
+            $contents = ob_get_clean();
+
+            if (! $encoded || ! is_string($contents)) {
+                throw new RuntimeException('Unable to encode the resized vehicle image.');
+            }
+        } finally {
+            imagedestroy($source);
+            imagedestroy($canvas);
+        }
+
+        $path = 'fleet/'.Str::uuid().'.jpg';
+
+        if (! Storage::disk('public')->put($path, $contents)) {
+            throw new RuntimeException('Unable to save the uploaded vehicle image.');
+        }
+
+        return 'storage/'.$path;
     }
 }

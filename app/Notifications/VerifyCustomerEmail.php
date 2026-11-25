@@ -2,35 +2,34 @@
 
 namespace App\Notifications;
 
-use App\Mail\FleetGuardMessageMail;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Mail\CustomerAccountActionMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Notification;
 
-class VerifyCustomerEmail extends VerifyEmail implements ShouldQueue
+class VerifyCustomerEmail extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct()
+    public function __construct(#[\SensitiveParameter] private readonly string $code)
     {
         $this->afterCommit();
     }
 
-    public function toMail($notifiable): FleetGuardMessageMail
+    public function via($notifiable): array
     {
-        $expiresIn = (int) config('auth.verification.expire', 60);
+        return ['mail'];
+    }
 
-        return (new FleetGuardMessageMail(
-            subjectLine: 'Verify your email',
-            preheader: 'Verify your FleetGuard account email address.',
+    public function toMail($notifiable): CustomerAccountActionMail
+    {
+        return (new CustomerAccountActionMail(
+            subjectLine: 'Your FleetGuard verification code: '.$this->code,
+            preheader: 'Your FleetGuard verification code is '.$this->code.'.',
             heading: 'Verify your email',
-            intro: 'Please verify your email address to complete your FleetGuard account setup.',
-            action: [
-                'label' => 'Verify email address',
-                'url' => $this->verificationUrl($notifiable),
-            ],
-            note: "This link expires in {$expiresIn} minutes. If you did not create an account, you can ignore this message.",
-            eventType: 'email_verification',
+            intro: 'We received a request to verify the email address for your FleetGuard account. Enter this code on the verification page.',
+            code: $this->code,
+            note: 'This code expires in 5 minutes. If you did not request it, you can safely ignore this email.',
         ))->to($notifiable->getEmailForVerification());
     }
 }

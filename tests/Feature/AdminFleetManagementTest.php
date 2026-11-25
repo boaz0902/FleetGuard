@@ -10,6 +10,8 @@ use App\Models\Vehicle;
 use App\Models\VehicleUnavailability;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminFleetManagementTest extends TestCase
@@ -35,7 +37,8 @@ class AdminFleetManagementTest extends TestCase
             ->get(route('admin.fleet.index'))
             ->assertOk()
             ->assertDontSee('Add vehicle')
-            ->assertDontSee('Edit '.$vehicle->name);
+            ->assertDontSee('Edit '.$vehicle->name)
+            ->assertDontSee('Delete '.$vehicle->name);
         $this->actingAs($staff)->get(route('admin.fleet.index'))->assertOk();
         $this->actingAs($customer)->get(route('admin.fleet.index'))->assertForbidden();
         $this->app['auth']->logout();
@@ -47,6 +50,34 @@ class AdminFleetManagementTest extends TestCase
         $this->actingAs($staff)
             ->get(route('admin.fleet.edit', $vehicle))
             ->assertForbidden();
+    }
+
+    public function test_vehicle_image_uploads_are_resized_to_the_fleet_media_dimensions(): void
+    {
+        Storage::fake('public');
+        $admin = $this->userWithRole('admin');
+
+        $this->actingAs($admin)
+            ->get(route('admin.fleet.create'))
+            ->assertOk()
+            ->assertSee('enctype="multipart/form-data"', false)
+            ->assertSee('name="image"', false);
+
+        $this->actingAs($admin)
+            ->post(route('admin.fleet.store'), [
+                ...$this->vehicleInput(),
+                'image' => UploadedFile::fake()->image('vehicle.png', 2400, 1400),
+            ])
+            ->assertRedirect();
+
+        $vehicle = Vehicle::query()->firstOrFail();
+        $this->assertStringStartsWith('storage/fleet/', $vehicle->image_path);
+        $path = str_replace('storage/', '', $vehicle->image_path);
+        Storage::disk('public')->assertExists($path);
+
+        $dimensions = getimagesizefromstring(Storage::disk('public')->get($path));
+        $this->assertSame(1600, $dimensions[0]);
+        $this->assertSame(1000, $dimensions[1]);
     }
 
     public function test_fleet_search_pagination_and_maintenance_vehicle_selector_are_independent(): void
@@ -85,6 +116,27 @@ class AdminFleetManagementTest extends TestCase
             ->assertSee(route('admin.fleet.index', ['search' => 'available']), false)
             ->assertViewHas('vehicles', fn ($vehicles) => $vehicles->currentPage() === 2 && $vehicles->total() === 26)
             ->assertSee('search=Searchable', false);
+    }
+
+    public function test_maintenance_forms_share_fields_and_default_to_a_future_service_window(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2031-02-01 10:00:30', 'Asia/Manila'));
+        $admin = $this->userWithRole('admin');
+        $this->vehicle();
+
+        foreach ([
+            route('admin.fleet.index'),
+            route('admin.calendar.index'),
+        ] as $route) {
+            $this->actingAs($admin)
+                ->get($route)
+                ->assertOk()
+                ->assertSee('class="admin-maintenance-form"', false)
+                ->assertSee('value="2031-02-01T10:01"', false)
+                ->assertSee('value="2031-02-01T11:01"', false)
+                ->assertSee('data-maintenance-start', false)
+                ->assertSee('data-maintenance-end', false);
+        }
     }
 
     public function test_fleet_search_covers_visible_fields_and_keeps_toolbar_filters_available(): void
@@ -271,6 +323,56 @@ class AdminFleetManagementTest extends TestCase
             ->assertForbidden();
         $this->put(route('admin.fleet.update', $vehicle), $this->vehicleInput())
             ->assertForbidden();
+        $this->delete(route('admin.fleet.destroy', $vehicle))
+            ->assertForbidden();
+    }
+
+    public function test_admin_can_delete_an_unused_vehicle_and_deletion_is_audited(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $vehicle = $this->vehicle();
+
+        $this->actingAs($admin)
+            ->get(route('admin.fleet.index'))
+            ->assertOk()
+            ->assertSee('Delete '.$vehicle->name)
+            ->assertSee(route('admin.fleet.destroy', $vehicle), false);
+
+        $this->delete(route('admin.fleet.destroy', $vehicle))
+            ->assertRedirect(route('admin.fleet.index'))
+            ->assertSessionHas('status', 'Vehicle removed from the fleet.');
+
+        $this->assertDatabaseMissing('vehicles', ['id' => $vehicle->id]);
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $admin->id,
+            'action' => 'vehicle_deleted',
+            'subject_type' => Vehicle::class,
+            'subject_id' => $vehicle->id,
+        ]);
+    }
+
+    public function test_vehicles_with_bookings_or_maintenance_records_cannot_be_deleted(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $vehicleWithBooking = $this->vehicle('booked-vehicle');
+        $this->booking($vehicleWithBooking);
+        $vehicleWithMaintenance = $this->vehicle('maintained-vehicle');
+        VehicleUnavailability::query()->create([
+            'vehicle_id' => $vehicleWithMaintenance->id,
+            'start_datetime' => '2031-02-01 09:00:00',
+            'end_datetime' => '2031-02-01 10:00:00',
+            'reason' => 'Scheduled service',
+        ]);
+
+        foreach ([$vehicleWithBooking, $vehicleWithMaintenance] as $vehicle) {
+            $this->actingAs($admin)
+                ->from(route('admin.fleet.index'))
+                ->delete(route('admin.fleet.destroy', $vehicle))
+                ->assertRedirect(route('admin.fleet.index'))
+                ->assertSessionHasErrors('vehicle');
+
+            $this->assertDatabaseHas('vehicles', ['id' => $vehicle->id]);
+        }
     }
 
     public function test_vehicle_deactivation_is_blocked_by_approved_or_ongoing_bookings(): void
@@ -338,6 +440,25 @@ class AdminFleetManagementTest extends TestCase
             'vehicle_id' => $vehicle->id,
             'start_datetime' => '2031-02-04 09:00:00',
         ]);
+    }
+
+    public function test_maintenance_start_cannot_be_in_the_past(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $vehicle = $this->vehicle();
+        $start = Carbon::now('Asia/Manila')->subDay()->startOfMinute();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.fleet.maintenance.store'), [
+                'vehicle_id' => $vehicle->id,
+                'start_datetime' => $start->format('Y-m-d\TH:i'),
+                'end_datetime' => $start->copy()->addHour()->format('Y-m-d\TH:i'),
+                'reason' => 'Past maintenance window',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('start_datetime');
+
+        $this->assertDatabaseCount('vehicle_unavailabilities', 0);
     }
 
     public function test_pending_rejected_and_cancelled_bookings_do_not_block_maintenance_and_removal_is_audited(): void

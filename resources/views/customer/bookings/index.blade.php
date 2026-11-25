@@ -28,7 +28,7 @@
                     <p>Your reservation history is private. Verify your email address to continue.</p>
                     <form method="POST" action="{{ route('verification.send') }}">
                         @csrf
-                        <button class="customer-submit" type="submit">Resend verification link <i class="bi bi-arrow-up-right" aria-hidden="true"></i></button>
+                        <button class="customer-submit" type="submit">Resend verification code <i class="bi bi-arrow-up-right" aria-hidden="true"></i></button>
                     </form>
                 </section>
             @else
@@ -140,6 +140,29 @@
                                     <span class="customer-booking-total"><small>Estimated total</small><strong>₱{{ number_format((float) $booking->estimated_total, 2) }}</strong></span>
                                     <a class="customer-action-link" href="{{ route('bookings.show', $booking) }}">View details <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
                                 </div>
+
+                                @php
+                                    $testimonial = $bookingTestimonials->get($booking->id);
+                                @endphp
+                                @if ($testimonial)
+                                    @php
+                                        [$testimonialState, $testimonialIcon, $testimonialClass] = match ($testimonial->status) {
+                                            \App\Enums\TestimonialStatus::Pending => ['Your review is awaiting moderation.', 'hourglass-split', 'is-pending'],
+                                            \App\Enums\TestimonialStatus::Published => ['Your review was approved and published.', 'check-circle', 'is-published'],
+                                            \App\Enums\TestimonialStatus::Rejected => ['Your review was not selected for publication.', 'info-circle', 'is-rejected'],
+                                            default => ['Your review has been received.', 'info-circle', ''],
+                                        };
+                                    @endphp
+                                    <p class="customer-testimonial-booking-state {{ $testimonialClass }}" role="status">
+                                        <i class="bi bi-{{ $testimonialIcon }}" aria-hidden="true"></i> {{ $testimonialState }}
+                                    </p>
+                                @elseif ($booking->status === \App\Models\Booking::STATUS_COMPLETED)
+                                    <div class="customer-testimonial-booking-state">
+                                        <a class="customer-testimonial-link" href="{{ route('account.bookings.testimonials.create', $booking) }}">
+                                            <i class="bi bi-chat-quote" aria-hidden="true"></i> Share your experience
+                                        </a>
+                                    </div>
+                                @endif
                             </article>
                         @endforeach
                     </section>

@@ -7,8 +7,11 @@ use App\Http\Requests\CustomerEmailVerificationRequest;
 use App\Http\Requests\UpdateCustomerProfileRequest;
 use App\Models\AuditLog;
 use App\Models\Customer;
+use App\Models\LegalPolicy;
+use App\Models\LegalPolicyAcceptance;
 use App\Models\User;
 use App\Services\CustomerBookingService;
+use App\Services\CustomerEmailVerificationService;
 use App\Services\SafeMailDeliveryService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class CustomerAccountController extends Controller
@@ -36,6 +40,32 @@ class CustomerAccountController extends Controller
             'user' => $user,
             'initials' => $initials,
             'bookingSummary' => $bookings->summary($user, Carbon::now(config('app.timezone'))),
+        ]);
+    }
+
+    public function legalPolicies(Request $request): View
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->isCustomer(), 403);
+
+        $customer = Customer::query()->where('user_id', $user->id)->first();
+        $acceptances = $customer
+            ? LegalPolicyAcceptance::query()
+                ->where('customer_id', $customer->id)
+                ->with(['policy:id,title,slug', 'version:id,legal_policy_id,version,content,effective_at,published_at'])
+                ->latest('accepted_at')
+                ->paginate(20)
+            : collect();
+
+        return view('customer.legal-policies', [
+            'user' => $user,
+            'acceptances' => $acceptances,
+            'policies' => LegalPolicy::query()
+                ->where('is_published', true)
+                ->orderBy('title')
+                ->get()
+                ->filter(fn (LegalPolicy $policy): bool => $policy->currentPublishedVersionAt(now()) !== null)
+                ->values(),
         ]);
     }
 
@@ -151,9 +181,21 @@ class CustomerAccountController extends Controller
         return view('customer-auth.verify-email');
     }
 
-    public function verify(CustomerEmailVerificationRequest $request): RedirectResponse
+    public function verify(
+        CustomerEmailVerificationRequest $request,
+        CustomerEmailVerificationService $verification,
+    ): RedirectResponse
     {
-        $request->fulfill();
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+
+        if (! $verification->verifyCode($user, $request->validated('code'))) {
+            throw ValidationException::withMessages([
+                'code' => ['This verification code is invalid or has expired. Request a new code and try again.'],
+            ]);
+        }
+
+        $user->refresh();
 
         return redirect()
             ->intended(route('account'))
@@ -170,6 +212,6 @@ class CustomerAccountController extends Controller
 
         return redirect()
             ->route('verification.notice')
-            ->with('status', 'If your email still needs verification, a new link has been sent.');
+            ->with('status', 'If your email still needs verification, a new verification code has been sent.');
     }
 }

@@ -3,6 +3,289 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const standaloneFleet = document.querySelector('.showroom-page [data-fleet]');
+
+if (standaloneFleet) {
+    const cards = [...standaloneFleet.querySelectorAll('[data-fleet-card]')];
+    const filterButtons = [...standaloneFleet.querySelectorAll('[data-filter]')];
+    const count = standaloneFleet.querySelector('[data-fleet-count]');
+
+    filterButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const category = button.dataset.filter;
+
+            filterButtons.forEach((item) => {
+                const selected = item === button;
+                item.classList.toggle('is-active', selected);
+                item.setAttribute('aria-pressed', String(selected));
+            });
+
+            let visible = 0;
+            cards.forEach((card) => {
+                const show = category === 'all' || card.dataset.category === category;
+                card.hidden = !show;
+                if (show) visible += 1;
+            });
+
+            if (count) count.textContent = `Showing ${visible} ${visible === 1 ? 'vehicle' : 'vehicles'}`;
+        });
+    });
+
+    const pickup = document.querySelector('[data-fleet-pickup]');
+    const returned = document.querySelector('[data-fleet-return]');
+
+    if (pickup && returned) {
+        const today = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Manila',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        }).format(new Date()).replaceAll('/', '-');
+        pickup.min = today;
+        returned.min = pickup.value || today;
+        const updateMinimum = () => {
+            returned.min = pickup.value || today;
+            returned.setCustomValidity(
+                pickup.value && returned.value && returned.value <= pickup.value
+                    ? 'Return date must be after the pickup date.'
+                    : '',
+            );
+        };
+        pickup.addEventListener('change', updateMinimum);
+        returned.addEventListener('change', updateMinimum);
+    }
+}
+
+const vehicleBookingForm = document.querySelector('[data-vehicle-booking-form]');
+
+if (vehicleBookingForm instanceof HTMLFormElement) {
+    const pickupDate = vehicleBookingForm.querySelector('[data-vehicle-pickup-date]');
+    const pickupTime = vehicleBookingForm.querySelector('[data-vehicle-pickup-time]');
+    const returnDate = vehicleBookingForm.querySelector('[data-vehicle-return-date]');
+    const returnTime = vehicleBookingForm.querySelector('[data-vehicle-return-time]');
+    const dateHint = vehicleBookingForm.querySelector('[data-vehicle-date-hint]');
+    const availabilityStatus = vehicleBookingForm.querySelector('[data-vehicle-availability]');
+    const requestButton = vehicleBookingForm.querySelector('[data-request-vehicle]');
+
+    if (
+        pickupDate instanceof HTMLInputElement
+        && pickupTime instanceof HTMLSelectElement
+        && returnDate instanceof HTMLInputElement
+        && returnTime instanceof HTMLSelectElement
+    ) {
+        let availabilityRequest = null;
+        let availabilitySequence = 0;
+        let availabilityTimer;
+
+        const getManilaNow = () => {
+            const parts = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hourCycle: 'h23',
+            }).formatToParts(new Date());
+            const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+
+            return {
+                date: `${values.year}-${values.month}-${values.day}`,
+                time: `${values.hour}:${values.minute}`,
+            };
+        };
+        const refreshDateAndTimeConstraints = () => {
+            const now = getManilaNow();
+            pickupDate.min = now.date;
+            returnDate.min = pickupDate.value || now.date;
+
+            const sameDayAsToday = pickupDate.value === now.date;
+            [...pickupTime.options].forEach((option) => {
+                option.disabled = Boolean(option.value && sameDayAsToday && option.value <= now.time);
+            });
+
+            if (pickupTime.selectedOptions[0]?.disabled) {
+                pickupTime.value = '';
+            }
+
+            const sameRentalDay = Boolean(pickupDate.value && returnDate.value && pickupDate.value === returnDate.value);
+            [...returnTime.options].forEach((option) => {
+                option.disabled = Boolean(
+                    option.value
+                    && sameRentalDay
+                    && pickupTime.value
+                    && option.value <= pickupTime.value,
+                );
+            });
+
+            if (returnTime.selectedOptions[0]?.disabled) {
+                returnTime.value = '';
+            }
+
+            const invalidDateOrder = Boolean(
+                pickupDate.value
+                && returnDate.value
+                && returnDate.value < pickupDate.value,
+            );
+            const invalidTimeOrder = Boolean(
+                sameRentalDay
+                && pickupTime.value
+                && returnTime.value
+                && returnTime.value <= pickupTime.value,
+            );
+            returnDate.setCustomValidity(invalidDateOrder || invalidTimeOrder
+                ? 'Return date and time must be later than pickup.'
+                : '');
+
+            if (dateHint) {
+                dateHint.textContent = invalidDateOrder || invalidTimeOrder
+                    ? 'Choose a return date and time after your pickup.'
+                    : 'Pickup times are shown in Asia/Manila. Past dates and times are not available.';
+            }
+        };
+
+        const checkVehicleAvailability = async () => {
+            const sequence = ++availabilitySequence;
+            availabilityRequest?.abort();
+            availabilityRequest = null;
+
+            if (requestButton instanceof HTMLButtonElement) {
+                requestButton.disabled = true;
+                requestButton.removeAttribute('aria-busy');
+            }
+
+            availabilityStatus?.classList.remove('is-loading', 'is-error', 'is-available', 'is-unavailable');
+
+            if (!pickupDate.value || !pickupTime.value || !returnDate.value || !returnTime.value) {
+                if (availabilityStatus) {
+                    availabilityStatus.textContent = 'Choose your pickup and return dates and times to check live availability.';
+                }
+                return;
+            }
+
+            const params = new URLSearchParams({
+                pickup_date: pickupDate.value,
+                pickup_time: pickupTime.value,
+                return_date: returnDate.value,
+                return_time: returnTime.value,
+            });
+            availabilityStatus?.classList.add('is-loading');
+            if (availabilityStatus) {
+                availabilityStatus.textContent = 'Checking live availability…';
+            }
+            if (requestButton instanceof HTMLButtonElement) {
+                requestButton.setAttribute('aria-busy', 'true');
+            }
+
+            availabilityRequest = new AbortController();
+
+            try {
+                const response = await fetch(`${vehicleBookingForm.dataset.availabilityUrl}?${params}`, {
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json' },
+                    signal: availabilityRequest.signal,
+                });
+                let result;
+
+                try {
+                    result = await response.json();
+                } catch {
+                    throw new Error('The availability service returned an unexpected response.');
+                }
+
+                if (sequence !== availabilitySequence) {
+                    return;
+                }
+
+                if (response.status === 422) {
+                    const messages = Object.values(result.errors ?? {}).flat();
+                    throw new Error(messages.join(' ') || 'Check the selected pickup and return times.');
+                }
+
+                if (response.status === 429) {
+                    throw new Error('Too many availability searches. Please wait a moment and try again.');
+                }
+
+                if (!response.ok || !Array.isArray(result.data)) {
+                    throw new Error('Availability could not be checked. Please try again.');
+                }
+
+                const isAvailable = result.data.some(
+                    (vehicle) => String(vehicle.id) === vehicleBookingForm.dataset.vehicleId,
+                );
+                availabilityStatus?.classList.remove('is-loading');
+                availabilityStatus?.classList.add(isAvailable ? 'is-available' : 'is-unavailable');
+
+                if (availabilityStatus) {
+                    availabilityStatus.textContent = isAvailable
+                        ? 'Available for your selected dates. Availability may change until your request is confirmed.'
+                        : 'This vehicle is not available for your selected dates. Try different dates or browse the fleet.';
+                }
+
+                if (requestButton instanceof HTMLButtonElement) {
+                    requestButton.disabled = !isAvailable;
+                    requestButton.removeAttribute('aria-busy');
+                }
+            } catch (error) {
+                if (error.name === 'AbortError' || sequence !== availabilitySequence) {
+                    return;
+                }
+
+                availabilityStatus?.classList.remove('is-loading');
+                availabilityStatus?.classList.add('is-error');
+                if (availabilityStatus) {
+                    availabilityStatus.textContent = error instanceof TypeError
+                        ? 'Could not reach the availability service. Check your connection and try again.'
+                        : error.message;
+                }
+                if (requestButton instanceof HTMLButtonElement) {
+                    requestButton.disabled = true;
+                    requestButton.removeAttribute('aria-busy');
+                }
+            }
+        };
+        const scheduleAvailabilityCheck = () => {
+            window.clearTimeout(availabilityTimer);
+            availabilityRequest?.abort();
+            availabilitySequence++;
+            availabilityStatus?.classList.remove('is-loading', 'is-error', 'is-available', 'is-unavailable');
+            if (requestButton instanceof HTMLButtonElement) {
+                requestButton.disabled = true;
+                requestButton.removeAttribute('aria-busy');
+            }
+            availabilityTimer = window.setTimeout(() => {
+                void checkVehicleAvailability();
+            }, 250);
+        };
+
+        [pickupDate, pickupTime, returnDate, returnTime].forEach((field) => {
+            const updateBookingState = () => {
+                refreshDateAndTimeConstraints();
+                scheduleAvailabilityCheck();
+            };
+            field.addEventListener('change', updateBookingState);
+            field.addEventListener('input', updateBookingState);
+        });
+
+        vehicleBookingForm.addEventListener('submit', (event) => {
+            refreshDateAndTimeConstraints();
+            if (!vehicleBookingForm.reportValidity()) {
+                event.preventDefault();
+                return;
+            }
+
+            if (!(requestButton instanceof HTMLButtonElement) || requestButton.disabled) {
+                event.preventDefault();
+            }
+        });
+
+        refreshDateAndTimeConstraints();
+        if (pickupDate.value && pickupTime.value && returnDate.value && returnTime.value) {
+            scheduleAvailabilityCheck();
+        }
+    }
+}
+
 const fleet = document.querySelector('[data-fleet]');
 
 if (fleet) {
@@ -154,21 +437,25 @@ if (fleet) {
                 },
             );
 
-            gsap.fromTo(
-                card.querySelector('[data-vehicle-image]'),
-                { scale: 1.055 },
-                {
-                    scale: 1,
-                    ease: 'none',
-                    scrollTrigger: {
-                        trigger: card,
-                        containerAnimation: horizontalTween,
-                        start: 'left 100%',
-                        end: 'left 35%',
-                        scrub: true,
+            const image = card.querySelector('[data-vehicle-image]');
+
+            if (image) {
+                gsap.fromTo(
+                    image,
+                    { scale: 1.055 },
+                    {
+                        scale: 1,
+                        ease: 'none',
+                        scrollTrigger: {
+                            trigger: card,
+                            containerAnimation: horizontalTween,
+                            start: 'left 100%',
+                            end: 'left 35%',
+                            scrub: true,
+                        },
                     },
-                },
-            );
+                );
+            }
         });
 
         return () => {
@@ -177,6 +464,9 @@ if (fleet) {
     });
 
     if (dialog && dialogPanel && dialogImage) {
+        const dialogImagePlaceholder = dialog.querySelector('[data-dialog-image-placeholder]');
+        const scheduleStatus = dialog.querySelector('[data-dialog-schedule-status]');
+        const scheduleList = dialog.querySelector('[data-dialog-schedule-list]');
         const fillDialog = (card) => {
             const values = {
                 '[data-dialog-title]': card.dataset.name,
@@ -192,14 +482,95 @@ if (fleet) {
                 dialog.querySelector(selector).textContent = value;
             });
 
-            dialogImage.src = card.dataset.image;
-            dialogImage.alt = card.dataset.imageAlt;
+            if (card.dataset.image) {
+                dialogImage.src = card.dataset.image;
+                dialogImage.alt = card.dataset.imageAlt;
+                dialogImage.hidden = false;
+                dialogImagePlaceholder.hidden = true;
+            } else {
+                dialogImage.removeAttribute('src');
+                dialogImage.alt = '';
+                dialogImage.hidden = true;
+                dialogImagePlaceholder.hidden = false;
+            }
+        };
+
+        let scheduleRequest;
+        let scheduleSequence = 0;
+
+        const loadSchedule = async (card) => {
+            const sequence = ++scheduleSequence;
+            scheduleRequest?.abort();
+            scheduleRequest = new AbortController();
+            scheduleList.replaceChildren();
+            scheduleStatus.className = 'vehicle-dialog-schedule-status is-loading';
+            scheduleStatus.textContent = 'Loading current availability…';
+
+            try {
+                const response = await fetch(card.dataset.scheduleUrl, {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                    signal: scheduleRequest.signal,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Schedule request failed with status ${response.status}`);
+                }
+
+                const { data } = await response.json();
+
+                if (sequence !== scheduleSequence) {
+                    return;
+                }
+
+                const statusLabels = {
+                    available: 'Available now',
+                    reserved: 'Booked now',
+                    ongoing: 'Rental in progress',
+                    maintenance: 'Under maintenance',
+                    inactive: 'Not currently available for rental',
+                };
+                const statusLabel = statusLabels[data.status];
+
+                if (!statusLabel || !Array.isArray(data.periods)) {
+                    throw new Error('The schedule response was incomplete');
+                }
+
+                scheduleStatus.className = `vehicle-dialog-schedule-status is-${data.status}`;
+                scheduleStatus.textContent = statusLabel;
+
+                if (data.periods.length === 0) {
+                    const item = document.createElement('li');
+                    item.textContent = `No confirmed bookings or maintenance scheduled in the next ${data.days_ahead} days.`;
+                    scheduleList.append(item);
+                    return;
+                }
+
+                data.periods.forEach((period) => {
+                    const item = document.createElement('li');
+                    const label = document.createElement('strong');
+                    const dates = document.createElement('span');
+
+                    label.textContent = period.label;
+                    dates.textContent = `${period.start} – ${period.end}`;
+                    item.append(label, dates);
+                    scheduleList.append(item);
+                });
+            } catch (error) {
+                if (error.name === 'AbortError' || sequence !== scheduleSequence) {
+                    return;
+                }
+
+                scheduleStatus.className = 'vehicle-dialog-schedule-status is-error';
+                scheduleStatus.textContent = 'We could not load the latest schedule. Continue to booking to check availability.';
+            }
         };
 
         const openDialog = (card) => {
             activeVehicle = card;
             fillDialog(card);
             dialog.showModal();
+            loadSchedule(card);
             activeDialogTween?.kill();
 
             if (reduceMotion) {
@@ -242,6 +613,7 @@ if (fleet) {
         }, true);
 
         dialog.addEventListener('close', () => {
+            scheduleRequest?.abort();
             activeDialogTween?.kill();
             gsap.set(dialogPanel, { clearProps: 'opacity,visibility,transform' });
         });

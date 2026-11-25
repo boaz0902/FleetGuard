@@ -14,12 +14,11 @@
         <div class="fleet-controls">
             <div class="fleet-filters" role="group" aria-label="Filter vehicles by category" data-fleet-filters>
                 <button class="fleet-filter is-active" type="button" data-filter="all" aria-pressed="true">All vehicles</button>
-                <button class="fleet-filter" type="button" data-filter="suv" aria-pressed="false">SUV</button>
-                <button class="fleet-filter" type="button" data-filter="sedan" aria-pressed="false">Sedan</button>
-                <button class="fleet-filter" type="button" data-filter="mpv" aria-pressed="false">MPV</button>
-                <button class="fleet-filter" type="button" data-filter="van" aria-pressed="false">Van</button>
+                @foreach ($categories as $category)
+                    <button class="fleet-filter" type="button" data-filter="{{ $category }}" aria-pressed="false">{{ strtoupper($category) }}</button>
+                @endforeach
             </div>
-            <p class="fleet-result-count" aria-live="polite" data-fleet-count>06 vehicles</p>
+            <p class="fleet-result-count" aria-live="polite" data-fleet-count>{{ str_pad($vehicles->count(), 2, '0', STR_PAD_LEFT) }} {{ $vehicles->count() === 1 ? 'vehicle' : 'vehicles' }}</p>
         </div>
 
         <div class="fleet-viewport" data-fleet-viewport>
@@ -28,10 +27,13 @@
                     @include('components.fleet-card', ['vehicle' => $vehicle, 'index' => $index])
                 @endforeach
             </div>
+            @if ($vehicles->isEmpty())
+                <p class="fleet-empty-state">No vehicles are currently listed. Please check back soon.</p>
+            @endif
         </div>
 
         <div class="fleet-progress-row">
-            <p class="fleet-sample-note">Sample vehicles, images &amp; rates only. Availability is not verified.</p>
+            <p class="fleet-sample-note">Availability is checked against current bookings and maintenance schedules.</p>
             <div class="fleet-progress" role="progressbar" aria-label="Fleet showcase scroll progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-fleet-progress>
                 <span data-fleet-progress-fill></span>
             </div>
@@ -46,13 +48,23 @@
             <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
         <div class="vehicle-dialog-image">
-            <img src="" alt="" width="1000" height="650" data-dialog-image>
-            <span class="vehicle-sample-tag"><span aria-hidden="true"></span>Sample inventory</span>
+            <img src="" alt="" width="1000" height="650" data-dialog-image hidden>
+            <span class="vehicle-dialog-image-placeholder" data-dialog-image-placeholder aria-hidden="true"><i class="bi bi-car-front"></i></span>
+            <span class="vehicle-sample-tag"><span aria-hidden="true"></span>Fleet vehicle</span>
         </div>
         <div class="vehicle-dialog-content">
             <p class="vehicle-category" data-dialog-category></p>
             <h2 id="vehicle-dialog-title" data-dialog-title></h2>
-            <p class="vehicle-dialog-disclaimer">Illustrative sample listing — availability and pricing are not verified.</p>
+            <p class="vehicle-dialog-disclaimer">Schedule information is current as of now. Availability is checked again for your selected dates and when you submit a request.</p>
+            <section class="vehicle-dialog-availability" aria-labelledby="vehicle-dialog-availability-title">
+                <div class="vehicle-dialog-availability-heading">
+                    <h3 id="vehicle-dialog-availability-title">Availability schedule</h3>
+                    <span>Next 90 days</span>
+                </div>
+                <p class="vehicle-dialog-schedule-status" role="status" aria-live="polite" data-dialog-schedule-status>Open vehicle details to load the latest schedule.</p>
+                <ul class="vehicle-dialog-schedule-list" data-dialog-schedule-list></ul>
+                <p class="vehicle-dialog-schedule-note">Times shown in Asia/Manila. Booking requests are not confirmed until approved.</p>
+            </section>
             <dl class="vehicle-dialog-specs">
                 <div><dt>Passengers</dt><dd data-dialog-passengers></dd></div>
                 <div><dt>Transmission</dt><dd data-dialog-transmission></dd></div>
@@ -60,7 +72,7 @@
                 <div><dt>Category</dt><dd data-dialog-category-value></dd></div>
             </dl>
             <div class="vehicle-dialog-footer">
-                <p class="vehicle-price"><strong data-dialog-price></strong><span>/ day</span><small>Sample rate</small></p>
+                <p class="vehicle-price"><strong data-dialog-price></strong><span>/ day</span><small>Current rate</small></p>
                 <a class="button button-primary vehicle-booking-link" href="#booking" data-dialog-booking-link>
                     Continue to booking <i class="bi bi-arrow-up-right button-arrow" aria-hidden="true"></i>
                 </a>

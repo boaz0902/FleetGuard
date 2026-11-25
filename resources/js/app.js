@@ -2,6 +2,10 @@ import './bootstrap';
 import './fleet.js';
 import './booking.js';
 import './customer-bookings.js';
+import './customer-testimonials.js';
+import './legal-editor.js';
+import './testimonials.js';
+import './admin-testimonials.js';
 import './admin-dashboard.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -388,6 +392,13 @@ if (bookingForm && bookingMessage) {
                 vehicleCategory: bookingForm.elements.vehicle_category.value,
             },
         }));
+        const fleetParams = new URLSearchParams({
+            pickup_location: bookingForm.elements.pickup_location.value,
+            pickup_date: bookingForm.elements.pickup_date.value,
+            return_date: bookingForm.elements.return_date.value,
+            category: bookingForm.elements.vehicle_category.value,
+        });
+        window.location.assign(`${window.location.origin}/fleet?${fleetParams}`);
     });
 
     bookingForm.addEventListener('input', () => {

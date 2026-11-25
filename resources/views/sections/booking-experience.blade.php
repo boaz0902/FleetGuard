@@ -1,4 +1,5 @@
 @php($bookingCustomer = auth()->user()?->isCustomer() ? auth()->user() : null)
+@php($agreementSlugs = ['terms-and-conditions', 'rental-policy', 'cancellation-policy', 'refund-policy'])
 <section class="booking-experience" id="booking" aria-labelledby="booking-experience-title" data-booking-experience data-booking-url="{{ route('bookings.store') }}" data-availability-url="{{ route('vehicles.availability') }}" data-register-url="{{ route('register') }}" data-customer-account-state="{{ $bookingCustomer ? ($bookingCustomer->hasVerifiedEmail() ? 'verified' : 'unverified') : 'guest' }}">
     <div class="booking-experience-shell">
         <div class="booking-experience-intro">
@@ -152,6 +153,44 @@
                         <textarea id="customer-notes" name="notes" rows="3" maxlength="500" placeholder="Anything you'd like to include in your request?"></textarea>
                     </div>
                 </div>
+                <section class="booking-identity-panel" aria-labelledby="booking-identity-heading">
+                    <div class="booking-identity-heading">
+                        <span class="booking-identity-icon" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+                        <div>
+                            <p class="booking-identity-eyebrow">Optional identity check</p>
+                            <h4 id="booking-identity-heading">Give your request a stronger start.</h4>
+                            <p>Clear ID photos can help our team verify your details sooner. They don't guarantee approval.</p>
+                        </div>
+                        <span class="booking-identity-optional">Optional</span>
+                    </div>
+                    <p class="booking-identity-privacy">
+                        <i class="bi bi-lock" aria-hidden="true"></i>
+                        Only authorized booking reviewers can view your uploads. JPG, PNG, or WebP · up to 5 MB each.
+                    </p>
+                    <div class="booking-identity-upload-grid">
+                        <label class="booking-identity-upload" for="license-front">
+                            <span class="booking-identity-upload-icon" aria-hidden="true"><i class="bi bi-card-image"></i></span>
+                            <span class="booking-identity-upload-title">License · front</span>
+                            <span class="booking-identity-upload-hint">A clear, readable photo</span>
+                            <span class="booking-identity-file-name" data-booking-document-name>Choose a photo</span>
+                            <input id="license-front" name="license_front" type="file" accept="image/jpeg,image/png,image/webp" data-booking-document>
+                        </label>
+                        <label class="booking-identity-upload" for="license-back">
+                            <span class="booking-identity-upload-icon" aria-hidden="true"><i class="bi bi-card-image"></i></span>
+                            <span class="booking-identity-upload-title">License · back</span>
+                            <span class="booking-identity-upload-hint">Include all details in frame</span>
+                            <span class="booking-identity-file-name" data-booking-document-name>Choose a photo</span>
+                            <input id="license-back" name="license_back" type="file" accept="image/jpeg,image/png,image/webp" data-booking-document>
+                        </label>
+                        <label class="booking-identity-upload" for="license-selfie">
+                            <span class="booking-identity-upload-icon" aria-hidden="true"><i class="bi bi-person-bounding-box"></i></span>
+                            <span class="booking-identity-upload-title">You holding your license</span>
+                            <span class="booking-identity-upload-hint">Keep your face and ID visible</span>
+                            <span class="booking-identity-file-name" data-booking-document-name>Choose a photo</span>
+                            <input id="license-selfie" name="license_selfie" type="file" accept="image/jpeg,image/png,image/webp" data-booking-document>
+                        </label>
+                    </div>
+                </section>
                 <p class="booking-form-error" role="alert" data-customer-error></p>
                 <div class="booking-step-actions">
                     <button class="booking-action-button is-secondary" type="button" data-booking-back>Back</button>
@@ -177,7 +216,8 @@
                             <button type="button" data-booking-edit="0">Edit</button>
                         </div>
                         <div class="booking-review-vehicle">
-                            <img src="" alt="" width="1000" height="650" data-review-image>
+                            <img src="" alt="" width="1000" height="650" data-review-image hidden>
+                            <span class="booking-review-image-placeholder" data-review-image-placeholder aria-hidden="true"><i class="bi bi-car-front"></i></span>
                             <div>
                                 <span class="booking-review-category" data-review-category></span>
                                 <strong data-review-vehicle></strong>
@@ -205,6 +245,7 @@
                             <div><dt>Name</dt><dd data-review-name></dd></div>
                             <div><dt>Email</dt><dd data-review-email></dd></div>
                             <div><dt>Mobile</dt><dd data-review-mobile></dd></div>
+                            <div data-review-documents-row hidden><dt>Identity photos</dt><dd data-review-documents></dd></div>
                             <div data-review-notes-row hidden><dt>Notes</dt><dd data-review-notes></dd></div>
                         </dl>
                     </section>
@@ -214,6 +255,23 @@
                     <p class="booking-review-price"><strong data-review-total></strong><span>PHP</span></p>
                     <p><span data-review-total-days></span> × <span data-review-day-rate></span> / day</p>
                     <p class="booking-review-caveat">The final subtotal is calculated by the server. No taxes, deposits, insurance, or other charges are included.</p>
+                    <fieldset class="booking-review-agreements">
+                        <legend>Required agreements</legend>
+                        <label>
+                            <input type="checkbox" data-legal-agreement data-policy-slugs="terms-and-conditions" data-policy-version-ids="{{ $agreementVersions['terms-and-conditions'] ?? '' }}" aria-describedby="booking-agreement-note">
+                            <span>I have read and agree to the <a href="{{ route('legal.show', 'terms-and-conditions') }}" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" data-legal-agreement data-policy-slugs="rental-policy" data-policy-version-ids="{{ $agreementVersions['rental-policy'] ?? '' }}" aria-describedby="booking-agreement-note">
+                            <span>I have read and understood the <a href="{{ route('legal.show', 'rental-policy') }}" target="_blank" rel="noopener">Rental Policy</a>.</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" data-legal-agreement data-policy-slugs="cancellation-policy,refund-policy" data-policy-version-ids="{{ ($agreementVersions['cancellation-policy'] ?? '').','.($agreementVersions['refund-policy'] ?? '') }}" aria-describedby="booking-agreement-note">
+                            <span>I acknowledge the <a href="{{ route('legal.show', 'cancellation-policy') }}" target="_blank" rel="noopener">Cancellation Policy</a> and <a href="{{ route('legal.show', 'refund-policy') }}" target="_blank" rel="noopener">Refund Policy</a>.</span>
+                        </label>
+                        <small id="booking-agreement-note">Your acceptance is recorded with this booking request and the versions shown. Policy pages open in a new tab.</small>
+                        <p class="booking-form-error" role="alert" data-booking-agreement-error></p>
+                    </fieldset>
                     <button class="booking-action-button is-primary booking-confirm-button" type="button" data-booking-confirm>
                         <span data-booking-submit-label>Submit booking request</span> <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
                     </button>
@@ -226,7 +284,7 @@
 
         <div class="booking-step-panel booking-confirmation" data-booking-step="4" aria-labelledby="booking-confirmation-heading" hidden inert>
             <div class="booking-confirmation-mark" aria-hidden="true">✓</div>
-            <p class="fleet-eyebrow"><span aria-hidden="true"></span>Request submitted</p>
+            <p class="fleet-eyebrow">Request submitted</p>
             <h3 id="booking-confirmation-heading">Your request<br>is under review.</h3>
             <p class="booking-confirmation-message">
                 Your booking request is pending admin approval. It is not a confirmed reservation.
@@ -246,7 +304,7 @@
                 </a>
             </section>
             @if ($bookingCustomer && ! $bookingCustomer->hasVerifiedEmail())
-                <section class="booking-confirmation-prompt" aria-labelledby="verify-booking-email-title" hidden data-confirmation-verify-prompt>
+                <section class="booking-confirmation-prompt booking-confirmation-prompt--verification" aria-labelledby="verify-booking-email-title" hidden data-confirmation-verify-prompt>
                     <h4 id="verify-booking-email-title">Verify your email to track this request.</h4>
                     <p>Your booking can be linked to My Bookings after your account email is verified.</p>
                     <a class="booking-action-button is-primary" href="{{ route('verification.notice') }}">

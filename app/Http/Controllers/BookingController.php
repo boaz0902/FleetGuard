@@ -6,6 +6,8 @@ use App\Exceptions\CustomerLinkConflict;
 use App\Http\Requests\StoreBookingRequest;
 use App\Models\AuditLog;
 use App\Models\Booking;
+use App\Models\LegalPolicy;
+use App\Models\LegalPolicyAcceptance;
 use App\Models\Vehicle;
 use App\Services\CustomerAccountService;
 use App\Services\SafeMailDeliveryService;
@@ -14,8 +16,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class BookingController extends Controller
 {
@@ -30,6 +34,7 @@ class BookingController extends Controller
         $returnDateTime = Carbon::createFromFormat('Y-m-d H:i', "{$validated['return_date']} {$validated['return_time']}", 'Asia/Manila');
         $email = strtolower(trim($validated['email']));
         $user = $request->user();
+        $acceptedAt = now();
 
         if ($user?->isCustomer() && strtolower($user->email) !== $email) {
             throw ValidationException::withMessages([
@@ -37,65 +42,104 @@ class BookingController extends Controller
             ]);
         }
 
+        $documentPaths = $this->storeBookingDocuments($request);
+        $bookingCreated = false;
+
         try {
-            $booking = DB::transaction(function () use (
-                $validated,
-                $pickupDateTime,
-                $returnDateTime,
-                $email,
-                $user,
-                $availability,
-                $accounts,
-            ) {
-                $vehicle = Vehicle::query()
-                    ->whereKey($validated['vehicle_id'])
-                    ->lockForUpdate()
-                    ->firstOrFail();
+            try {
+                $booking = DB::transaction(function () use (
+                    $validated,
+                    $documentPaths,
+                    $pickupDateTime,
+                    $returnDateTime,
+                    $email,
+                    $user,
+                    $acceptedAt,
+                    $availability,
+                    $accounts,
+                ) {
+                    $vehicle = Vehicle::query()
+                        ->whereKey($validated['vehicle_id'])
+                        ->lockForUpdate()
+                        ->firstOrFail();
 
-                if (! $availability->isAvailable($vehicle, $pickupDateTime, $returnDateTime)) {
-                    throw ValidationException::withMessages([
-                        'vehicle_id' => ['The selected vehicle is not available for the requested dates and times.'],
-                    ]);
-                }
+                    if (! $availability->isAvailable($vehicle, $pickupDateTime, $returnDateTime)) {
+                        throw ValidationException::withMessages([
+                            'vehicle_id' => ['The selected vehicle is not available for the requested dates and times.'],
+                        ]);
+                    }
 
-                $customer = $accounts->resolveBookingCustomer($user, [
-                    'full_name' => trim($validated['full_name']),
-                    'mobile_number' => trim($validated['mobile_number']),
-                ], $email);
+                    $customer = $accounts->resolveBookingCustomer($user, [
+                        'full_name' => trim($validated['full_name']),
+                        'mobile_number' => trim($validated['mobile_number']),
+                    ], $email);
 
-                $rentalDurationDays = max(1, (int) ceil($pickupDateTime->diffInSeconds($returnDateTime) / 86400));
-                $booking = Booking::query()->create([
-                    'booking_reference' => 'FG-'.strtoupper(Str::random(8)),
-                    'customer_id' => $customer->id,
-                    'vehicle_id' => $vehicle->id,
-                    'pickup_location' => trim($validated['pickup_location']),
-                    'pickup_datetime' => $pickupDateTime,
-                    'return_location' => trim($validated['return_location']),
-                    'return_datetime' => $returnDateTime,
-                    'rental_duration_days' => $rentalDurationDays,
-                    'daily_rate_snapshot' => $vehicle->daily_rate,
-                    'estimated_total' => $vehicle->daily_rate * $rentalDurationDays,
-                    'customer_notes' => trim((string) ($validated['customer_notes'] ?? '')) ?: null,
-                    'status' => Booking::STATUS_PENDING,
-                ]);
-
-                AuditLog::query()->create([
-                    'user_id' => Auth::id(),
-                    'action' => 'booking_submitted',
-                    'subject_type' => Booking::class,
-                    'subject_id' => $booking->id,
-                    'changes' => [
+                    $rentalDurationDays = max(1, (int) ceil($pickupDateTime->diffInSeconds($returnDateTime) / 86400));
+                    $booking = Booking::query()->create([
+                        'booking_reference' => 'FG-'.strtoupper(Str::random(8)),
                         'customer_id' => $customer->id,
                         'vehicle_id' => $vehicle->id,
-                        'pickup_datetime' => $pickupDateTime->toDateTimeString(),
-                        'return_datetime' => $returnDateTime->toDateTimeString(),
-                        'estimated_total' => (string) $booking->estimated_total,
-                    ],
-                    'created_at' => now(),
-                ]);
+                        'pickup_location' => trim($validated['pickup_location']),
+                        'pickup_datetime' => $pickupDateTime,
+                        'return_location' => trim($validated['return_location']),
+                        'return_datetime' => $returnDateTime,
+                        'rental_duration_days' => $rentalDurationDays,
+                        'daily_rate_snapshot' => $vehicle->daily_rate,
+                        'estimated_total' => $vehicle->daily_rate * $rentalDurationDays,
+                        'customer_notes' => trim((string) ($validated['customer_notes'] ?? '')) ?: null,
+                        'license_front_path' => $documentPaths['license_front_path'] ?? null,
+                        'license_back_path' => $documentPaths['license_back_path'] ?? null,
+                        'license_selfie_path' => $documentPaths['license_selfie_path'] ?? null,
+                        'status' => Booking::STATUS_PENDING,
+                    ]);
 
-                return $booking;
-            });
+                    foreach (LegalPolicy::bookingAgreementSlugs() as $slug) {
+                        $policy = LegalPolicy::query()
+                            ->where('slug', $slug)
+                            ->where('is_published', true)
+                            ->lockForUpdate()
+                            ->firstOrFail();
+                        $version = $policy->currentPublishedVersionAt($acceptedAt);
+
+                        if (! $version || $version->id !== (int) $validated['policy_versions'][$slug]) {
+                            throw ValidationException::withMessages([
+                                'agreements.'.$slug => ['A required policy has changed. Review the current policy and try again.'],
+                            ]);
+                        }
+
+                        LegalPolicyAcceptance::query()->create([
+                            'customer_id' => $customer->id,
+                            'booking_id' => $booking->id,
+                            'legal_policy_id' => $policy->id,
+                            'legal_policy_version_id' => $version->id,
+                            'status' => 'accepted',
+                            'accepted_at' => $acceptedAt,
+                        ]);
+                    }
+
+                    AuditLog::query()->create([
+                        'user_id' => Auth::id(),
+                        'action' => 'booking_submitted',
+                        'subject_type' => Booking::class,
+                        'subject_id' => $booking->id,
+                        'changes' => [
+                            'customer_id' => $customer->id,
+                            'vehicle_id' => $vehicle->id,
+                            'pickup_datetime' => $pickupDateTime->toDateTimeString(),
+                            'return_datetime' => $returnDateTime->toDateTimeString(),
+                            'estimated_total' => (string) $booking->estimated_total,
+                        ],
+                        'created_at' => now(),
+                    ]);
+
+                    return $booking;
+                });
+                $bookingCreated = true;
+            } finally {
+                if (! $bookingCreated && $documentPaths !== []) {
+                    Storage::disk('local')->delete(array_values($documentPaths));
+                }
+            }
         } catch (CustomerLinkConflict $conflict) {
             if ($user?->isCustomer()) {
                 $accounts->recordBookingConflict($user, $conflict);
@@ -107,6 +151,7 @@ class BookingController extends Controller
         }
 
         $mail->sendBookingNotification($booking, 'received');
+        $mail->sendAdminBookingNotification($booking);
 
         if ($request->expectsJson()) {
             $bookingDetails = $booking->only([
@@ -137,6 +182,41 @@ class BookingController extends Controller
         }
 
         return redirect()->back()->with('status', 'Booking request received and is awaiting admin approval.');
+    }
+
+    private function storeBookingDocuments(StoreBookingRequest $request): array
+    {
+        $documentFields = [
+            'license_front' => 'license_front_path',
+            'license_back' => 'license_back_path',
+            'license_selfie' => 'license_selfie_path',
+        ];
+        $paths = [];
+        $storedAllFiles = false;
+
+        try {
+            foreach ($documentFields as $input => $attribute) {
+                if (! $request->hasFile($input)) {
+                    continue;
+                }
+
+                $path = $request->file($input)->store('booking-documents', 'local');
+
+                if (! is_string($path)) {
+                    throw new RuntimeException('Unable to securely store a booking identity document.');
+                }
+
+                $paths[$attribute] = $path;
+            }
+
+            $storedAllFiles = true;
+        } finally {
+            if (! $storedAllFiles && $paths !== []) {
+                Storage::disk('local')->delete(array_values($paths));
+            }
+        }
+
+        return $paths;
     }
 
     public function show(Request $request, Booking $booking)

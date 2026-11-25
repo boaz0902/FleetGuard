@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Mail\FleetGuardMessageMail;
+use App\Mail\CustomerAccountActionMail;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,14 +17,14 @@ class ResetCustomerPassword extends ResetPassword implements ShouldQueue
         $this->afterCommit();
     }
 
-    public function toMail($notifiable): FleetGuardMessageMail
+    public function toMail($notifiable): CustomerAccountActionMail
     {
         $expiresIn = (int) config(
             'auth.passwords.'.config('auth.defaults.passwords').'.expire',
             60,
         );
 
-        return (new FleetGuardMessageMail(
+        return (new CustomerAccountActionMail(
             subjectLine: 'Reset your password',
             preheader: 'Use the secure link to reset your FleetGuard password.',
             heading: 'Reset your password',
@@ -34,7 +34,6 @@ class ResetCustomerPassword extends ResetPassword implements ShouldQueue
                 'url' => $this->resetUrl($notifiable),
             ],
             note: "This link expires in {$expiresIn} minutes. If you did not request this, ignore this email; your password will not change.",
-            eventType: 'password_reset',
         ))->to($notifiable->getEmailForPasswordReset());
     }
 }

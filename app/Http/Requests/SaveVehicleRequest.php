@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -45,6 +46,9 @@ class SaveVehicleRequest extends FormRequest
     {
         $imagePaths = collect(File::files(public_path('images/fleet')))
             ->map(fn (\SplFileInfo $file): string => 'images/fleet/'.$file->getFilename())
+            ->merge(collect(Storage::disk('public')->exists('fleet')
+                ? Storage::disk('public')->files('fleet')
+                : [])->map(fn (string $path): string => 'storage/'.$path))
             ->all();
 
         return [
@@ -58,6 +62,7 @@ class SaveVehicleRequest extends FormRequest
             'transmission' => ['required', 'string', 'max:50'],
             'fuel_type' => ['required', 'string', 'max:50'],
             'image_path' => ['nullable', 'string', 'max:255', Rule::in($imagePaths)],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240', 'dimensions:max_width=4096,max_height=4096'],
             'status' => ['required', Rule::in([
                 Vehicle::STATUS_ACTIVE,
                 Vehicle::STATUS_INACTIVE,

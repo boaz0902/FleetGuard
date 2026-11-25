@@ -10,27 +10,32 @@
     data-fuel="{{ $vehicle['fuel'] }}"
     data-price="{{ $vehicle['price'] }}"
     data-daily-rate="{{ $vehicle['daily_rate'] }}"
-    data-image="{{ asset($vehicle['image']) }}"
-    data-image-alt="Illustrative {{ strtolower($vehicle['category_label']) }} sample vehicle"
+    data-image="{{ $vehicle['image'] ? asset($vehicle['image']) : '' }}"
+    data-image-alt="{{ $vehicle['name'] }}"
+    data-schedule-url="{{ route('vehicles.schedule', $vehicle['id']) }}"
 >
     <div class="vehicle-card-image">
         <button
             class="vehicle-image-button"
             type="button"
             data-vehicle-open
-            aria-label="View {{ $vehicle['name'] }} sample details"
+            aria-label="View {{ $vehicle['name'] }} details"
         >
-            <img
-                src="{{ asset($vehicle['image']) }}"
-                alt="Illustrative {{ strtolower($vehicle['category_label']) }} sample vehicle"
-                width="1000"
-                height="650"
-                loading="lazy"
-                decoding="async"
-                data-vehicle-image
-            >
+            @if ($vehicle['image'])
+                <img
+                    src="{{ asset($vehicle['image']) }}"
+                    alt="{{ $vehicle['name'] }}"
+                    width="1000"
+                    height="650"
+                    loading="lazy"
+                    decoding="async"
+                    data-vehicle-image
+                >
+            @else
+                <span class="vehicle-card-image-placeholder" aria-hidden="true"><i class="bi bi-car-front"></i></span>
+            @endif
         </button>
-        <span class="vehicle-sample-tag"><span aria-hidden="true"></span>Sample inventory</span>
+        <span class="vehicle-sample-tag"><span aria-hidden="true"></span>Fleet vehicle</span>
         <span class="vehicle-card-number" aria-hidden="true">/ {{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}</span>
     </div>
 
@@ -43,7 +48,7 @@
                         class="vehicle-name-button"
                         type="button"
                         data-vehicle-open
-                        aria-label="View {{ $vehicle['name'] }} sample details"
+                        aria-label="View {{ $vehicle['name'] }} details"
                     >{{ $vehicle['name'] }}</button>
                 </h3>
             </div>
@@ -57,12 +62,12 @@
         </ul>
 
         <div class="vehicle-card-footer">
-            <p class="vehicle-price"><strong>{{ $vehicle['price'] }}</strong><span>/ day</span><small>Sample rate</small></p>
+            <p class="vehicle-price"><strong>{{ $vehicle['price'] }}</strong><span>/ day</span><small>Current rate</small></p>
             <button
                 class="vehicle-details-button"
                 type="button"
                 data-vehicle-details
-                aria-label="View {{ $vehicle['name'] }} sample details"
+                aria-label="View {{ $vehicle['name'] }} details"
             >
                 View details <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
             </button>

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Mail\CustomerAccountActionMail;
 use App\Mail\FleetGuardMessageMail;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\LegalPolicy;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Notifications\ResetCustomerPassword;
@@ -19,7 +21,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -77,6 +78,53 @@ class BookingEmailDeliveryTest extends TestCase
             ->assertSee('will link to this account after you verify', false);
     }
 
+    public function test_new_booking_alert_is_sent_to_admin_and_manager_reviewers(): void
+    {
+        Mail::fake();
+        $this->user('booking-admin@example.test', 'admin', true);
+        $this->user('booking-manager@example.test', 'manager', true);
+        $this->user('booking-staff@example.test', 'staff', true);
+
+        $response = $this->postJson(route('bookings.store'), array_merge($this->bookingPayload(), [
+            'customer_notes' => 'Private note not needed in the email.',
+        ]));
+
+        $response->assertCreated();
+        $booking = Booking::query()->firstOrFail();
+        $this->assertQueuedMail('guest@example.test', 'Request received');
+
+        $alerts = Mail::queued(FleetGuardMessageMail::class)
+            ->filter(fn (FleetGuardMessageMail $mail): bool => $mail->eventType === 'admin_booking_received')
+            ->values();
+
+        $this->assertCount(2, $alerts);
+        $this->assertTrue($alerts->contains(fn (FleetGuardMessageMail $mail): bool => $mail->hasTo('booking-admin@example.test')));
+        $this->assertTrue($alerts->contains(fn (FleetGuardMessageMail $mail): bool => $mail->hasTo('booking-manager@example.test')));
+
+        $alert = $alerts->first();
+        $this->assertNotNull($alert);
+        $this->assertSame('New booking request: '.$booking->booking_reference, $alert->subjectLine);
+        $this->assertSame(route('admin.bookings.show', $booking), $alert->action['url']);
+        $this->assertStringContainsString('Guest Customer', $alert->render());
+        $this->assertStringContainsString('guest@example.test', $alert->render());
+        $this->assertStringNotContainsString('Private note not needed in the email.', $alert->render());
+    }
+
+    public function test_invalid_booking_submission_does_not_send_customer_or_admin_emails(): void
+    {
+        Mail::fake();
+        $this->user('booking-admin@example.test', 'admin', true);
+
+        $this->postJson(route('bookings.store'), array_merge($this->bookingPayload(), [
+            'vehicle_id' => 'unknown-vehicle',
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('vehicle_id');
+
+        Mail::assertNothingQueued();
+        $this->assertDatabaseCount('bookings', 0);
+    }
+
     public function test_verified_customer_booking_email_links_to_my_bookings(): void
     {
         Mail::fake();
@@ -118,11 +166,13 @@ class BookingEmailDeliveryTest extends TestCase
 
         Mail::assertQueued(FleetGuardMessageMail::class, 2);
         $messages = Mail::queued(FleetGuardMessageMail::class);
-        $approvedMail = $messages->first(fn (FleetGuardMessageMail $mail): bool => $mail->subjectLine === 'Request approved');
+        $approvedMail = $messages->first(fn (FleetGuardMessageMail $mail): bool => $mail->subjectLine === 'FleetGuard: Your booking is approved');
         $rejectedMail = $messages->first(fn (FleetGuardMessageMail $mail): bool => $mail->subjectLine === 'Request update');
 
         $this->assertNotNull($approvedMail);
-        $this->assertStringContainsString('contact information is not currently listed', $approvedMail->intro);
+        $this->assertSame('Congratulations, Test Customer! Your FleetGuard booking has been approved.', $approvedMail->preheader);
+        $this->assertStringContainsString('The FleetGuard admin approved your booking.', $approvedMail->intro);
+        $this->assertStringContainsString('Your vehicle is reserved', $approvedMail->intro);
         $this->assertNotNull($rejectedMail);
         $this->assertStringNotContainsString('INTERNAL ADMIN REMARK', $rejectedMail->render());
 
@@ -136,6 +186,25 @@ class BookingEmailDeliveryTest extends TestCase
         } catch (ValidationException) {
             Mail::assertQueued(FleetGuardMessageMail::class, 2);
         }
+    }
+
+    public function test_admin_approval_action_queues_an_approval_email_to_the_booking_customer(): void
+    {
+        Mail::fake();
+        $admin = $this->user('approval-admin@example.test', 'admin', true);
+        $booking = $this->booking($this->customer('approved-customer@example.test'));
+
+        $this->actingAs($admin)
+            ->patch(route('admin.bookings.status', $booking), [
+                'status' => Booking::STATUS_APPROVED,
+            ])
+            ->assertRedirect();
+
+        Mail::assertQueued(
+            FleetGuardMessageMail::class,
+            fn (FleetGuardMessageMail $mail): bool => $mail->hasTo('approved-customer@example.test')
+                && $mail->subjectLine === 'FleetGuard: Your booking is approved',
+        );
     }
 
     public function test_customer_cancellation_sends_one_confirmation_but_checkin_sends_none(): void
@@ -265,21 +334,22 @@ class BookingEmailDeliveryTest extends TestCase
         Mail::assertQueued(FleetGuardMessageMail::class, 3);
     }
 
-    public function test_verification_and_reset_notifications_keep_their_secure_urls_and_branded_templates(): void
+    public function test_verification_and_reset_notifications_use_the_branded_account_template(): void
     {
         $user = $this->user('account-mail@example.test', 'customer', false);
-        $verificationMail = (new VerifyCustomerEmail)->toMail($user);
+        $verificationMail = (new VerifyCustomerEmail('123456'))->toMail($user);
         $verificationHtml = $verificationMail->render();
-        $verificationUrl = $verificationMail->action['url'];
 
+        $this->assertInstanceOf(CustomerAccountActionMail::class, $verificationMail);
         $this->assertStringContainsString('Verify your email', $verificationHtml);
-        $this->assertStringContainsString('60 minutes', $verificationHtml);
-        $this->assertStringContainsString('signature=', $verificationUrl);
-        $this->assertTrue(URL::hasValidSignature(request()->create($verificationUrl)));
+        $this->assertStringContainsString('123456', $verificationHtml);
+        $this->assertStringContainsString('expires in 5 minutes', $verificationHtml);
+        $this->assertNull($verificationMail->action);
 
         $resetMail = (new ResetCustomerPassword('sensitive-token'))->toMail($user);
         $resetHtml = $resetMail->render();
 
+        $this->assertInstanceOf(CustomerAccountActionMail::class, $resetMail);
         $this->assertStringContainsString('Reset your password', $resetHtml);
         $this->assertStringContainsString('If you did not request this, ignore this email', $resetHtml);
         $this->assertStringContainsString('sensitive-token', $resetMail->action['url']);
@@ -297,10 +367,12 @@ class BookingEmailDeliveryTest extends TestCase
 
         $user = $this->user('render-account@example.test', 'customer', false);
         $mailables = Mail::queued(FleetGuardMessageMail::class)->values();
-        $mailables->push((new VerifyCustomerEmail)->toMail($user));
-        $mailables->push((new ResetCustomerPassword('render-token'))->toMail($user));
+        $accountMailables = [
+            (new VerifyCustomerEmail('123456'))->toMail($user),
+            (new ResetCustomerPassword('render-token'))->toMail($user),
+        ];
 
-        $this->assertCount(6, $mailables);
+        $this->assertCount(4, $mailables);
 
         foreach ($mailables as $mailable) {
             $html = $mailable->render();
@@ -312,6 +384,25 @@ class BookingEmailDeliveryTest extends TestCase
             $this->assertStringContainsString('This is an automated message.', $html);
             $this->assertStringContainsString($mailable->heading, $text);
             $this->assertStringContainsString($mailable->preheader, $text);
+        }
+
+        foreach ($accountMailables as $mailable) {
+            $html = $mailable->render();
+            $text = view('emails.text.customer-account-action', [
+                'businessName' => config('fleetguard.name', 'FleetGuard'),
+                'preheader' => $mailable->preheader,
+                'heading' => $mailable->heading,
+                'intro' => $mailable->intro,
+                'code' => $mailable->code,
+                'action' => $mailable->action,
+                'note' => $mailable->note,
+            ])->render();
+
+            $this->assertStringContainsString('<html lang="en">', $html);
+            $this->assertStringContainsString('FleetGuard', $html);
+            $this->assertStringContainsString($mailable->heading, $html);
+            $this->assertStringContainsString($mailable->preheader, $text);
+            $this->assertStringContainsString($mailable->heading, $text);
         }
     }
 
@@ -489,6 +580,12 @@ class BookingEmailDeliveryTest extends TestCase
 
     private function bookingPayload(): array
     {
+        $policyVersions = LegalPolicy::query()
+            ->whereIn('slug', LegalPolicy::bookingAgreementSlugs())
+            ->get()
+            ->mapWithKeys(fn (LegalPolicy $policy): array => [$policy->slug => $policy->currentPublishedVersion?->id])
+            ->all();
+
         return [
             'vehicle_id' => 'mail-test-vehicle',
             'full_name' => 'Guest Customer',
@@ -500,6 +597,8 @@ class BookingEmailDeliveryTest extends TestCase
             'return_location' => 'Panabo City',
             'return_date' => '2026-12-11',
             'return_time' => '10:00',
+            'agreements' => array_fill_keys(LegalPolicy::bookingAgreementSlugs(), true),
+            'policy_versions' => $policyVersions,
         ];
     }
 }

@@ -27,7 +27,7 @@ class BookingCalendarController extends Controller
         $vehicles = Vehicle::query()
             ->with([
                 'bookings' => fn ($query) => $query
-                    ->select(['id', 'vehicle_id', 'booking_reference', 'pickup_datetime', 'return_datetime', 'status'])
+                    ->select(['id', 'vehicle_id', 'customer_id', 'booking_reference', 'pickup_datetime', 'return_datetime', 'status'])
                     ->where('pickup_datetime', '<', $end)
                     ->where('return_datetime', '>', $start)
                     ->orderBy('pickup_datetime'),
@@ -35,6 +35,7 @@ class BookingCalendarController extends Controller
                     ->where('start_datetime', '<', $end)
                     ->where('end_datetime', '>', $start)
                     ->orderBy('start_datetime'),
+                'bookings.customer:id,full_name',
             ])
             ->orderBy('name')
             ->get();

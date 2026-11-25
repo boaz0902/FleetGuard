@@ -53,6 +53,41 @@ class AdminBookingManagementTest extends TestCase
             ->assertSee($booking->booking_reference);
     }
 
+    public function test_booking_details_highlight_unverified_customer_accounts_and_offer_contact_shortcuts(): void
+    {
+        $manager = $this->userWithRole('manager');
+        $unverifiedAccount = $this->userWithRole('customer');
+        $unverifiedAccount->forceFill(['email_verified_at' => null])->save();
+        $unverifiedBooking = $this->booking([
+            'reference' => 'FG-UNVERIF1',
+            'email' => 'unverified@example.com',
+            'phone' => '+639171234567',
+        ]);
+        $unverifiedBooking->customer->update(['user_id' => $unverifiedAccount->id]);
+
+        $this->actingAs($manager)
+            ->get(route('admin.bookings.show', $unverifiedBooking))
+            ->assertOk()
+            ->assertSee('Customer email is not verified')
+            ->assertDontSee('admin-customer-verified-badge', false)
+            ->assertSee('href="mailto:unverified@example.com"', false)
+            ->assertSee('href="sms:+639171234567"', false)
+            ->assertSee('reject the request');
+
+        $verifiedAccount = $this->userWithRole('customer');
+        $verifiedBooking = $this->booking([
+            'reference' => 'FG-VERIFIED1',
+            'email' => $verifiedAccount->email,
+        ]);
+        $verifiedBooking->customer->update(['user_id' => $verifiedAccount->id]);
+
+        $this->get(route('admin.bookings.show', $verifiedBooking))
+            ->assertOk()
+            ->assertSee('admin-customer-verified-badge', false)
+            ->assertSee('Verified')
+            ->assertDontSee('admin-customer-verification-alert', false);
+    }
+
     public function test_booking_list_paginates_newest_first_and_preserves_filters(): void
     {
         $manager = $this->userWithRole('manager');
@@ -116,6 +151,7 @@ class AdminBookingManagementTest extends TestCase
             ->assertSee('Toyota Vios')
             ->assertSee('Sedan')
             ->assertSee('Panabo City')
+            ->assertSee('No verified customer account is linked')
             ->assertSee('₱2,500.00')
             ->assertSee('₱5,000.00')
             ->assertSee('Booking history')

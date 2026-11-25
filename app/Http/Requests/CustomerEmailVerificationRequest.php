@@ -2,12 +2,22 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Models\User;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CustomerEmailVerificationRequest extends EmailVerificationRequest
+class CustomerEmailVerificationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return parent::authorize() && $this->user()?->isCustomer();
+        $user = $this->user();
+
+        return $user instanceof User && $user->isCustomer() && ! $user->hasVerifiedEmail();
+    }
+
+    public function rules(): array
+    {
+        return [
+            'code' => ['required', 'digits:6'],
+        ];
     }
 }

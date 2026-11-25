@@ -26,7 +26,7 @@
                     </div>
                     <form method="POST" action="{{ route('verification.send') }}">
                         @csrf
-                        <button type="submit">Resend verification link</button>
+                        <button type="submit">Resend verification code</button>
                     </form>
                 </section>
             @endif

@@ -32,6 +32,11 @@ class Customer extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function legalPolicyAcceptances(): HasMany
+    {
+        return $this->hasMany(LegalPolicyAcceptance::class);
+    }
+
     public function notes(): HasMany
     {
         return $this->hasMany(CustomerNote::class);

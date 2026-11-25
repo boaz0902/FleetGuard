@@ -61,14 +61,14 @@ class SafeMailDeliveryService
                     }
 
                     $recipientKey = 'booking-email-recipient:'.hash('sha256', $email);
-                    $queued = RateLimiter::attempt(
+                    $delivered = RateLimiter::attempt(
                         $recipientKey,
                         self::BOOKING_EMAILS_PER_HOUR,
-                        fn (): bool => $this->queue($email, $mail),
+                        fn (): bool => $this->deliverBookingMail($email, $mail),
                         3600,
                     );
 
-                    if (! $queued) {
+                    if (! $delivered) {
                         Log::info('Booking email skipped because the recipient limit was reached.', [
                             'event' => $event,
                             'booking_id' => $booking->id,
@@ -81,6 +81,48 @@ class SafeMailDeliveryService
             });
         } catch (Throwable $exception) {
             $this->logFailure($exception, $email, $event, $booking->id);
+        }
+    }
+
+    public function sendAdminBookingNotification(Booking $booking): void
+    {
+        try {
+            $booking->loadMissing(['customer', 'vehicle']);
+            $recipients = User::query()
+                ->whereIn('role', ['admin', 'manager'])
+                ->pluck('email')
+                ->map(fn ($email): string => strtolower(trim((string) $email)))
+                ->filter(fn (string $email): bool => filter_var($email, FILTER_VALIDATE_EMAIL) !== false)
+                ->unique()
+                ->values();
+
+            if ($recipients->isEmpty()) {
+                Log::warning('New booking notification skipped because no booking reviewer email is available.', [
+                    'booking_id' => $booking->id,
+                ]);
+
+                return;
+            }
+
+            $mail = $this->adminBookingMail($booking);
+
+            DB::afterCommit(function () use ($booking, $recipients, $mail): void {
+                foreach ($recipients as $email) {
+                    try {
+                        $dedupeKey = 'fleetguard:admin-booking-email:'.$booking->id.':'.hash('sha256', $email);
+
+                        if (! Cache::add($dedupeKey, true)) {
+                            continue;
+                        }
+
+                        $this->deliverBookingMail($email, $mail);
+                    } catch (Throwable $exception) {
+                        $this->logFailure($exception, $email, 'admin_booking_received', $booking->id);
+                    }
+                }
+            });
+        } catch (Throwable $exception) {
+            $this->logFailure($exception, '', 'admin_booking_received', $booking->id);
         }
     }
 
@@ -151,8 +193,22 @@ class SafeMailDeliveryService
         return true;
     }
 
+    private function deliverBookingMail(string $email, FleetGuardMessageMail $mail): bool
+    {
+        $localWebRequest = config('app.env') === 'local' && ! app()->runningInConsole();
+
+        if ($localWebRequest) {
+            Mail::to($email)->send($mail);
+
+            return true;
+        }
+
+        return $this->queue($email, $mail);
+    }
+
     private function bookingMail(Booking $booking, string $email, string $event): FleetGuardMessageMail
     {
+        $customerName = trim((string) $booking->customer?->full_name) ?: 'there';
         $customerUser = $booking->customer?->user;
         $hasVerifiedAccount = $customerUser?->isCustomer() && $customerUser->hasVerifiedEmail();
         $action = $hasVerifiedAccount
@@ -162,8 +218,10 @@ class SafeMailDeliveryService
             ]
             : null;
         $callout = $hasVerifiedAccount ? null : [
-            'heading' => 'Want to track or cancel this request?',
-            'text' => 'Create an account with the same email address. Your request will be linked after you verify that email.',
+            'heading' => $event === 'approved' ? 'Want to track this booking?' : 'Want to track or cancel this request?',
+            'text' => $event === 'approved'
+                ? 'Create an account with the same email address. Your approved booking will be linked after you verify that email.'
+                : 'Create an account with the same email address. Your request will be linked after you verify that email.',
             'action' => [
                 'label' => 'Create account',
                 'url' => route('register', ['email' => $email]),
@@ -204,11 +262,11 @@ class SafeMailDeliveryService
                 'This request is not confirmed until the FleetGuard team approves it.',
             ],
             'approved' => [
-                'Request approved',
-                'Your FleetGuard booking request has been approved.',
-                'Request approved',
-                $this->approvalNextSteps(),
-                null,
+                'FleetGuard: Your booking is approved',
+                "Congratulations, {$customerName}! Your FleetGuard booking has been approved.",
+                "Congratulations, {$customerName}!",
+                'The FleetGuard admin approved your booking. Your vehicle is reserved for the pickup and return times below.',
+                'Keep this email and your booking reference for your records.',
             ],
             'rejected' => [
                 'Request update',
@@ -241,17 +299,43 @@ class SafeMailDeliveryService
         );
     }
 
-    private function approvalNextSteps(): string
+    private function adminBookingMail(Booking $booking): FleetGuardMessageMail
     {
-        $hasContactDetails = collect([
-            config('fleetguard.phone'),
-            config('fleetguard.email'),
-            config('fleetguard.address'),
-        ])->contains(fn ($value): bool => is_string($value) && trim($value) !== '');
+        $customer = $booking->customer;
+        $vehicle = $booking->vehicle;
+        $pickup = $booking->pickup_datetime
+            ->copy()
+            ->timezone(config('app.timezone'))
+            ->format('M j, Y, g:i A');
+        $returned = $booking->return_datetime
+            ->copy()
+            ->timezone(config('app.timezone'))
+            ->format('M j, Y, g:i A');
 
-        return $hasContactDetails
-            ? 'FleetGuard approved your request. Please contact the team using the details below to coordinate next steps.'
-            : 'FleetGuard approved your request. The team will share any remaining next-step details directly; contact information is not currently listed.';
+        return new FleetGuardMessageMail(
+            subjectLine: 'New booking request: '.$booking->booking_reference,
+            preheader: ($customer?->full_name ?? 'A customer').' submitted a booking request.',
+            heading: 'New booking request',
+            intro: 'A customer submitted a booking request that is waiting for admin review.',
+            details: [
+                ['label' => 'Booking reference', 'value' => $booking->booking_reference],
+                ['label' => 'Customer', 'value' => (string) $customer?->full_name],
+                ['label' => 'Email', 'value' => (string) $customer?->email],
+                ['label' => 'Mobile', 'value' => (string) $customer?->mobile_number],
+                ['label' => 'Vehicle', 'value' => (string) $vehicle?->name],
+                ['label' => 'Pickup', 'value' => $booking->pickup_location.' · '.$pickup],
+                ['label' => 'Return', 'value' => $booking->return_location.' · '.$returned],
+                ['label' => 'Estimated total', 'value' => 'PHP '.number_format((float) $booking->estimated_total, 2)],
+                ['label' => 'Status', 'value' => 'Pending approval'],
+            ],
+            action: [
+                'label' => 'Review booking',
+                'url' => route('admin.bookings.show', $booking),
+            ],
+            note: 'This is an automated notification for a new FleetGuard booking request.',
+            eventType: 'admin_booking_received',
+            bookingId: $booking->id,
+        );
     }
 
     private function logFailure(

@@ -83,7 +83,7 @@
                         </a>
                     @endcan
                     @can('manage', \App\Models\Vehicle::class)
-                        <a class="admin-fleet-secondary-link" href="{{ route('admin.fleet.index') }}#fleet-maintenance-heading">
+                        <a class="admin-fleet-secondary-link" href="{{ route('admin.fleet.index', ['maintenance_vehicle' => $vehicle->id]) }}#fleet-maintenance-heading">
                             <i class="bi bi-calendar-plus" aria-hidden="true"></i>
                             <span>Add maintenance</span>
                         </a>

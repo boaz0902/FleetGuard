@@ -7,7 +7,9 @@ use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\ContactMessage;
 use App\Models\Customer;
+use App\Models\LegalPolicy;
 use App\Models\SiteSetting;
+use App\Models\Testimonial;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Policies\AuditLogPolicy;
@@ -15,7 +17,9 @@ use App\Policies\BookingPolicy;
 use App\Policies\ContactMessagePolicy;
 use App\Policies\CustomerAccountPolicy;
 use App\Policies\CustomerPolicy;
+use App\Policies\LegalPolicyPolicy;
 use App\Policies\SiteSettingPolicy;
+use App\Policies\TestimonialPolicy;
 use App\Policies\VehiclePolicy;
 use App\Services\SiteSettings;
 use Illuminate\Auth\Events\Verified;
@@ -45,10 +49,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Vehicle::class, VehiclePolicy::class);
         Gate::policy(Booking::class, BookingPolicy::class);
         Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(LegalPolicy::class, LegalPolicyPolicy::class);
         Gate::policy(User::class, CustomerAccountPolicy::class);
         Gate::policy(AuditLog::class, AuditLogPolicy::class);
         Gate::policy(ContactMessage::class, ContactMessagePolicy::class);
         Gate::policy(SiteSetting::class, SiteSettingPolicy::class);
+        Gate::policy(Testimonial::class, TestimonialPolicy::class);
 
         Gate::before(function ($user, $ability) {
             if ($ability === 'viewCustomerAccount') {
@@ -85,6 +91,10 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('customer-booking-cancel', function (Request $request) {
             return Limit::perMinute(5)->by($request->user()?->id.':'.$request->ip());
+        });
+
+        RateLimiter::for('customer-testimonial-submission', function (Request $request) {
+            return Limit::perHour(3)->by($request->user()?->id.':'.$request->ip());
         });
 
         RateLimiter::for('booking-submission', function (Request $request) {

@@ -2,6 +2,163 @@
     background: var(--admin-ice);
 }
 
+.admin-maintenance-panel {
+    margin-top: 16px;
+    padding: 18px;
+    border: 1px solid #e6ebef;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.admin-maintenance-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.admin-maintenance-icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid #efd9cb;
+    border-radius: 9px;
+    background: #fbefe9;
+    color: #a35b3b;
+    font-size: 17px;
+}
+
+.admin-maintenance-eyebrow {
+    margin: 0 0 3px;
+    color: #74818d;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.admin-maintenance-heading h2 {
+    margin: 0;
+    color: #1b2530;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.admin-maintenance-heading p:last-child {
+    margin: 5px 0 0;
+    color: #74818d;
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.admin-maintenance-fields {
+    display: grid;
+    grid-template-columns: minmax(150px, 1.1fr) repeat(3, minmax(140px, 1fr)) auto;
+    align-items: end;
+    gap: 11px;
+}
+
+.admin-maintenance-fields label {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+    color: #65727f;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.admin-maintenance-fields label > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-maintenance-fields label > span > .bi {
+    color: #7e94a6;
+    font-size: 11px;
+}
+
+.admin-maintenance-fields input,
+.admin-maintenance-fields select {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    border: 1px solid #dce3e9;
+    border-radius: 7px;
+    background: #fff;
+    color: #263441;
+    padding: 7px 9px;
+    font: inherit;
+    font-size: 9px;
+}
+
+.admin-maintenance-fields input:focus,
+.admin-maintenance-fields select:focus {
+    border-color: #6ba8df;
+    outline: 2px solid rgb(57 136 214 / 15%);
+}
+
+.admin-maintenance-field-error {
+    color: #a34336;
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.admin-maintenance-submit {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid #2e7ec5;
+    border-radius: 7px;
+    background: #3988d6;
+    color: #fff;
+    padding: 0 12px;
+    font-size: 9px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.admin-maintenance-submit:hover {
+    border-color: #256da8;
+    background: #2879c2;
+}
+
+@media (max-width: 1200px) {
+    .admin-maintenance-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-maintenance-submit {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-maintenance-panel {
+        padding: 14px;
+    }
+
+    .admin-maintenance-heading {
+        align-items: flex-start;
+    }
+
+    .admin-maintenance-fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-maintenance-submit {
+        grid-column: auto;
+    }
+}
+
 .admin-shell .admin-topbar {
     border-color: #e5e9ed;
 }
@@ -212,6 +369,17 @@
         padding-bottom: calc(20px + env(safe-area-inset-bottom));
     }
 
+    .admin-shell dialog.admin-rental-dialog {
+        inset: 0;
+        width: min(500px, calc(100vw - 32px));
+        max-width: calc(100vw - 32px);
+        max-height: min(90dvh, 760px);
+        margin: auto;
+        border-radius: 16px;
+        padding: 17px;
+        padding-bottom: calc(17px + env(safe-area-inset-bottom));
+    }
+
     .admin-shell .admin-metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
@@ -318,6 +486,34 @@
 
     .admin-shell .admin-filter-disclosure-fields > * {
         min-width: 0;
+    }
+
+    .admin-shell .admin-rentals-filters {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .admin-shell .admin-rentals-filters > .admin-filter-disclosure {
+        grid-column: 1;
+    }
+
+    .admin-shell .admin-rentals-filters .admin-filter-disclosure-fields {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .admin-shell .admin-rentals-filters label,
+    .admin-shell .admin-rentals-search {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .admin-shell .admin-rentals-filters .admin-rentals-filter-submit,
+    .admin-shell .admin-rentals-filters .admin-rentals-clear {
+        width: 100%;
+        min-height: 44px;
+        justify-self: stretch;
     }
 }
 
@@ -640,40 +836,148 @@
 }
 
 @media (max-width: 560px) {
+    .admin-shell #main-content .admin-reservations-panel .admin-panel-heading {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .admin-shell #main-content .admin-reservations-panel .admin-text-link {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .admin-shell #main-content .admin-reservations-table tbody {
+        display: grid;
+        gap: 10px;
+    }
+
     .admin-shell #main-content .admin-reservations-table tr {
         position: relative;
-        border: 1px solid #e5e9ed;
-        border-radius: 14px;
-        background: #fff;
-        box-shadow: 0 4px 14px rgb(26 39 52 / 4%);
-        padding: 10px 12px;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: center;
+        gap: 7px 12px;
+        border: 1px solid #e4e9ee;
+        border-radius: 16px;
+        background: linear-gradient(145deg, #fff 0%, #fbfcfd 100%);
+        box-shadow: 0 5px 16px rgb(26 39 52 / 5%);
+        padding: 13px 14px;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td {
+        display: grid;
+        min-width: 0;
+        grid-template-columns: minmax(0, 1fr);
+        justify-content: initial;
+        gap: 4px;
+        padding: 2px 3px;
+        color: #233344;
+        font-size: 12px;
+        line-height: 1.4;
+        text-align: left;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td::before {
+        min-width: 0;
+        color: #8995a1;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.075em;
+        line-height: 1.2;
+        text-transform: uppercase;
+        white-space: nowrap;
     }
 
     .admin-shell #main-content .admin-reservations-table td[data-label="Reference"] {
         grid-column: 1;
         grid-row: 1;
+        gap: 5px;
+        justify-items: start;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td[data-label="Reference"]::before {
+        content: "Reservation";
+    }
+
+    .admin-shell #main-content .admin-reservations-table .admin-booking-reference {
+        display: inline-flex;
+        width: fit-content;
+        border-radius: 7px;
+        background: #edf4fa;
+        padding: 4px 7px;
+        color: #2f6799;
+        font-size: 10px;
+        letter-spacing: 0.025em;
     }
 
     .admin-shell #main-content .admin-reservations-table td[data-label="Status"] {
         grid-column: 2;
         grid-row: 1;
-        justify-content: flex-end;
+        align-self: center;
+        justify-items: end;
+    }
+
+    .admin-shell #main-content .admin-reservations-table td[data-label="Status"]::before {
+        display: none;
+    }
+
+    .admin-shell #main-content .admin-reservations-table .admin-status-badge {
+        min-height: 25px;
+        padding-inline: 10px;
+        font-size: 10px;
     }
 
     .admin-shell #main-content .admin-reservations-table td[data-label="Customer"] {
+        grid-column: 1 / -1;
         grid-row: 2;
     }
 
     .admin-shell #main-content .admin-reservations-table td[data-label="Vehicle"] {
+        grid-column: 1 / -1;
         grid-row: 3;
+    }
+
+    .admin-shell #main-content .admin-reservations-table .admin-reservation-customer {
+        color: #26394b;
+        font-size: 13px;
+        font-weight: 650;
+    }
+
+    .admin-shell #main-content .admin-reservations-table .admin-reservation-vehicle {
+        color: #526170;
+        font-weight: 500;
     }
 
     .admin-shell #main-content .admin-reservations-table td[data-label="Pickup"] {
         grid-column: 1;
+        grid-row: 4;
+        border-top: 1px solid #edf0f3;
+        padding-top: 9px;
     }
 
     .admin-shell #main-content .admin-reservations-table td[data-label="Return"] {
         grid-column: 2;
+        grid-row: 4;
+        border-top: 1px solid #edf0f3;
+        padding-top: 9px;
+    }
+
+    .admin-shell #main-content .admin-reservations-table .admin-reservation-date {
+        color: #283d50;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .admin-shell #main-content .admin-reservations-table .admin-table-empty {
+        grid-column: 1 / -1;
+        display: block;
+        padding: 24px 10px !important;
+        text-align: center;
+    }
+
+    .admin-shell #main-content .admin-reservations-table .admin-table-empty::before {
+        display: none;
     }
 
 }
@@ -776,6 +1080,170 @@
     }
 
     .admin-shell #main-content .admin-testimonials-table td[colspan]::before {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .admin-shell #main-content .admin-bookings-table-wrap {
+        overflow: visible;
+    }
+
+    .admin-shell #main-content .admin-bookings-table tbody {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .admin-shell #main-content .admin-bookings-table tbody tr {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        gap: 9px 12px;
+        border: 1px solid #e4e9ee;
+        border-radius: 15px;
+        background: linear-gradient(145deg, #fff 0%, #fbfcfd 100%);
+        box-shadow: 0 5px 16px rgb(26 39 52 / 5%);
+        padding: 13px 14px;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td {
+        display: grid;
+        min-width: 0;
+        grid-template-columns: minmax(0, 1fr);
+        align-content: start;
+        justify-items: start;
+        align-items: start;
+        gap: 4px;
+        padding: 3px 2px;
+        color: #27394b;
+        font-size: 11px;
+        line-height: 1.4;
+        text-align: left;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td::before {
+        color: #8794a0;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        line-height: 1.2;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Reference"] {
+        grid-column: 1;
+        grid-row: 1;
+        gap: 5px;
+    }
+
+    .admin-shell #main-content .admin-bookings-table .admin-booking-reference {
+        display: inline-flex;
+        width: fit-content;
+        border-radius: 7px;
+        background: #edf4fa;
+        padding: 4px 7px;
+        font-size: 10px;
+        letter-spacing: 0.025em;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Status"] {
+        grid-column: 2;
+        grid-row: 1;
+        justify-items: end;
+        align-self: center;
+    }
+
+    .admin-shell #main-content .admin-bookings-table .admin-status-badge {
+        min-height: 25px;
+        gap: 5px;
+        padding-inline: 9px;
+        font-size: 10px;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Customer"] {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        font-size: 13px;
+        font-weight: 650;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Vehicle"] {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        color: #536271;
+        font-weight: 550;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Pickup"],
+    .admin-shell #main-content .admin-bookings-table td[data-label="Return"] {
+        grid-row: 4;
+        border-top: 1px solid #edf0f3;
+        padding-top: 9px;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Pickup"] {
+        grid-column: 1;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Return"] {
+        grid-column: 2;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Duration"],
+    .admin-shell #main-content .admin-bookings-table td[data-label="Total"] {
+        grid-row: 5;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Duration"] {
+        grid-column: 1;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Total"] {
+        grid-column: 2;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Total"] {
+        color: #1f659f;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Created"],
+    .admin-shell #main-content .admin-bookings-table td[data-label="Action"] {
+        grid-row: 6;
+        border-top: 1px solid #edf0f3;
+        padding-top: 9px;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Created"] {
+        grid-column: 1;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Action"] {
+        grid-column: 2;
+        justify-items: end;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td[data-label="Action"]::before {
+        display: none;
+        margin-right: 0;
+    }
+
+    .admin-shell #main-content .admin-bookings-table .admin-bookings-view {
+        min-height: 36px;
+        padding-inline: 11px;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td.admin-bookings-empty {
+        grid-column: 1 / -1;
+        display: block;
+        padding: 30px 12px !important;
+        text-align: center;
+    }
+
+    .admin-shell #main-content .admin-bookings-table td.admin-bookings-empty::before {
         display: none;
     }
 }

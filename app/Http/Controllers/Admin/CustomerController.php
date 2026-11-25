@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BlockCustomerRequest;
 use App\Http\Requests\StoreCustomerNoteRequest;
-use App\Http\Requests\UpdateCustomerRequest;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
@@ -44,7 +43,6 @@ class CustomerController extends Controller
             'metrics' => $customers->metrics($now),
             'filters' => $filters,
             'now' => $now,
-            'canEdit' => $showContact,
         ]);
     }
 
@@ -75,7 +73,7 @@ class CustomerController extends Controller
             ),
             'displayEmail' => $customers->emailForDisplay($customer, $user->isAdmin()),
             'displayPhone' => $customers->phoneForDisplay($customer, $user->isAdmin()),
-            'canEdit' => $user->can('update', $customer),
+            'canViewContact' => $user->isAdmin(),
             'canReviewBookings' => $canReviewBookings,
             'canViewAudit' => $includeAudit,
             'canAddNotes' => $user->can('addNote', $customer),
@@ -126,22 +124,4 @@ class CustomerController extends Controller
             ->with('status', $changed ? 'Customer unblocked.' : 'Customer is already active.');
     }
 
-    public function edit(Customer $customer): View
-    {
-        $this->authorize('update', $customer);
-
-        return view('admin.customers.edit', compact('customer'));
-    }
-
-    public function update(
-        UpdateCustomerRequest $request,
-        Customer $customer,
-        CustomerManagementService $customers,
-    ) {
-        $updated = $customers->updateProfile($customer, $request->validated(), $request->user());
-
-        return redirect()
-            ->route('admin.customers.show', $customer)
-            ->with('status', $updated ? 'Customer profile updated.' : 'No changes were made to the customer record.');
-    }
 }

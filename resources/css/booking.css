@@ -466,6 +466,152 @@
     margin-top: 12px;
 }
 
+.booking-identity-panel {
+    margin-top: 20px;
+    padding: clamp(16px, 2.5vw, 24px);
+    border: 1px solid rgb(198 170 121 / 30%);
+    background:
+        radial-gradient(ellipse at top right, rgb(198 170 121 / 9%), transparent 48%),
+        linear-gradient(135deg, #18232c, #131b23 72%);
+}
+
+.booking-identity-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+}
+
+.booking-identity-icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid rgb(198 170 121 / 42%);
+    color: #d3b98d;
+    font-size: 17px;
+}
+
+.booking-identity-heading > div {
+    min-width: 0;
+}
+
+.booking-identity-eyebrow {
+    margin: 0 0 5px;
+    color: #d3b98d;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.booking-identity-heading h4 {
+    margin: 0;
+    color: #f2f3f4;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.035em;
+}
+
+.booking-identity-heading > div > p:last-child {
+    margin: 6px 0 0;
+    color: #aab4bf;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.booking-identity-optional {
+    margin-left: auto;
+    border: 1px solid rgb(255 255 255 / 15%);
+    color: #c4ccd4;
+    padding: 5px 8px;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.booking-identity-privacy {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin: 17px 0 12px;
+    color: #8999a7;
+    font-size: 8px;
+    line-height: 1.55;
+}
+
+.booking-identity-privacy .bi {
+    flex: 0 0 auto;
+    color: #9dc5e7;
+}
+
+.booking-identity-upload-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.booking-identity-upload {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    min-height: 122px;
+    align-content: start;
+    gap: 5px;
+    border: 1px dashed rgb(255 255 255 / 21%);
+    background: rgb(10 17 24 / 42%);
+    padding: 13px;
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.booking-identity-upload:hover,
+.booking-identity-upload:focus-within {
+    border-color: #9dc5e7;
+    background: rgb(31 48 62 / 72%);
+}
+
+.booking-identity-upload-icon {
+    margin-bottom: 3px;
+    color: #d3b98d;
+    font-size: 15px;
+}
+
+.booking-identity-upload-title {
+    overflow: hidden;
+    color: #e9edf0;
+    font-size: 9px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.booking-identity-upload-hint {
+    color: #89939f;
+    font-size: 8px;
+}
+
+.booking-identity-file-name {
+    overflow: hidden;
+    margin-top: 5px;
+    color: #9dc5e7;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.booking-identity-upload input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
 .booking-review-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.65fr) minmax(235px, 0.8fr);
@@ -517,6 +663,25 @@
     flex: 0 0 auto;
     object-fit: cover;
     background: #222b34;
+}
+
+.booking-review-vehicle img[hidden] {
+    display: none;
+}
+
+.booking-review-image-placeholder {
+    display: grid;
+    width: 108px;
+    height: 70px;
+    flex: 0 0 auto;
+    place-items: center;
+    background: #222b34;
+    color: #89939f;
+    font-size: 24px;
+}
+
+.booking-review-image-placeholder[hidden] {
+    display: none;
 }
 
 .booking-review-vehicle > div {
@@ -644,6 +809,17 @@
 
 .booking-confirmation > .fleet-eyebrow {
     justify-content: center;
+}
+
+.booking-confirmation .booking-confirmation-prompt--verification {
+    text-align: center;
+}
+
+.booking-confirmation-prompt--verification .booking-action-button {
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
 }
 
 .booking-confirmation h3 {
@@ -868,6 +1044,10 @@
         gap: 14px;
     }
 
+    .booking-identity-upload-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .booking-field-wide {
         grid-column: auto;
     }
@@ -883,7 +1063,8 @@
         gap: 12px;
     }
 
-    .booking-review-vehicle img {
+    .booking-review-vehicle img,
+    .booking-review-image-placeholder {
         width: 92px;
         height: 64px;
     }

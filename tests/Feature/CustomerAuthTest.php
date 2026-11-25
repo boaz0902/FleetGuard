@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\LegalPolicy;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Notifications\ResetCustomerPassword;
@@ -15,7 +16,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class CustomerAuthTest extends TestCase
@@ -80,6 +80,11 @@ class CustomerAuthTest extends TestCase
             AuditLog::query()->where('action', 'customer_account_registered')->firstOrFail()->changes,
         );
         Notification::assertSentToTimes($user, VerifyCustomerEmail::class, 1);
+        $mail = Notification::sent($user, VerifyCustomerEmail::class)->first()->toMail($user);
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $mail->code);
+        $this->assertNull($mail->action);
+        $this->assertTrue(Hash::check($mail->code, $user->email_verification_code_hash));
+        $this->assertStringContainsString('expires in 5 minutes', $mail->note);
     }
 
     public function test_local_registration_sends_verification_without_a_queue_worker(): void
@@ -121,13 +126,11 @@ class CustomerAuthTest extends TestCase
 
         $user = User::query()->firstOrFail();
         $this->assertNull($customer->fresh()->user_id);
+        $code = $this->issueVerificationCode($user);
 
-        $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(30), [
-            'id' => $user->id,
-            'hash' => sha1($user->getEmailForVerification()),
-        ]);
-
-        $this->get($url)->assertRedirect(route('account'));
+        $this->actingAs($user)
+            ->post(route('verification.verify'), ['code' => $code])
+            ->assertRedirect(route('account'));
 
         $this->assertSame($user->id, $customer->fresh()->user_id);
         $this->assertSame('Original Guest Name', $customer->fresh()->full_name);
@@ -161,12 +164,11 @@ class CustomerAuthTest extends TestCase
         ])->assertRedirect(route('verification.notice'));
 
         $user = User::query()->firstOrFail();
-        $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(30), [
-            'id' => $user->id,
-            'hash' => sha1($user->getEmailForVerification()),
-        ]);
+        $code = $this->issueVerificationCode($user);
 
-        $this->get($url)->assertRedirect(route('account'));
+        $this->actingAs($user)
+            ->post(route('verification.verify'), ['code' => $code])
+            ->assertRedirect(route('account'));
 
         $this->assertNull($first->fresh()->user_id);
         $this->assertNull($second->fresh()->user_id);
@@ -224,7 +226,9 @@ class CustomerAuthTest extends TestCase
 
     public function test_unverified_customer_login_redirects_to_verification_notice_with_account_option(): void
     {
+        Notification::fake();
         $customer = $this->customerAccount('unverified-login@example.com');
+        $code = $this->issueVerificationCode($customer);
 
         $this->get(route('account.bookings'))->assertRedirect(route('login'));
 
@@ -240,21 +244,53 @@ class CustomerAuthTest extends TestCase
             ->assertSee('Please verify your email to continue')
             ->assertSee($customer->email)
             ->assertSee('Account verification')
-            ->assertSee('Send a new verification link')
-            ->assertSee('Continue to your account')
+            ->assertSee('6-digit verification code')
+            ->assertSee('Resend code')
+            ->assertSee('Return to account')
             ->assertSee('Sign out')
             ->assertSee(route('account'), false);
 
-        $verificationUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(30), [
-            'id' => $customer->id,
-            'hash' => sha1($customer->getEmailForVerification()),
-        ]);
-
-        $this->get($verificationUrl)
+        $this->post(route('verification.verify'), ['code' => $code])
             ->assertRedirect(route('account.bookings'))
             ->assertSessionHas('status', 'Your email address has been verified.');
         $this->assertTrue($customer->fresh()->hasVerifiedEmail());
+        $this->assertAuthenticatedAs($customer->fresh());
         $this->get(route('account.bookings'))->assertOk();
+    }
+
+    public function test_verification_code_expires_after_five_minutes(): void
+    {
+        Notification::fake();
+        $customer = $this->customerAccount('expired-code@example.com');
+        $code = $this->issueVerificationCode($customer);
+
+        Carbon::setTestNow(now()->addMinutes(6));
+        $this->actingAs($customer)
+            ->post(route('verification.verify'), ['code' => $code])
+            ->assertSessionHasErrors('code');
+
+        $this->assertNull($customer->fresh()->email_verification_code_hash);
+        $this->assertFalse($customer->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_five_incorrect_verification_codes_invalidate_the_code(): void
+    {
+        Notification::fake();
+        $customer = $this->customerAccount('attempt-limit@example.com');
+        $newCode = $this->issueVerificationCode($customer);
+        $wrongCode = $newCode === '000000' ? '000001' : '000000';
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->actingAs($customer)
+                ->post(route('verification.verify'), ['code' => $wrongCode])
+                ->assertSessionHasErrors('code');
+        }
+
+        $this->actingAs($customer)
+            ->post(route('verification.verify'), ['code' => $newCode])
+            ->assertSessionHasErrors('code');
+        $this->assertFalse($customer->fresh()->hasVerifiedEmail());
+        $this->assertNull($customer->fresh()->email_verification_code_hash);
     }
 
     public function test_customer_login_failures_share_the_same_generic_response(): void
@@ -300,7 +336,7 @@ class CustomerAuthTest extends TestCase
             $this->actingAs($customer)
                 ->post(route('verification.send'))
                 ->assertRedirect(route('verification.notice'))
-                ->assertSessionHas('status', 'If your email still needs verification, a new link has been sent.');
+                ->assertSessionHas('status', 'If your email still needs verification, a new verification code has been sent.');
         }
 
         $this->actingAs($customer)
@@ -578,8 +614,24 @@ class CustomerAuthTest extends TestCase
         return $user;
     }
 
+    private function issueVerificationCode(User $user): string
+    {
+        $user->sendEmailVerificationNotification();
+        $notification = Notification::sent($user, VerifyCustomerEmail::class)->last();
+
+        $this->assertNotNull($notification);
+
+        return $notification->toMail($user)->code;
+    }
+
     private function bookingPayload(array $overrides = []): array
     {
+        $policyVersions = LegalPolicy::query()
+            ->whereIn('slug', LegalPolicy::bookingAgreementSlugs())
+            ->get()
+            ->mapWithKeys(fn (LegalPolicy $policy): array => [$policy->slug => $policy->currentPublishedVersion?->id])
+            ->all();
+
         return array_merge([
             'vehicle_id' => 'toyota-vios',
             'full_name' => 'Booking Customer',
@@ -592,6 +644,8 @@ class CustomerAuthTest extends TestCase
             'return_date' => '2026-12-02',
             'return_time' => '10:00',
             'customer_notes' => 'Test booking',
+            'agreements' => array_fill_keys(LegalPolicy::bookingAgreementSlugs(), true),
+            'policy_versions' => $policyVersions,
         ], $overrides);
     }
 }

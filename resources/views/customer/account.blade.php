@@ -30,7 +30,7 @@
                     </div>
                     <form method="POST" action="{{ route('verification.send') }}">
                         @csrf
-                        <button type="submit">Resend verification link</button>
+                        <button type="submit">Resend verification code</button>
                     </form>
                 </section>
             @else
@@ -72,6 +72,11 @@
                 <a class="customer-quick-link" href="{{ route('account.profile') }}">
                     <span class="customer-quick-link-icon"><i class="bi bi-person-gear" aria-hidden="true"></i></span>
                     <span><strong>Profile</strong><small>Update your details and password.</small></span>
+                    <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                </a>
+                <a class="customer-quick-link" href="{{ route('account.legal-policies') }}">
+                    <span class="customer-quick-link-icon"><i class="bi bi-file-earmark-check" aria-hidden="true"></i></span>
+                    <span><strong>Legal &amp; Policies</strong><small>View current policies and your acceptance history.</small></span>
                     <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
                 </a>
                 @if ($user->hasVerifiedEmail())

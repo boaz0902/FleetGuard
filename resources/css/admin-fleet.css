@@ -206,7 +206,6 @@
 }
 
 .admin-fleet-filters label,
-.admin-fleet-maintenance-fields label,
 .admin-fleet-form label {
     display: grid;
     min-width: 0;
@@ -236,8 +235,6 @@
 
 .admin-fleet-filters input,
 .admin-fleet-filters select,
-.admin-fleet-maintenance-fields input,
-.admin-fleet-maintenance-fields select,
 .admin-fleet-form input,
 .admin-fleet-form select,
 .admin-fleet-form textarea {
@@ -259,8 +256,7 @@
     outline: 0;
 }
 
-.admin-fleet-filters input::placeholder,
-.admin-fleet-maintenance-fields input::placeholder {
+.admin-fleet-filters input::placeholder {
     color: #9aa4ad;
 }
 
@@ -440,6 +436,25 @@
     color: #174e7c;
 }
 
+.admin-fleet-delete-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    color: #b54747;
+}
+
+.admin-fleet-delete-link:hover,
+.admin-fleet-delete-button:hover {
+    color: #923333;
+}
+
+.admin-fleet-delete-button {
+    border-color: #f0dada;
+    color: #b54747;
+    cursor: pointer;
+}
+
 .admin-fleet-empty {
     padding: 36px 16px !important;
     color: #7e8b97;
@@ -574,46 +589,6 @@
 .admin-fleet-remove-maintenance:hover {
     border-color: #e5c4c0;
     background: #fff1ef;
-}
-
-.admin-fleet-maintenance-form {
-    margin-top: 16px;
-    padding-top: 15px;
-    border-top: 1px solid #e9edf0;
-}
-
-.admin-fleet-maintenance-form-heading {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-
-.admin-fleet-maintenance-form-heading strong,
-.admin-fleet-maintenance-form-heading small {
-    display: block;
-}
-
-.admin-fleet-maintenance-form-heading strong {
-    color: #33404d;
-    font-size: 11px;
-}
-
-.admin-fleet-maintenance-form-heading small {
-    margin-top: 3px;
-    color: #87929d;
-    font-size: 9px;
-}
-
-.admin-fleet-maintenance-fields {
-    display: grid;
-    grid-template-columns: 1.1fr repeat(3, minmax(130px, 1fr)) auto;
-    align-items: end;
-    gap: 9px;
-}
-
-.admin-fleet-maintenance-fields .admin-fleet-filter-button {
-    min-height: 38px;
 }
 
 .admin-fleet-form-page-heading {
@@ -846,9 +821,6 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .admin-fleet-maintenance-fields {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 }
 
 @media (max-width: 900px) {
@@ -977,10 +949,6 @@
         margin-left: 44px;
     }
 
-    .admin-fleet-maintenance-fields {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .admin-fleet-form-grid {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -1014,14 +982,6 @@
     .admin-fleet-filters {
         gap: 9px;
         padding: 11px;
-    }
-
-    .admin-fleet-maintenance-fields {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .admin-fleet-maintenance-fields .admin-fleet-filter-button {
-        width: 100%;
     }
 
     .admin-fleet-form-panel {
@@ -1663,6 +1623,7 @@ a.admin-fleet-metric:focus-visible,
 .admin-fleet-details-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
     column-count: initial;
     column-gap: 14px;
     column-fill: initial;
@@ -1672,6 +1633,7 @@ a.admin-fleet-metric:focus-visible,
     display: block;
     width: auto;
     margin: 0;
+    align-self: start;
     border-radius: 16px;
 }
 
@@ -1965,5 +1927,19 @@ a.admin-fleet-metric:focus-visible,
         transition-duration: .01ms !important;
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
+    }
+}
+
+@media (max-width: 800px) {
+    .admin-fleet-view-toggle {
+        display: none;
+    }
+
+    .admin-fleet-table-wrap[data-fleet-view-panel="table"] {
+        display: none !important;
+    }
+
+    .admin-fleet-grid[data-fleet-view-panel="grid"] {
+        display: grid !important;
     }
 }

@@ -300,44 +300,6 @@ class CustomerManagementService
         });
     }
 
-    public function updateProfile(Customer $customer, array $attributes, User $actor): bool
-    {
-        return DB::transaction(function () use ($customer, $attributes, $actor): bool {
-            $record = Customer::query()
-                ->whereKey($customer->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $attributes = array_intersect_key($attributes, array_flip(['full_name', 'email', 'mobile_number']));
-            $changes = [];
-
-            foreach ($attributes as $field => $newValue) {
-                $oldValue = $record->{$field};
-
-                if ($oldValue !== $newValue) {
-                    $changes[$field] = ['from' => $oldValue, 'to' => $newValue];
-                }
-            }
-
-            if ($changes === []) {
-                return false;
-            }
-
-            $record->forceFill(array_intersect_key($attributes, array_flip(array_keys($changes))))->save();
-
-            AuditLog::query()->create([
-                'user_id' => $actor->getKey(),
-                'action' => 'customer_updated',
-                'subject_type' => Customer::class,
-                'subject_id' => (string) $record->getKey(),
-                'changes' => $changes,
-                'created_at' => now(),
-            ]);
-
-            return true;
-        });
-    }
-
     public function emailForDisplay(Customer $customer, bool $showContact): string
     {
         if ($showContact) {

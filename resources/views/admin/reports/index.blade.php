@@ -121,9 +121,6 @@
         $auditCoverageWidth = $operations['completed_rentals'] > 0
             ? min(100, ($operations['paired_audit_rentals'] / $operations['completed_rentals']) * 100)
             : 0;
-        $activeReportFilterCount = (int) ($filters['range'] !== 'this_month')
-            + (int) !empty($filters['category'])
-            + (int) !empty($filters['vehicle_id']);
     @endphp
 
     <main class="admin-content admin-reports-page" id="main-content">
@@ -155,100 +152,76 @@
         </section>
 
         <section class="admin-panel admin-report-filters" aria-labelledby="report-filter-heading">
-            <div class="admin-report-filter-toolbar" hidden>
-                <button class="admin-report-filter-trigger" type="button" aria-controls="report-filter-sheet" aria-expanded="false" data-report-filter-open>
-                    <i class="bi bi-sliders" aria-hidden="true"></i>
-                    <span>Filters</span>
-                    <span class="admin-report-filter-count">{{ $activeReportFilterCount }}</span>
+            <div class="admin-panel-heading">
+                <div>
+                    <p class="admin-eyebrow">Refine reports</p>
+                    <h2 id="report-filter-heading">Report filters</h2>
+                </div>
+            </div>
+            <form method="GET" action="{{ route('admin.reports.index') }}" class="admin-report-filter-form">
+                <fieldset class="admin-report-preset-field">
+                    <legend>Date preset</legend>
+                    <div class="admin-report-preset-group" role="group" aria-label="Date preset">
+                        @foreach ([
+                            'this_month' => 'This month',
+                            'last_month' => 'Last month',
+                            'last_30_days' => '30 days',
+                            'last_90_days' => '90 days',
+                            'this_year' => 'This year',
+                            'custom' => 'Custom',
+                        ] as $rangeValue => $rangeLabel)
+                            <label class="admin-report-preset-option">
+                                <input type="radio" name="range" value="{{ $rangeValue }}" @checked($filters['range'] === $rangeValue)>
+                                <span>{{ $rangeLabel }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </fieldset>
+                <label>
+                    <span>Start date</span>
+                    <input type="date" name="start_date" value="{{ $filters['start_date'] }}">
+                </label>
+                <label>
+                    <span>End date</span>
+                    <input type="date" name="end_date" value="{{ $filters['end_date'] }}">
+                </label>
+                <label>
+                    <span>Vehicle category</span>
+                    <select name="category">
+                        <option value="">All categories</option>
+                        @foreach ($category_options as $category)
+                            <option value="{{ $category }}" @selected($filters['category'] === $category)>{{ ucfirst($category) }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label>
+                    <span>Vehicle</span>
+                    <select name="vehicle_id">
+                        <option value="">All vehicles</option>
+                        @foreach ($vehicle_options as $vehicle)
+                            <option value="{{ $vehicle->id }}" @selected($filters['vehicle_id'] === $vehicle->id)>
+                                {{ $vehicle->name }} · {{ ucfirst($vehicle->category) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </label>
+                <button class="admin-primary-link admin-report-apply" type="submit">
+                    <i class="bi bi-funnel" aria-hidden="true"></i>
+                    Apply filters
                 </button>
-                <p class="admin-report-filter-current-range">
+            </form>
+
+            <p class="admin-report-active-range">
+                <span>Active range</span>
+                <strong>
                     @if ($date_range['start']->isSameMonth($date_range['end']) && $date_range['start']->isSameYear($date_range['end']))
                         {{ $date_range['start']->format('M j') }} – {{ $date_range['end']->format('M j, Y') }}
                     @else
                         {{ $date_range['start']->format('M j, Y') }} – {{ $date_range['end']->format('M j, Y') }}
                     @endif
-                </p>
-            </div>
-            <button class="admin-report-filter-backdrop" type="button" aria-label="Close report filters" tabindex="-1" data-report-filter-close hidden></button>
-            <div class="admin-report-filter-sheet" id="report-filter-sheet" role="dialog" aria-labelledby="report-filter-heading" aria-hidden="true" data-report-filter-sheet>
-                <div class="admin-report-filter-sheet-head" hidden>
-                    <span class="admin-report-filter-handle" aria-hidden="true"></span>
-                    <div class="admin-report-filter-sheet-title">
-                        <p class="admin-eyebrow">Refine reports</p>
-                        <h2 id="report-filter-heading">Report filters</h2>
-                    </div>
-                    <button class="admin-report-filter-dismiss" type="button" aria-label="Close report filters" data-report-filter-close>
-                        <i class="bi bi-x-lg" aria-hidden="true"></i>
-                    </button>
-                </div>
-                <form method="GET" action="{{ route('admin.reports.index') }}" class="admin-report-filter-form" id="report-filter-form">
-                    <fieldset class="admin-report-preset-field">
-                        <legend>Date preset</legend>
-                        <div class="admin-report-preset-group" role="group" aria-label="Date preset">
-                            @foreach ([
-                                'this_month' => 'This month',
-                                'last_month' => 'Last month',
-                                'last_30_days' => '30 days',
-                                'last_90_days' => '90 days',
-                                'this_year' => 'This year',
-                                'custom' => 'Custom',
-                            ] as $rangeValue => $rangeLabel)
-                                <label class="admin-report-preset-option">
-                                    <input type="radio" name="range" value="{{ $rangeValue }}" @checked($filters['range'] === $rangeValue)>
-                                    <span>{{ $rangeLabel }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </fieldset>
-                    <label>
-                        <span>Start date</span>
-                        <input type="date" name="start_date" value="{{ $filters['start_date'] }}">
-                    </label>
-                    <label>
-                        <span>End date</span>
-                        <input type="date" name="end_date" value="{{ $filters['end_date'] }}">
-                    </label>
-                    <label>
-                        <span>Vehicle category</span>
-                        <select name="category">
-                            <option value="">All categories</option>
-                            @foreach ($category_options as $category)
-                                <option value="{{ $category }}" @selected($filters['category'] === $category)>{{ ucfirst($category) }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <label>
-                        <span>Vehicle</span>
-                        <select name="vehicle_id">
-                            <option value="">All vehicles</option>
-                            @foreach ($vehicle_options as $vehicle)
-                                <option value="{{ $vehicle->id }}" @selected($filters['vehicle_id'] === $vehicle->id)>
-                                    {{ $vehicle->name }} · {{ ucfirst($vehicle->category) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <div class="admin-report-filter-form-actions">
-                        <button class="admin-primary-link admin-report-apply" type="submit">
-                            <i class="bi bi-funnel" aria-hidden="true"></i>
-                            Apply filters
-                        </button>
-                        <a class="admin-report-filter-reset" href="{{ route('admin.reports.index') }}" hidden>Reset</a>
-                    </div>
-                </form>
-
-                <p class="admin-report-active-range">
-                    <span>Active range</span>
-                    <strong>
-                        @if ($date_range['start']->isSameMonth($date_range['end']) && $date_range['start']->isSameYear($date_range['end']))
-                            {{ $date_range['start']->format('M j') }} – {{ $date_range['end']->format('M j, Y') }}
-                        @else
-                            {{ $date_range['start']->format('M j, Y') }} – {{ $date_range['end']->format('M j, Y') }}
-                        @endif
-                    </strong>
-                    <small>{{ $filters['category'] ? ucfirst($filters['category']) : 'All categories' }} · {{ $filters['vehicle_id'] ? ($vehicle_options->firstWhere('id', $filters['vehicle_id'])?->name ?? $filters['vehicle_id']) : 'All vehicles' }}</small>
-                </p>
-            </div>
+                </strong>
+                <small>{{ $filters['category'] ? ucfirst($filters['category']) : 'All categories' }} · {{ $filters['vehicle_id'] ? ($vehicle_options->firstWhere('id', $filters['vehicle_id'])?->name ?? $filters['vehicle_id']) : 'All vehicles' }}</small>
+            </p>
 
             <div class="admin-report-filter-chips" aria-label="Active report filters">
                 <span class="admin-report-filter-chip">
@@ -307,18 +280,17 @@
         </section>
 
         <nav class="admin-report-section-nav" aria-label="Report sections" data-report-section-nav>
-            <a href="#report-overview" aria-label="Overview"><i class="bi bi-grid-1x2" aria-hidden="true" hidden></i><span>Overview</span></a>
-            <a href="#report-reservations" aria-label="Reservations trend"><i class="bi bi-activity" aria-hidden="true" hidden></i><span>Trends</span></a>
-            <a href="#report-fleet" aria-label="Fleet utilization and popularity"><i class="bi bi-car-front" aria-hidden="true" hidden></i><span>Fleet</span></a>
-            <a href="#report-customers" aria-label="Customer insights"><i class="bi bi-people" aria-hidden="true" hidden></i><span>Customers</span></a>
-            <a href="#report-maintenance" aria-label="Maintenance summary"><i class="bi bi-wrench-adjustable" aria-hidden="true" hidden></i><span>Maintenance</span></a>
-            <a href="#report-operations" aria-label="Rental operations"><i class="bi bi-arrow-left-right" aria-hidden="true" hidden></i><span>Rentals</span></a>
+            <a href="#report-overview">Overview</a>
+            <a href="#report-reservations">Trends</a>
+            <a href="#report-fleet">Fleet</a>
+            <a href="#report-customers">Customers</a>
+            <a href="#report-maintenance">Maintenance</a>
+            <a href="#report-operations">Rentals</a>
         </nav>
 
         <section class="admin-report-section" id="report-overview" aria-labelledby="report-overview-heading">
             <div class="admin-report-section-heading">
                 <div>
-                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-grid-1x2"></i></span>
                     <p class="admin-eyebrow">Business summary</p>
                     <h2 id="report-overview-heading">Overview</h2>
                 </div>
@@ -397,7 +369,6 @@
         <section class="admin-report-section" id="report-reservations" aria-labelledby="report-reservations-heading">
             <div class="admin-report-section-heading">
                 <div>
-                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-activity"></i></span>
                     <p class="admin-eyebrow">Volume and outcomes</p>
                     <h2 id="report-reservations-heading">Reservations trend</h2>
                 </div>
@@ -413,10 +384,9 @@
                         </div>
                     </div>
                     @if ($overview['total_reservations'] > 0)
-                        <div class="admin-report-trend-chart"
+                        <div class="admin-report-trend-chart" role="img"
                              aria-label="Reservation trend has {{ number_format($overview['total_reservations']) }} booking{{ $overview['total_reservations'] === 1 ? '' : 's' }}, grouped by {{ $date_range['days'] <= 31 ? 'day' : ($date_range['days'] <= 180 ? 'week' : 'month') }}. Highest bucket: {{ number_format($trendMaximum) }}.">
-                            <svg viewBox="0 0 760 270" width="100%" height="auto" preserveAspectRatio="none" role="group"
-                                 aria-label="Reservations trend chart">
+                            <svg viewBox="0 0 760 270" preserveAspectRatio="none" aria-hidden="true">
                                 <defs>
                                     <linearGradient id="report-trend-fill" x1="0" x2="0" y1="0" y2="1">
                                         <stop offset="0%" stop-color="#3988d6" stop-opacity=".25"></stop>
@@ -425,28 +395,23 @@
                                 </defs>
                                 @foreach ([['y' => 28, 'value' => $trendMaximum], ['y' => 123, 'value' => round($trendMaximum / 2, 1)], ['y' => 218, 'value' => 0]] as $gridline)
                                     <line class="admin-report-trend-gridline" x1="{{ $plotLeft }}" x2="{{ $plotRight }}" y1="{{ $gridline['y'] }}" y2="{{ $gridline['y'] }}"></line>
-                                    <text class="admin-report-trend-axis-label {{ $gridline['y'] === 123 ? 'admin-report-trend-axis-label--middle' : '' }}" x="6" y="{{ $gridline['y'] + 4 }}">{{ $gridline['value'] }}</text>
+                                    <text class="admin-report-trend-axis-label" x="6" y="{{ $gridline['y'] + 4 }}">{{ $gridline['value'] }}</text>
                                 @endforeach
                                 @if ($trendAreaPath !== '')
                                     <path class="admin-report-trend-area" d="{{ $trendAreaPath }}"></path>
                                 @endif
                                 <path class="admin-report-trend-line" d="{{ $trendLinePath }}"></path>
                                 @foreach ($trendPoints as $point)
-                                    <circle class="admin-report-trend-point" cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="4"
-                                            tabindex="0" focusable="true" aria-label="{{ $point['label'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}">
-                                        <title>{{ $point['label'] }} · {{ $point['start'] === $point['end'] ? $point['start'] : $point['start'].' – '.$point['end'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}</title>
+                                    <circle class="admin-report-trend-point"
+                                            cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="4"
+                                            tabindex="0" focusable="true"
+                                        aria-label="{{ $point['label'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}">
+                                    <title>{{ $point['label'] }} · {{ $point['start'] === $point['end'] ? $point['start'] : $point['start'].' – '.$point['end'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}</title>
                                     </circle>
-                                    <circle class="admin-report-trend-hit-target"
-                                            cx="{{ $point['x'] }}" cy="{{ $point['y'] }}" r="18"
-                                            tabindex="0" focusable="true" role="button"
-                                            data-report-point hidden aria-hidden="true"
-                                            data-period="{{ $point['label'] }} · {{ $point['start'] === $point['end'] ? $point['start'] : $point['start'].' – '.$point['end'] }}"
-                                            data-count="{{ number_format($point['count']) }}"
-                                            aria-label="{{ $point['label'] }}: {{ number_format($point['count']) }} reservation{{ (int) $point['count'] === 1 ? '' : 's' }}"></circle>
                                 @endforeach
                                 @if (count($trendPoints) > 0)
                                     @foreach (array_unique([0, (int) floor((count($trendPoints) - 1) / 2), count($trendPoints) - 1]) as $tickIndex)
-                                        <text class="admin-report-trend-date-label {{ $tickIndex !== 0 && $tickIndex !== count($trendPoints) - 1 ? 'admin-report-trend-date-label--middle' : '' }}"
+                                        <text class="admin-report-trend-date-label"
                                               x="{{ $trendPoints[$tickIndex]['x'] }}"
                                               y="253"
                                               text-anchor="{{ $tickIndex === 0 ? 'start' : ($tickIndex === count($trendPoints) - 1 ? 'end' : 'middle') }}">
@@ -456,10 +421,6 @@
                                 @endif
                             </svg>
                         </div>
-                        <div class="admin-report-trend-detail" data-report-trend-detail role="status" aria-live="polite" hidden>
-                            <span data-report-trend-period></span>
-                            <strong><span data-report-trend-count></span> reservations</strong>
-                        </div>
                         <details class="admin-report-chart-data">
                             <summary>View reservations data table</summary>
                             <div class="admin-report-table-wrap">
@@ -467,7 +428,7 @@
                                     <thead><tr><th scope="col">Period</th><th scope="col">Reservations</th></tr></thead>
                                     <tbody>
                                         @foreach ($trend as $point)
-                                            <tr><td data-label="Period" data-card-title>{{ $point['label'] }}</td><td data-label="Reservations">{{ number_format($point['count']) }}</td></tr>
+                                            <tr><td>{{ $point['label'] }}</td><td>{{ number_format($point['count']) }}</td></tr>
                                         @endforeach
                                     </tbody>
                                 </table>
@@ -528,7 +489,6 @@
         <section class="admin-report-section" id="report-fleet" aria-labelledby="report-fleet-heading">
             <div class="admin-report-section-heading">
                 <div>
-                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-car-front"></i></span>
                     <p class="admin-eyebrow">Vehicle performance</p>
                     <h2 id="report-fleet-heading">Fleet utilization &amp; popularity</h2>
                 </div>
@@ -597,11 +557,6 @@
                                         <span class="admin-report-stacked-segment admin-report-stacked-segment--maintenance" style="width: {{ $maintenanceWidth }}%" title="Maintenance: {{ number_format($vehicle['maintenance_days'], 2) }} days" tabindex="0"></span>
                                         <span class="admin-report-stacked-segment admin-report-stacked-segment--idle" style="width: {{ $idleWidth }}%" title="Idle: {{ number_format($vehicle['idle_days'], 2) }} days" tabindex="0"></span>
                                     </div>
-                                    <div class="admin-report-stacked-values" aria-hidden="true" hidden>
-                                        <span>Rented <strong>{{ number_format($vehicle['rented_days'], 2) }}</strong></span>
-                                        <span>Maintenance <strong>{{ number_format($vehicle['maintenance_days'], 2) }}</strong></span>
-                                        <span>Idle <strong>{{ number_format($vehicle['idle_days'], 2) }}</strong></span>
-                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -642,14 +597,14 @@
                             <tbody>
                                 @foreach ($fleet['vehicles'] as $vehicle)
                                     <tr>
-                                        <td data-label="Vehicle" data-card-title>{{ $vehicle['name'] }}</td>
-                                        <td data-label="Category">{{ ucfirst($vehicle['category']) }}</td>
-                                        <td data-label="Confirmed bookings">{{ number_format($vehicle['booking_count']) }}</td>
-                                        <td data-label="Rented days">{{ number_format($vehicle['rented_days'], 2) }}</td>
-                                        <td data-label="Available days">{{ number_format($vehicle['available_days'], 2) }}</td>
-                                        <td data-label="Utilization">{{ number_format($vehicle['utilization'], 1) }}%</td>
-                                        <td data-label="Maintenance days">{{ number_format($vehicle['maintenance_days'], 2) }}</td>
-                                        <td data-label="Idle days">{{ number_format($vehicle['idle_days'], 2) }}</td>
+                                        <td>{{ $vehicle['name'] }}</td>
+                                        <td>{{ ucfirst($vehicle['category']) }}</td>
+                                        <td>{{ number_format($vehicle['booking_count']) }}</td>
+                                        <td>{{ number_format($vehicle['rented_days'], 2) }}</td>
+                                        <td>{{ number_format($vehicle['available_days'], 2) }}</td>
+                                        <td>{{ number_format($vehicle['utilization'], 1) }}%</td>
+                                        <td>{{ number_format($vehicle['maintenance_days'], 2) }}</td>
+                                        <td>{{ number_format($vehicle['idle_days'], 2) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -727,18 +682,6 @@
                                 @endforeach
                             </ul>
                         </div>
-                        <div class="admin-report-category-ranks" role="list" aria-label="Popular categories ranked by confirmed bookings" hidden>
-                            @foreach ($categorySlices as $slice)
-                                <div class="admin-report-category-rank" role="listitem">
-                                    <span class="admin-report-rank-badge">{{ $loop->iteration }}</span>
-                                    <strong>{{ $slice['label'] }}</strong>
-                                    <span class="admin-report-category-rank-bar" role="img" aria-label="{{ $slice['label'] }}: {{ $slice['count'] }} bookings, {{ number_format($slice['percentage'], 1) }} percent">
-                                        <span style="width: {{ min(100, $slice['percentage']) }}%"></span>
-                                    </span>
-                                    <span class="admin-report-category-rank-count">{{ number_format($slice['count']) }}</span>
-                                </div>
-                            @endforeach
-                        </div>
                     @else
                         <div class="admin-report-empty admin-report-empty--compact"><strong>No confirmed category bookings in this range.</strong></div>
                     @endif
@@ -749,14 +692,13 @@
         <section class="admin-report-section" id="report-customers" aria-labelledby="report-customers-heading">
             <div class="admin-report-section-heading">
                 <div>
-                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-people"></i></span>
                     <p class="admin-eyebrow">Guest-style customer records</p>
                     <h2 id="report-customers-heading">Customer insights</h2>
                 </div>
                 <span>No customer accounts or registrations are implied</span>
             </div>
             <div class="admin-report-chart-grid">
-                <article class="admin-panel admin-report-panel admin-report-card admin-report-customer-insights-card">
+                <article class="admin-panel admin-report-panel admin-report-card">
                     <div class="admin-report-card-heading">
                         <span class="admin-report-card-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
                         <div>
@@ -794,22 +736,6 @@
                             @endforeach
                         </ul>
                     </div>
-                    <div class="admin-report-customer-split" hidden>
-                        <div class="admin-report-customer-split-track" role="img" aria-label="New records {{ number_format($customers['new_records']) }} of {{ number_format($customerTotal) }}; returning records {{ number_format($customers['returning_customers']) }} of {{ number_format($customerTotal) }}">
-                            <span class="admin-report-customer-split-new" style="width: {{ number_format($customerSlices[0]['percentage'], 3, '.', '') }}%"></span>
-                            <span class="admin-report-customer-split-returning" style="width: {{ number_format($customerSlices[1]['percentage'], 3, '.', '') }}%"></span>
-                        </div>
-                        <ul class="admin-report-customer-split-legend" aria-label="Customer record legend">
-                            @foreach ($customerSlices as $slice)
-                                <li>
-                                    <span class="admin-report-legend-dot" style="--legend-color: {{ $slice['color'] }}"></span>
-                                    <span>{{ $slice['label'] }}</span>
-                                    <strong>{{ number_format($slice['count']) }}</strong>
-                                    <small>{{ number_format($slice['percentage'], 1) }}%</small>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
                     <p class="admin-report-footnote">New uses the customer record’s created date. Returning means the record existed before the selected range and has a matching booking. Pending requests are included in customer activity.</p>
                 </article>
                 <article class="admin-panel admin-report-panel admin-report-card">
@@ -827,9 +753,9 @@
                                 <tbody>
                                     @foreach ($customers['top_customers'] as $customer)
                                         <tr>
-                                            <td data-label="Rank"><span class="admin-report-rank-badge">{{ $loop->iteration }}</span></td>
-                                            <td data-label="Customer" data-card-title>{{ $customer->full_name }}</td>
-                                            <td data-label="Completed bookings">{{ number_format($customer->completed_bookings) }}</td>
+                                            <td><span class="admin-report-rank-badge">{{ $loop->iteration }}</span></td>
+                                            <td>{{ $customer->full_name }}</td>
+                                            <td>{{ number_format($customer->completed_bookings) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -846,7 +772,6 @@
         <section class="admin-report-section" id="report-maintenance" aria-labelledby="report-maintenance-heading">
             <div class="admin-report-section-heading">
                 <div>
-                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-wrench-adjustable"></i></span>
                     <p class="admin-eyebrow">Service planning</p>
                     <h2 id="report-maintenance-heading">Maintenance summary</h2>
                 </div>
@@ -907,11 +832,11 @@
                             <tbody>
                                 @foreach ($maintenance['periods'] as $period)
                                     <tr>
-                                        <td data-label="Vehicle" data-card-title>{{ $period->vehicle?->name ?? 'Vehicle record' }}</td>
-                                        <td data-label="Category">{{ ucfirst($period->vehicle?->category ?? '') }}</td>
-                                        <td data-label="Starts">{{ $period->start_datetime->timezone('Asia/Manila')->format('M j, Y g:i A') }}</td>
-                                        <td data-label="Ends">{{ $period->end_datetime->timezone('Asia/Manila')->format('M j, Y g:i A') }}</td>
-                                        <td data-label="Reason">{{ $period->reason }}</td>
+                                        <td>{{ $period->vehicle?->name ?? 'Vehicle record' }}</td>
+                                        <td>{{ ucfirst($period->vehicle?->category ?? '') }}</td>
+                                        <td>{{ $period->start_datetime->timezone('Asia/Manila')->format('M j, Y g:i A') }}</td>
+                                        <td>{{ $period->end_datetime->timezone('Asia/Manila')->format('M j, Y g:i A') }}</td>
+                                        <td>{{ $period->reason }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -929,7 +854,6 @@
         <section class="admin-report-section" id="report-operations" aria-labelledby="report-operations-heading">
             <div class="admin-report-section-heading">
                 <div>
-                    <span class="admin-report-section-icon" aria-hidden="true" hidden><i class="bi bi-arrow-left-right"></i></span>
                     <p class="admin-eyebrow">Rental lifecycle</p>
                     <h2 id="report-operations-heading">Rental operations</h2>
                 </div>
@@ -945,7 +869,7 @@
                     </div>
                     <small>Completed status, by pickup date</small>
                 </article>
-                <article class="admin-panel admin-report-operation-card admin-report-operation-card--warning">
+                <article class="admin-panel admin-report-operation-card">
                     <span class="admin-report-operation-icon admin-report-operation-icon--warning"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
                     <span class="admin-report-operation-label">Overdue returns</span>
                     <strong>{{ number_format($operations['overdue_returns']) }}</strong>
@@ -971,119 +895,24 @@
     </main>
     <script>
         (() => {
-            const filterPanel = document.querySelector('.admin-report-filters');
-            const filterTrigger = filterPanel?.querySelector('[data-report-filter-open]');
-            const filterSheet = filterPanel?.querySelector('[data-report-filter-sheet]');
-            const filterBackdrop = filterPanel?.querySelector('.admin-report-filter-backdrop');
-            const isMobile = window.matchMedia('(max-width: 767px)');
-
-            if (filterTrigger && filterSheet && filterBackdrop) {
-                const closeFilterSheet = (restoreFocus = true) => {
-                    filterPanel.classList.remove('is-filter-sheet-open');
-                    filterTrigger.setAttribute('aria-expanded', 'false');
-                    filterSheet.setAttribute('aria-hidden', 'true');
-                    filterSheet.removeAttribute('aria-modal');
-                    filterBackdrop.hidden = true;
-                    document.body.classList.remove('admin-report-filter-open');
-
-                    if (restoreFocus) {
-                        filterTrigger.focus();
-                    }
-                };
-
-                const openFilterSheet = () => {
-                    filterPanel.classList.add('is-filter-sheet-open');
-                    filterTrigger.setAttribute('aria-expanded', 'true');
-                    filterSheet.setAttribute('aria-hidden', 'false');
-                    filterSheet.setAttribute('aria-modal', 'true');
-                    filterBackdrop.hidden = false;
-                    document.body.classList.add('admin-report-filter-open');
-                    filterPanel.querySelector('.admin-report-filter-dismiss')?.focus();
-                };
-
-                filterTrigger.addEventListener('click', openFilterSheet);
-                filterPanel.querySelectorAll('[data-report-filter-close]').forEach((control) => {
-                    control.addEventListener('click', () => closeFilterSheet());
-                });
-                document.addEventListener('keydown', (event) => {
-                    if (event.key === 'Escape' && filterPanel.classList.contains('is-filter-sheet-open')) {
-                        closeFilterSheet();
-                    }
-                });
-
-                if (!isMobile.matches) {
-                    filterSheet.setAttribute('aria-hidden', 'false');
-                }
-
-                isMobile.addEventListener?.('change', (event) => {
-                    if (event.matches) {
-                        closeFilterSheet(false);
-                    } else {
-                        closeFilterSheet(false);
-                        filterSheet.setAttribute('aria-hidden', 'false');
-                    }
-                });
-            }
-
             const navigation = document.querySelector('[data-report-section-nav]');
             const links = navigation ? Array.from(navigation.querySelectorAll('a[href^="#"]')) : [];
             const sections = links
                 .map((link) => document.querySelector(link.getAttribute('href')))
                 .filter(Boolean);
-            const trendDetail = document.querySelector('[data-report-trend-detail]');
-            const trendPeriod = trendDetail?.querySelector('[data-report-trend-period]');
-            const trendCount = trendDetail?.querySelector('[data-report-trend-count]');
-
-            if (trendDetail && trendPeriod && trendCount && window.matchMedia('(max-width: 767px)').matches) {
-                const revealTrendPoint = (point) => {
-                    trendPeriod.textContent = point.dataset.period || '';
-                    trendCount.textContent = point.dataset.count || '0';
-                    trendDetail.hidden = false;
-                };
-
-                document.querySelectorAll('.admin-report-trend-point').forEach((point) => {
-                    point.setAttribute('aria-hidden', 'true');
-                    point.setAttribute('tabindex', '-1');
-                });
-
-                document.querySelectorAll('[data-report-point]').forEach((point) => {
-                    point.hidden = false;
-                    point.removeAttribute('aria-hidden');
-                    point.addEventListener('click', () => revealTrendPoint(point));
-                    point.addEventListener('keydown', (event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            revealTrendPoint(point);
-                        }
-                    });
-                });
-            }
 
             if (!navigation || !('IntersectionObserver' in window)) {
                 return;
             }
 
             const setActiveSection = (sectionId) => {
-                let activeLink = null;
-
                 links.forEach((link) => {
                     if (link.hash === `#${sectionId}`) {
-                        if (!link.hasAttribute('aria-current')) {
-                            activeLink = link;
-                        }
                         link.setAttribute('aria-current', 'location');
                     } else {
                         link.removeAttribute('aria-current');
                     }
                 });
-
-                if (activeLink && navigation.scrollWidth > navigation.clientWidth && window.matchMedia('(max-width: 1023px)').matches) {
-                    const left = activeLink.offsetLeft - (navigation.clientWidth - activeLink.offsetWidth) / 2;
-                    navigation.scrollTo({
-                        left,
-                        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-                    });
-                }
             };
 
             links.forEach((link) => link.addEventListener('click', () => setActiveSection(link.hash.slice(1))));

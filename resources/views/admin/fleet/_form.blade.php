@@ -1,4 +1,4 @@
-<form class="admin-fleet-form" method="POST" action="{{ $vehicle->exists ? route('admin.fleet.update', $vehicle) : route('admin.fleet.store') }}" data-admin-disable-submit>
+<form class="admin-fleet-form" method="POST" enctype="multipart/form-data" action="{{ $vehicle->exists ? route('admin.fleet.update', $vehicle) : route('admin.fleet.store') }}" data-admin-disable-submit>
     @csrf
     @if ($vehicle->exists)
         @method('PUT')
@@ -94,17 +94,24 @@
                     <i class="bi bi-car-front" aria-hidden="true" data-fleet-image-placeholder></i>
                     <img src="{{ old('image_path', $vehicle->image_path) ? asset(old('image_path', $vehicle->image_path)) : '' }}" alt="Selected fleet image preview" @if (!old('image_path', $vehicle->image_path)) hidden @endif data-fleet-image-preview-img>
                 </span>
-                <label>
-                    <span>Fleet image</span>
+                <div class="admin-fleet-media-controls">
+                    <label>
+                        <span>Upload vehicle image</span>
+                        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" data-fleet-image-upload>
+                        <small>JPG, PNG, or WebP up to 10 MB. Images are resized to fit a 1600 × 1000 media frame.</small>
+                        @error('image') <small class="admin-fleet-field-error">{{ $message }}</small> @enderror
+                    </label>
+                    <label>
+                        <span>Or choose existing media</span>
                     <select name="image_path" data-fleet-image-select>
                         <option value="" data-preview-url="">Use vehicle icon</option>
                         @foreach ($images as $image)
                             <option value="{{ $image }}" data-preview-url="{{ asset($image) }}" @selected(old('image_path', $vehicle->image_path) === $image)>{{ basename($image) }}</option>
                         @endforeach
                     </select>
-                    <small>Choose an existing public image. Image uploads and plate numbers are not supported by the current application.</small>
                     @error('image_path') <small class="admin-fleet-field-error">{{ $message }}</small> @enderror
-                </label>
+                    </label>
+                </div>
             </div>
         </fieldset>
     </div>

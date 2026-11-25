@@ -8,6 +8,7 @@ use App\Models\ContactMessage;
 use App\Models\SiteSetting;
 use App\Models\User;
 use App\Services\MapLink;
+use App\Services\GoogleReviewLink;
 use App\Services\SiteSettings;
 use App\Services\SocialProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -96,6 +97,7 @@ class ContactAndSettingsTest extends TestCase
             ->assertSee('Only administrators can change these details.')
             ->assertDontSee('Save settings');
         $this->assertMatchesRegularExpression('/<input[^>]*name="email"[^>]*disabled/', $managerResponse->getContent());
+        $this->assertMatchesRegularExpression('/<input[^>]*name="google_reviews_url"[^>]*disabled/', $managerResponse->getContent());
 
         $admin = User::factory()->create();
         $admin->forceFill(['role' => 'admin'])->save();
@@ -167,6 +169,68 @@ class ContactAndSettingsTest extends TestCase
             ->assertSee('target="_blank" rel="noopener noreferrer"', false);
     }
 
+    public function test_google_review_settings_save_and_render_safe_links_and_manual_figures(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $payload = array_merge($this->completeSettingsPayload(), [
+            'google_business_name' => 'FleetGuard Panabo',
+            'google_reviews_url' => 'https://maps.app.goo.gl/exampleProfile',
+            'google_write_review_url' => 'https://g.page/fleetguard/review',
+            'google_rating' => '4.8',
+            'google_review_count' => '120',
+            'show_google_rating' => '1',
+            'show_google_review_count' => '1',
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('admin.settings.index'))
+            ->post(route('admin.settings.update'), $payload)
+            ->assertRedirect(route('admin.settings.index'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('site_settings', [
+            'key' => 'google_reviews_url',
+            'value' => 'https://maps.app.goo.gl/exampleProfile',
+        ]);
+        $this->assertDatabaseHas('site_settings', [
+            'key' => 'google_rating',
+            'value' => '4.8',
+        ]);
+
+        $this->get(route('home'))->assertOk()
+            ->assertSee('google-reviews-panel', false)
+            ->assertSee('FleetGuard Panabo')
+            ->assertSee('Read All Google Reviews')
+            ->assertSee('Write a Google Review')
+            ->assertSee('4.8')
+            ->assertSee('120')
+            ->assertSee('Figures entered by the business; not live Google data.')
+            ->assertSee('href="https://maps.app.goo.gl/exampleProfile" target="_blank" rel="noopener noreferrer"', false)
+            ->assertSee('href="https://g.page/fleetguard/review" target="_blank" rel="noopener noreferrer"', false);
+    }
+
+    public function test_google_reviews_panel_is_hidden_when_not_configured_and_does_not_expose_api_credentials(): void
+    {
+        config([
+            'fleetguard.google_business_name' => null,
+            'fleetguard.google_reviews_url' => null,
+            'fleetguard.google_write_review_url' => null,
+            'fleetguard.google_rating' => null,
+            'fleetguard.google_review_count' => null,
+            'fleetguard.show_google_rating' => '0',
+            'fleetguard.show_google_review_count' => '0',
+        ]);
+
+        $this->get(route('home'))->assertOk()
+            ->assertDontSee('google-reviews-panel', false)
+            ->assertDontSee('Read All Google Reviews');
+
+        $response = $this->actingAs($this->userWithRole('admin'))->get(route('admin.settings.index'));
+        $response->assertOk()
+            ->assertDontSee('GOOGLE_MAPS_API_KEY')
+            ->assertDontSee('Places API key');
+    }
+
     public function test_settings_invalid_values_redirect_with_inline_errors_instead_of_500s(): void
     {
         $admin = $this->userWithRole('admin');
@@ -177,6 +241,13 @@ class ContactAndSettingsTest extends TestCase
             ['maps_url', 'javascript:alert(1)', 'maps_url'],
             ['maps_url', 'https://user:pass@www.google.com/maps?q=Panabo', 'maps_url'],
             ['maps_url', 'https://www.google.com:8443/maps?q=Panabo', 'maps_url'],
+            ['google_reviews_url', 'http://www.google.com/maps?q=Panabo', 'google_reviews_url'],
+            ['google_reviews_url', 'https://www.google.com.evil.example/maps?q=Panabo', 'google_reviews_url'],
+            ['google_write_review_url', 'https://maps.google.com/not-a-review', 'google_write_review_url'],
+            ['google_rating', '5.5', 'google_rating'],
+            ['google_rating', '4.88', 'google_rating'],
+            ['google_review_count', '-1', 'google_review_count'],
+            ['google_place_id', 'bad-place-id', 'google_place_id'],
             ['social.instagram', 'https://facebook.com/fleetguard', 'social.instagram'],
             ['social.youtube', 'data:text/html,channel', 'social.youtube'],
             ['social.facebook', str_repeat('@', 501), 'social.facebook'],
@@ -415,6 +486,37 @@ class ContactAndSettingsTest extends TestCase
     {
         $this->assertTrue(app(MapLink::class)->parse('https://google.com/maps?q=Panabo')['valid']);
         $this->assertSame('fleetguard', app(SocialProfile::class)->parse('facebook', '@fleetguard')['username']);
+    }
+
+    public function test_google_review_link_parser_accepts_google_links_and_rejects_unsafe_urls(): void
+    {
+        $parser = app(GoogleReviewLink::class);
+
+        $this->assertSame(
+            'https://search.google.com/local/writereview?placeid=ChIJexample',
+            $parser->parse('https://search.google.com/local/writereview?placeid=ChIJexample', 'write')['url'],
+        );
+        $this->assertFalse($parser->parse('https://maps.google.com.evil.example/maps', 'read')['valid']);
+        $this->assertFalse($parser->parse('https://user:pass@google.com/maps', 'read')['valid']);
+        $this->assertFalse($parser->parse('https://google.com/maps#review', 'read')['valid']);
+    }
+
+    public function test_google_place_id_provides_the_standard_write_review_link(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $payload = array_merge($this->completeSettingsPayload(), [
+            'google_reviews_url' => 'https://maps.google.com/maps?q=FleetGuard',
+            'google_place_id' => 'ChIJN1t_tDeuEmsRUsoyG83frY4',
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('admin.settings.index'))
+            ->post(route('admin.settings.update'), $payload)
+            ->assertRedirect(route('admin.settings.index'))
+            ->assertSessionHasNoErrors();
+
+        $this->get(route('home'))->assertOk()
+            ->assertSee('href="https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG83frY4"', false);
     }
 
     public function test_manager_can_review_a_message_and_navigate_to_the_adjacent_inbox_record(): void

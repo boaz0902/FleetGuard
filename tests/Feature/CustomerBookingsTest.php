@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\LegalPolicy;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\BookingStatusTransitionService;
@@ -98,7 +99,7 @@ class CustomerBookingsTest extends TestCase
         $this->actingAs($unverified)
             ->get(route('account'))
             ->assertOk()
-            ->assertSee('Resend verification link')
+            ->assertSee('Resend verification code')
             ->assertSee(route('verification.send'), false)
             ->assertDontSee('Verified');
 
@@ -377,6 +378,11 @@ class CustomerBookingsTest extends TestCase
     {
         $user = $this->customerUser('confirmation@example.com');
         $this->linkedCustomer($user);
+        $policyVersions = LegalPolicy::query()
+            ->whereIn('slug', LegalPolicy::bookingAgreementSlugs())
+            ->get()
+            ->mapWithKeys(fn (LegalPolicy $policy): array => [$policy->slug => $policy->currentPublishedVersion?->id])
+            ->all();
 
         $response = $this->actingAs($user)->postJson('/bookings', [
             'vehicle_id' => 'customer-booking-car',
@@ -389,6 +395,8 @@ class CustomerBookingsTest extends TestCase
             'return_location' => 'Panabo City',
             'return_date' => '2026-12-11',
             'return_time' => '10:00',
+            'agreements' => array_fill_keys(LegalPolicy::bookingAgreementSlugs(), true),
+            'policy_versions' => $policyVersions,
         ]);
 
         $response->assertCreated();
