@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', $vehicle->name.' | FleetGuard')
-@section('meta-description', $vehicle->description ?: 'View vehicle details and send a FleetGuard booking request.')
+@section('title', $vehicle->name.' | '.ucfirst($vehicle->category).' Vehicle | FleetGuard')
+@section('meta-description', 'Explore '.$vehicle->name.', a '.strtolower($vehicle->category).' with '.$vehicle->passenger_capacity.' passenger capacity, '.$vehicle->transmission.' transmission and '.$vehicle->fuel_type.' fuel type. View details and send a booking request.')
 
 @section('content')
     @include('partials.public-navigation')
@@ -21,7 +21,7 @@
                 <section class="vehicle-about">
                     <p class="eyebrow">{{ strtoupper($vehicle->category) }}</p>
                     <h1>{{ $vehicle->name }}</h1>
-                    <p>{{ $vehicle->description ?: 'A maintained vehicle for comfortable travel around Panabo City and beyond.' }}</p>
+                    <p>{{ $vehicle->description ?: 'Review the vehicle specifications and rental details before sending a booking request.' }}</p>
                 </section>
                 <section class="vehicle-spec-grid" aria-label="Vehicle specifications">
                     <div><i class="bi bi-people" aria-hidden="true"></i><span>Passengers<strong>{{ $vehicle->passenger_capacity }}</strong></span></div>
@@ -32,8 +32,8 @@
                 <section class="rental-notes">
                     <h2>Rental notes</h2>
                     <ul>
-                        <li><i class="bi bi-check2" aria-hidden="true"></i>Insured and maintained vehicle</li>
-                        <li><i class="bi bi-check2" aria-hidden="true"></i>Transparent daily rate</li>
+                        <li><i class="bi bi-check2" aria-hidden="true"></i>Key vehicle specifications shown</li>
+                        <li><i class="bi bi-check2" aria-hidden="true"></i>Displayed daily rate</li>
                         <li><i class="bi bi-info-circle" aria-hidden="true"></i>Final details are confirmed by FleetGuard</li>
                     </ul>
                 </section>

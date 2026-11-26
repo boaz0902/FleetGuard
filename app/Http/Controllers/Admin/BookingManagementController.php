@@ -285,9 +285,10 @@ class BookingManagementController extends Controller
             default => null,
         };
 
-        abort_unless(is_string($path) && Storage::disk('local')->exists($path), 404);
+        $disk = Storage::disk(config('filesystems.booking_documents_disk', 'private'));
+        abort_unless(is_string($path) && $disk->exists($path), 404);
 
-        return Storage::disk('local')->response($path, null, [
+        return $disk->response($path, null, [
             'Cache-Control' => 'private, no-store, max-age=0',
             'Referrer-Policy' => 'no-referrer',
             'X-Content-Type-Options' => 'nosniff',

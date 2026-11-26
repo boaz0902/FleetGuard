@@ -2,8 +2,8 @@
     <div class="public-content-shell">
         <header class="public-section-heading" data-scroll-reveal>
             <p class="fleet-eyebrow homepage-section-label"><span><strong>02</strong> / How it works</span></p>
-            <h2 id="how-it-works-title">A clear path from search to request.</h2>
-            <p>Choose a vehicle, share your trip details, and follow your request through review.</p>
+            <h2 id="how-it-works-title">How to Rent a Car with FleetGuard</h2>
+            <p>Choose a listed vehicle, share your trip details, and follow your request through review.</p>
         </header>
 
         <ol class="how-it-works-steps">
@@ -23,13 +23,13 @@
                 <span class="how-step-icon"><i class="bi bi-patch-check" aria-hidden="true"></i></span>
                 <span class="how-step-number">03</span>
                 <h3>We review it</h3>
-                <p>The FleetGuard team reviews requests. Submitting one does not confirm a reservation.</p>
+                <p>The FleetGuard team reviews each request; it is not confirmed automatically. No payment is taken when you submit it.</p>
             </li>
             <li class="how-it-works-step" data-scroll-reveal>
                 <span class="how-step-icon"><i class="bi bi-key" aria-hidden="true"></i></span>
                 <span class="how-step-number">04</span>
-                <h3>Pick up and return</h3>
-                <p>FleetGuard staff record pickup and return. Verified customers can follow booking updates in My Bookings.</p>
+                <h3>Confirm pickup and return details</h3>
+                <p>Include your pickup and return locations in the request. FleetGuard reviews and confirms the final arrangements.</p>
             </li>
         </ol>
     </div>

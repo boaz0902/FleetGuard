@@ -39,7 +39,7 @@
                     </a>
                     <p class="customer-booking-detail-eyebrow">Booking request</p>
                     <div class="customer-booking-detail-title">
-                        <h1>{{ $booking->booking_reference }}</h1>
+                        <h1>Booking request {{ $booking->booking_reference }}</h1>
                         @include('partials.customer-booking-status', ['statusMeta' => $statusMeta])
                     </div>
                     <p class="customer-booking-detail-subtitle">Your reservation details and trip information.</p>
@@ -271,7 +271,7 @@
         <div class="mx-auto max-w-4xl px-6 py-10">
             <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
                 <p class="text-sm uppercase tracking-[0.25em] text-cyan-500">Booking request</p>
-                <h1 class="mt-2 text-3xl font-semibold text-slate-900">{{ $booking->booking_reference }}</h1>
+                <h1 class="mt-2 text-3xl font-semibold text-slate-900">Booking request {{ $booking->booking_reference }}</h1>
 
                 <dl class="mt-6 grid gap-4 md:grid-cols-2">
                     <div>

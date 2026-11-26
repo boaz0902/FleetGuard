@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Fleet | FleetGuard')
-@section('meta-description', 'Browse the FleetGuard vehicle collection and check availability for your travel dates.')
+@section('title', 'Browse the Fleet | FleetGuard')
+@section('meta-description', 'Compare vehicle categories, passenger capacity, transmission and fuel type, then view details and check availability.')
 
 @section('content')
     @include('partials.public-navigation')
@@ -12,8 +12,8 @@
                     <a href="{{ route('home') }}">Home</a><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Fleet</span>
                 </nav>
                 <p class="eyebrow">The FleetGuard Collection</p>
-                <h1>Choose your ride.</h1>
-                <p>Browse insured, maintained vehicles for every kind of journey.</p>
+                <h1>Browse our car rental fleet.</h1>
+                <p>Review vehicle specifications, displayed rates and available dates before sending a request.</p>
             </div>
         </header>
 
@@ -76,9 +76,9 @@
         </section>
 
         <section class="showroom-reassurance" aria-label="Rental reassurance">
-            <div><i class="bi bi-patch-check" aria-hidden="true"></i><span><strong>Insured and maintained</strong><small>Prepared for confident travel</small></span></div>
-            <div><i class="bi bi-receipt" aria-hidden="true"></i><span><strong>Transparent rates</strong><small>Clear estimated totals</small></span></div>
-            <div><i class="bi bi-headset" aria-hidden="true"></i><span><strong>Local support</strong><small>Help from our Panabo team</small></span></div>
+            <div><i class="bi bi-car-front" aria-hidden="true"></i><span><strong>Vehicle details</strong><small>Specifications and daily rates shown</small></span></div>
+            <div><i class="bi bi-calendar-check" aria-hidden="true"></i><span><strong>Availability requests</strong><small>Choose dates to ask about a vehicle</small></span></div>
+            <div><i class="bi bi-clipboard-check" aria-hidden="true"></i><span><strong>Request review</strong><small>FleetGuard reviews each request</small></span></div>
         </section>
     </main>
 @endsection

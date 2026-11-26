@@ -137,7 +137,8 @@ class BookingController extends Controller
                 $bookingCreated = true;
             } finally {
                 if (! $bookingCreated && $documentPaths !== []) {
-                    Storage::disk('local')->delete(array_values($documentPaths));
+                    Storage::disk(config('filesystems.booking_documents_disk', 'private'))
+                        ->delete(array_values($documentPaths));
                 }
             }
         } catch (CustomerLinkConflict $conflict) {
@@ -200,7 +201,10 @@ class BookingController extends Controller
                     continue;
                 }
 
-                $path = $request->file($input)->store('booking-documents', 'local');
+                $path = $request->file($input)->store(
+                    'booking-documents',
+                    config('filesystems.booking_documents_disk', 'private'),
+                );
 
                 if (! is_string($path)) {
                     throw new RuntimeException('Unable to securely store a booking identity document.');
@@ -212,7 +216,8 @@ class BookingController extends Controller
             $storedAllFiles = true;
         } finally {
             if (! $storedAllFiles && $paths !== []) {
-                Storage::disk('local')->delete(array_values($paths));
+                Storage::disk(config('filesystems.booking_documents_disk', 'private'))
+                    ->delete(array_values($paths));
             }
         }
 

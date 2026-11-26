@@ -31,7 +31,7 @@
 
         <div class="legal-document-layout">
             <article class="legal-document">
-                {!! $contentRenderer->render($version->content) !!}
+                {!! $contentRenderer->renderDocument($version->content) !!}
             </article>
 
             <aside class="legal-document-nav" aria-label="Other legal documents">

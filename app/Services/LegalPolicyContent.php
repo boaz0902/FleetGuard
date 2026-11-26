@@ -30,6 +30,38 @@ class LegalPolicyContent
             : $this->renderPlainText($content));
     }
 
+    public function renderDocument(string $content): HtmlString
+    {
+        $html = $this->render($content)->toHtml();
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $previousErrorMode = libxml_use_internal_errors(true);
+
+        try {
+            $document->loadHTML(
+                '<?xml encoding="UTF-8"><!DOCTYPE html><html><body><div id="legal-document-root">'.$html.'</div></body></html>',
+                LIBXML_NONET,
+            );
+            $root = $document->getElementById('legal-document-root');
+
+            if (! $root) {
+                return new HtmlString($html);
+            }
+
+            $previousLevel = 1;
+            $this->normalizeDocumentHeadings($root, $previousLevel);
+            $rendered = '';
+
+            foreach ($root->childNodes as $child) {
+                $rendered .= $document->saveHTML($child);
+            }
+
+            return new HtmlString(trim($rendered));
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrorMode);
+        }
+    }
+
     public function editorContent(string $content): HtmlString
     {
         return $this->render($content);
@@ -168,6 +200,39 @@ class LegalPolicyContent
             }
 
             $this->sanitizeAttributes($child);
+        }
+    }
+
+    private function normalizeDocumentHeadings(DOMNode $parent, int &$previousLevel): void
+    {
+        foreach (iterator_to_array($parent->childNodes) as $child) {
+            if (! $child instanceof DOMElement) {
+                continue;
+            }
+
+            $tag = strtolower($child->tagName);
+            if (preg_match('/^h([1-6])$/', $tag, $matches)) {
+                $level = max(2, min((int) $matches[1], $previousLevel + 1));
+
+                if ($level !== (int) $matches[1]) {
+                    $replacement = $child->ownerDocument->createElement('h'.$level);
+
+                    foreach (iterator_to_array($child->attributes) as $attribute) {
+                        $replacement->setAttribute($attribute->name, $attribute->value);
+                    }
+
+                    while ($child->firstChild) {
+                        $replacement->appendChild($child->firstChild);
+                    }
+
+                    $child->parentNode?->replaceChild($replacement, $child);
+                    $child = $replacement;
+                }
+
+                $previousLevel = $level;
+            }
+
+            $this->normalizeDocumentHeadings($child, $previousLevel);
         }
     }
 

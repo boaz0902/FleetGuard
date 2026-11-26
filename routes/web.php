@@ -21,11 +21,15 @@ use App\Http\Controllers\CustomerBookingsController;
 use App\Http\Controllers\CustomerTestimonialController;
 use App\Http\Controllers\CustomerPasswordController;
 use App\Http\Controllers\LegalPolicyController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\VehicleAvailabilityController;
 use App\Models\LegalPolicy;
 use App\Models\Testimonial;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
 
 Route::get('/', function () {
     $vehicles = Vehicle::query()

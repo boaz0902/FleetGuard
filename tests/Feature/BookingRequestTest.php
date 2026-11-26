@@ -173,7 +173,9 @@ class BookingRequestTest extends TestCase
 
     public function test_booking_identity_photos_are_optional_private_and_visible_only_to_booking_reviewers(): void
     {
-        Storage::fake('local');
+        config(['filesystems.booking_documents_disk' => 'booking-private']);
+        Storage::fake('booking-private');
+        Storage::fake('public');
 
         $this->from('/')->post('/bookings', $this->bookingPayload([
             'license_front' => UploadedFile::fake()->image('license-front.jpg'),
@@ -186,7 +188,8 @@ class BookingRequestTest extends TestCase
         $this->assertNotNull($booking->license_back_path);
         $this->assertNotNull($booking->license_selfie_path);
         $this->assertArrayNotHasKey('license_front_path', $booking->toArray());
-        Storage::disk('local')->assertExists($booking->license_front_path);
+        Storage::disk('booking-private')->assertExists($booking->license_front_path);
+        Storage::disk('public')->assertMissing($booking->license_front_path);
 
         $admin = $this->userWithRole('admin');
         $this->actingAs($admin)
@@ -202,6 +205,25 @@ class BookingRequestTest extends TestCase
         $this->actingAs($customer)
             ->get(route('admin.bookings.documents.show', [$booking, 'license-front']))
             ->assertForbidden();
+    }
+
+    public function test_failed_booking_cleans_up_identity_documents_from_the_configured_disk(): void
+    {
+        config(['filesystems.booking_documents_disk' => 'booking-private']);
+        Storage::fake('booking-private');
+        Customer::query()->forceCreate([
+            'full_name' => 'Blocked Customer',
+            'email' => 'jane@example.com',
+            'mobile_number' => '09171234567',
+            'status' => Customer::STATUS_BLOCKED,
+        ]);
+
+        $this->from('/')->post('/bookings', $this->bookingPayload([
+            'license_front' => UploadedFile::fake()->image('license-front.jpg'),
+        ]))->assertSessionHasErrors('email');
+
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertSame([], Storage::disk('booking-private')->allFiles('booking-documents'));
     }
 
     public function test_booking_rejects_non_image_identity_document_uploads(): void

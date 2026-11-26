@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'FleetGuard | Your Journey. Your Freedom.')
-@section('meta-description', 'Explore FleetGuard vehicles, check availability for your dates, and send a booking request for review in Panabo City.')
+@section('title', 'Car Rental in Panabo City | FleetGuard')
+@section('meta-description', 'Looking for car rental in Panabo City? Compare listed vehicles and displayed daily rates, check availability for your dates, and send a request for FleetGuard review.')
 
 @section('content')
     @include('partials.public-navigation')
@@ -27,16 +27,16 @@
             <div class="hero-content">
                 <p class="eyebrow hero-eyebrow" data-reveal>
                     <span class="eyebrow-line" aria-hidden="true"></span>
-                    Premium car rental experience
+                    Explore listed vehicles
                 </p>
 
                 <h1 id="hero-title" class="hero-title">
-                    <span class="headline-line"><span data-headline-line>Your journey.</span></span>
-                    <span class="headline-line headline-line-accent"><span data-headline-line>Your freedom.</span></span>
+                    <span class="headline-line"><span data-headline-line>Car Rental in</span></span>
+                    <span class="headline-line headline-line-accent"><span data-headline-line>Panabo City.</span></span>
                 </h1>
 
                 <p class="hero-description" data-reveal>
-                    Discover a better way to move. Explore our fleet and experience every journey with confidence.
+                    <strong>Drive Your Next Journey.</strong> Experience convenient and reliable car rental services in Panabo City. Explore our vehicles and find the right ride for your next journey.
                 </p>
 
                 <div class="hero-actions" data-reveal>
@@ -124,10 +124,10 @@
 
         <section class="trust-strip" aria-label="Service highlights">
             <ul>
-                <li><i class="bi bi-patch-check" aria-hidden="true"></i><span>Insured &amp; maintained</span></li>
-                <li><i class="bi bi-clock-history" aria-hidden="true"></i><span>Flexible pickup</span></li>
-                <li><i class="bi bi-receipt" aria-hidden="true"></i><span>Transparent rates</span></li>
-                <li><i class="bi bi-headset" aria-hidden="true"></i><span>Local support</span></li>
+                <li><i class="bi bi-car-front" aria-hidden="true"></i><span>Listed vehicles</span></li>
+                <li><i class="bi bi-calendar-check" aria-hidden="true"></i><span>Check your dates</span></li>
+                <li><i class="bi bi-receipt" aria-hidden="true"></i><span>Displayed daily rates</span></li>
+                <li><i class="bi bi-clipboard-check" aria-hidden="true"></i><span>Requests reviewed</span></li>
             </ul>
         </section>
 
@@ -135,7 +135,7 @@
             <div class="featured-fleet-heading">
                 <div>
                     <p class="fleet-eyebrow homepage-section-label"><span><strong>01</strong> / Featured vehicles</span></p>
-                    <h2 id="featured-fleet-title">Find your perfect ride.</h2>
+                    <h2 id="featured-fleet-title">Explore Our Car Rental Fleet</h2>
                 </div>
                 <a class="button button-secondary" href="{{ route('fleet') }}">Browse the full fleet <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
             </div>
@@ -154,7 +154,7 @@
                         <div class="featured-fleet-card-body">
                             <div class="featured-fleet-card-meta">
                                 <p>{{ strtoupper($vehicle['category_label']) }}</p>
-                                <span>Insured &amp; maintained</span>
+                                <span>Displayed daily rate</span>
                             </div>
                             <h3><a href="{{ route('fleet.show', $vehicle['id']) }}">{{ $vehicle['name'] }}</a></h3>
                             <ul class="featured-fleet-specs" aria-label="Vehicle specifications">
@@ -184,7 +184,7 @@
         <section class="home-closing-cta" aria-labelledby="closing-cta-title">
             <p class="fleet-eyebrow homepage-section-label"><span>Make your next trip yours</span></p>
             <h2 id="closing-cta-title">Your next drive starts with a request.</h2>
-            <p>Choose your dates and vehicle. FleetGuard will review availability and confirm the details with you.</p>
+            <p>Choose your dates and a listed vehicle. FleetGuard will review your request and confirm availability and final rates.</p>
             <a class="button button-primary" href="{{ route('booking') }}">Start a booking request <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
         </section>
     </main>

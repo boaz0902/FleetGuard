@@ -3,7 +3,7 @@
         <div class="about-story">
             <div class="about-story-copy" data-scroll-reveal>
                 <p class="fleet-eyebrow homepage-section-label"><span><strong>04</strong> / About FleetGuard</span></p>
-                <h2 id="about-title">A better way to plan your next drive.</h2>
+                <h2 id="about-title">Why Choose FleetGuard?</h2>
                 <p class="about-placeholder">Company story to be provided by FleetGuard.</p>
             </div>
 
@@ -26,8 +26,8 @@
         <div class="about-pillars">
             <article class="about-pillar" data-scroll-reveal>
                 <span class="public-icon-tile"><i class="bi bi-calendar2-check" aria-hidden="true"></i></span>
-                <h3>Availability you can trust</h3>
-                <p>Availability checks account for approved and ongoing bookings and scheduled maintenance for your dates.</p>
+                <h3>Check vehicle availability</h3>
+                <p>Check dates against approved and ongoing bookings and scheduled maintenance. FleetGuard confirms availability before approving a request.</p>
             </article>
             <article class="about-pillar" data-scroll-reveal>
                 <span class="public-icon-tile"><i class="bi bi-person-check" aria-hidden="true"></i></span>
@@ -36,8 +36,8 @@
             </article>
             <article class="about-pillar" data-scroll-reveal>
                 <span class="public-icon-tile"><i class="bi bi-lock" aria-hidden="true"></i></span>
-                <h3>Your rate stays fixed</h3>
-                <p>The vehicle's daily rate is recorded with your request, so later rate changes do not rewrite that snapshot.</p>
+                <h3>See displayed daily rates</h3>
+                <p>Displayed daily rates come from vehicle records. FleetGuard confirms final rates for each request.</p>
             </article>
         </div>
     </div>

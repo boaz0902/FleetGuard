@@ -11,7 +11,7 @@
             <aside class="verification-story" aria-label="FleetGuard account security">
                 <span class="verification-icon" aria-hidden="true"><i class="bi bi-shield-lock-fill"></i></span>
                 <p class="verification-story-kicker">FleetGuard <span>·</span> Customer account</p>
-                <h2>Every journey<br><span>begins with trust.</span></h2>
+                <p class="verification-story-heading">Every journey<br><span>begins with trust.</span></p>
                 <p class="verification-story-copy">A quick email confirmation keeps your account and booking details protected.</p>
 
                 <div class="verification-progress">

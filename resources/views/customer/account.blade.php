@@ -12,7 +12,7 @@
 
     <main class="customer-dashboard-page" id="main-content">
         @include('partials.customer-account-hero', [
-            'heroTitle' => 'Welcome back, '.$firstName,
+            'heroTitle' => 'Your FleetGuard account, '.$firstName,
             'heroDescription' => $user->name.' · '.$user->email,
         ])
 

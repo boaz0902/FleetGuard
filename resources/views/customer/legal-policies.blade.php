@@ -48,7 +48,7 @@
                                 <div class="legal-accepted-content">
                                     <p>Accepted {{ $acceptance->accepted_at->timezone('Asia/Manila')->format('F j, Y \a\t g:i A') }} (Philippine time). Recorded version: {{ $acceptance->version->version }}.</p>
                                     <a href="{{ route('legal.show', $acceptance->policy->slug) }}">View current {{ $acceptance->policy->title }} <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
-                                    {!! $contentRenderer->render($acceptance->version->content) !!}
+                                    {!! $contentRenderer->renderDocument($acceptance->version->content) !!}
                                 </div>
                             </details>
                         @endforeach

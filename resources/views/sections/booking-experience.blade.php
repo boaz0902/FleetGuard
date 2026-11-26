@@ -6,7 +6,7 @@
             <p class="fleet-eyebrow homepage-section-label"><span><strong>03</strong> / Booking request</span></p>
             <div class="booking-experience-heading">
                 <div>
-                    <h2 id="booking-experience-title">Plan your next<br>great drive.</h2>
+                    <h1 id="booking-experience-title">Plan your next<br>great drive.</h1>
                     <p>Four steps to send your request for admin review. Requests are not confirmed automatically.</p>
                 </div>
                 <span class="booking-prototype-tag">Request for approval</span>
@@ -29,7 +29,7 @@
             <div class="booking-step-heading">
                 <div>
                     <p class="booking-step-kicker">Step 01 <span>/ 04</span></p>
-                    <h3 id="booking-vehicle-heading">Choose a vehicle and dates.</h3>
+                    <h2 id="booking-vehicle-heading">Choose a vehicle and dates.</h2>
                     <p>Availability and rates come from FleetGuard's current vehicle records.</p>
                     <p class="booking-search-preference" data-search-preference hidden></p>
                 </div>
@@ -84,7 +84,7 @@
             <div class="booking-step-heading">
                 <div>
                     <p class="booking-step-kicker">Step 02 <span>/ 04</span></p>
-                    <h3 id="booking-trip-heading">Choose your locations.</h3>
+                    <h2 id="booking-trip-heading">Choose your locations.</h2>
                     <p>Choose your pickup and return locations. Options below are demo locations in Panabo City.</p>
                 </div>
                 <button class="booking-text-link" type="button" data-booking-edit="0">Change vehicle <i class="bi bi-arrow-up-right" aria-hidden="true"></i></button>
@@ -126,7 +126,7 @@
             <div class="booking-step-heading">
                 <div>
                     <p class="booking-step-kicker">Step 03 <span>/ 04</span></p>
-                    <h3 id="booking-customer-heading">A little about you.</h3>
+                    <h2 id="booking-customer-heading">A little about you.</h2>
                     <p>Enter the contact details for this booking request.</p>
                 </div>
             </div>
@@ -158,7 +158,7 @@
                         <span class="booking-identity-icon" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
                         <div>
                             <p class="booking-identity-eyebrow">Optional identity check</p>
-                            <h4 id="booking-identity-heading">Give your request a stronger start.</h4>
+                            <h3 id="booking-identity-heading">Give your request a stronger start.</h3>
                             <p>Clear ID photos can help our team verify your details sooner. They don't guarantee approval.</p>
                         </div>
                         <span class="booking-identity-optional">Optional</span>
@@ -203,7 +203,7 @@
             <div class="booking-step-heading">
                 <div>
                     <p class="booking-step-kicker">Step 04 <span>/ 04</span></p>
-                    <h3 id="booking-review-heading">Review your plans.</h3>
+                    <h2 id="booking-review-heading">Review your plans.</h2>
                     <p>The estimate uses displayed rates. The server calculates the request total using the vehicle's stored rate.</p>
                 </div>
             </div>
@@ -212,7 +212,7 @@
                 <div class="booking-review-main">
                     <section class="booking-review-block">
                         <div class="booking-review-block-heading">
-                            <h4>Vehicle</h4>
+                            <h3>Vehicle</h3>
                             <button type="button" data-booking-edit="0">Edit</button>
                         </div>
                         <div class="booking-review-vehicle">
@@ -227,7 +227,7 @@
                     </section>
                     <section class="booking-review-block">
                         <div class="booking-review-block-heading">
-                            <h4>Trip details</h4>
+                            <h3>Trip details</h3>
                             <button type="button" data-booking-edit="1">Edit</button>
                         </div>
                         <dl class="booking-review-details">
@@ -238,7 +238,7 @@
                     </section>
                     <section class="booking-review-block">
                         <div class="booking-review-block-heading">
-                            <h4>Customer</h4>
+                            <h3>Customer</h3>
                             <button type="button" data-booking-edit="2">Edit</button>
                         </div>
                         <dl class="booking-review-details">
@@ -285,7 +285,7 @@
         <div class="booking-step-panel booking-confirmation" data-booking-step="4" aria-labelledby="booking-confirmation-heading" hidden inert>
             <div class="booking-confirmation-mark" aria-hidden="true">✓</div>
             <p class="fleet-eyebrow">Request submitted</p>
-            <h3 id="booking-confirmation-heading">Your request<br>is under review.</h3>
+            <h2 id="booking-confirmation-heading">Your request<br>is under review.</h2>
             <p class="booking-confirmation-message">
                 Your booking request is pending admin approval. It is not a confirmed reservation.
             </p>
@@ -297,7 +297,7 @@
                 <span data-confirmation-status>Pending approval</span>
             </div>
             <section class="booking-confirmation-prompt" aria-labelledby="guest-account-prompt-title" hidden data-confirmation-guest-prompt>
-                <h4 id="guest-account-prompt-title">Want to track or cancel this request?</h4>
+                <h3 id="guest-account-prompt-title">Want to track or cancel this request?</h3>
                 <p>Create an account with the same email address. Your request will be linked after you verify that email.</p>
                 <a class="booking-action-button is-primary" href="{{ route('register') }}" data-confirmation-create-account>
                     Create account <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
@@ -305,7 +305,7 @@
             </section>
             @if ($bookingCustomer && ! $bookingCustomer->hasVerifiedEmail())
                 <section class="booking-confirmation-prompt booking-confirmation-prompt--verification" aria-labelledby="verify-booking-email-title" hidden data-confirmation-verify-prompt>
-                    <h4 id="verify-booking-email-title">Verify your email to track this request.</h4>
+                    <h3 id="verify-booking-email-title">Verify your email to track this request.</h3>
                     <p>Your booking can be linked to My Bookings after your account email is verified.</p>
                     <a class="booking-action-button is-primary" href="{{ route('verification.notice') }}">
                         Verify email address <i class="bi bi-arrow-up-right" aria-hidden="true"></i>

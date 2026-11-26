@@ -291,7 +291,7 @@
     color: #6fa9e3;
 }
 
-.verification-story h2 {
+.verification-story-heading {
     margin: 0;
     color: #f4f6f8;
     font-family: var(--font-display);
@@ -301,7 +301,7 @@
     line-height: 1.16;
 }
 
-.verification-story h2 span {
+.verification-story-heading span {
     color: #9dcafa;
 }
 
@@ -842,7 +842,7 @@
         font-size: 20px;
     }
 
-    .verification-story h2 {
+    .verification-story-heading {
         font-size: 29px;
     }
 

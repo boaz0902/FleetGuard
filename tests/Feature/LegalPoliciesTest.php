@@ -247,6 +247,18 @@ class LegalPoliciesTest extends TestCase
         );
     }
 
+    public function test_public_policy_content_headings_follow_the_document_outline(): void
+    {
+        $content = app(LegalPolicyContent::class)->renderDocument(
+            '<h1>Policy section</h1><h3>Subsection</h3><h4>Details</h4><h2>Next section</h2>',
+        )->toHtml();
+
+        preg_match_all('/<h([1-6])\b/', $content, $matches);
+
+        $this->assertSame(['2', '3', '4', '2'], $matches[1]);
+        $this->assertStringNotContainsString('<h1', $content);
+    }
+
     public function test_rich_text_is_saved_as_formatted_html_and_rendered_with_safe_styles(): void
     {
         $policy = LegalPolicy::query()->where('slug', 'cancellation-policy')->firstOrFail();

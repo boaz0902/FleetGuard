@@ -2,7 +2,7 @@
     <div class="public-content-shell faq-shell">
         <header class="public-section-heading" data-scroll-reveal>
             <p class="fleet-eyebrow homepage-section-label"><span><strong>05</strong> / FAQ</span></p>
-            <h2 id="faq-title">Good to know before you request.</h2>
+            <h2 id="faq-title">Frequently Asked Questions About Car Rental</h2>
             <p>Booking requests are reviewed by the FleetGuard team and are not confirmed automatically.</p>
         </header>
 
@@ -22,6 +22,14 @@
             <details class="faq-item" data-scroll-reveal>
                 <summary>Why can't I see a vehicle for my dates?</summary>
                 <p>It may be unavailable because of an approved or ongoing booking or scheduled maintenance during that period.</p>
+            </details>
+            <details class="faq-item" data-scroll-reveal>
+                <summary>How much does it cost to rent a car?</summary>
+                <p>Each listing shows its displayed daily rate. The estimate uses your selected dates; FleetGuard confirms final rates and availability when reviewing your request.</p>
+            </details>
+            <details class="faq-item" data-scroll-reveal>
+                <summary>Can I request a car for multiple days?</summary>
+                <p>Choose pickup and return dates spanning your trip when you send a request. FleetGuard reviews the dates and confirms availability before approving it.</p>
             </details>
             <details class="faq-item faq-item-placeholder" data-scroll-reveal>
                 <summary>Which documents are required?</summary>

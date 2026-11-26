@@ -9,7 +9,7 @@
     <main class="customer-page" id="main-content">
         <section class="customer-card" aria-labelledby="customer-auth-title">
             <p class="customer-eyebrow"><span aria-hidden="true"></span> Customer account</p>
-            <h1 id="customer-auth-title">Welcome back.</h1>
+            <h1 id="customer-auth-title">Sign in to your account.</h1>
             <p class="customer-card-intro">Sign in to your FleetGuard customer account.</p>
 
             @if (session('status'))

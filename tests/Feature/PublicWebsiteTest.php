@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\LegalPolicy;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,8 +62,95 @@ class PublicWebsiteTest extends TestCase
         $response->assertSee('I acknowledge the');
         $response->assertSee('id="vehicle-search"', false);
         $response->assertDontSee('id="experience"', false);
-        $response->assertSee('A clear path from search to request.');
+        $response->assertSee('How to Rent a Car with FleetGuard');
         $response->assertSee('To be confirmed by FleetGuard.');
+    }
+
+    public function test_customer_pages_have_one_meaningful_h1_and_no_skipped_heading_levels(): void
+    {
+        $vehicle = Vehicle::query()->create([
+            'id' => 'heading-audit-car',
+            'name' => 'Heading Audit Car',
+            'brand' => 'FleetGuard',
+            'model' => 'Audit',
+            'category' => 'sedan',
+            'description' => 'A vehicle for heading structure checks.',
+            'daily_rate' => 1800,
+            'passenger_capacity' => 5,
+            'transmission' => 'Automatic',
+            'fuel_type' => 'Gasoline',
+            'status' => Vehicle::STATUS_ACTIVE,
+        ]);
+
+        foreach ([
+            $this->get(route('home')),
+            $this->get(route('fleet')),
+            $this->get(route('fleet.show', $vehicle)),
+            $this->get(route('booking')),
+            $this->get(route('login')),
+            $this->get(route('register')),
+            $this->get(route('password.request')),
+            $this->get(route('legal.show', 'terms-and-conditions')),
+        ] as $response) {
+            $this->assertCustomerHeadingStructure($response->assertOk()->getContent());
+        }
+
+        $policy = LegalPolicy::query()->where('slug', 'terms-and-conditions')->firstOrFail();
+        $policy->versions()->latest('id')->firstOrFail()->update([
+            'content' => '<h1>Policy content heading</h1><h3>Policy subheading</h3>',
+        ]);
+        $this->assertCustomerHeadingStructure(
+            $this->get(route('legal.show', $policy->slug))->assertOk()->getContent(),
+        );
+
+        $this->assertCustomerHeadingStructure(
+            $this->get('/heading-audit-missing-page')->assertNotFound()->getContent(),
+        );
+
+        $user = $this->makeUser('customer');
+        $customer = Customer::query()->forceCreate([
+            'user_id' => $user->id,
+            'full_name' => $user->name,
+            'email' => $user->email,
+            'mobile_number' => '09171234567',
+            'status' => Customer::STATUS_ACTIVE,
+        ]);
+        $booking = Booking::query()->create([
+            'booking_reference' => 'FG-HEADING-AUDIT',
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'pickup_location' => 'Panabo City',
+            'pickup_datetime' => now()->addDays(2),
+            'return_location' => 'Panabo City',
+            'return_datetime' => now()->addDays(4),
+            'rental_duration_days' => 2,
+            'daily_rate_snapshot' => 1800,
+            'estimated_total' => 3600,
+            'status' => Booking::STATUS_PENDING,
+        ]);
+        $completedBooking = $booking->replicate();
+        $completedBooking->booking_reference = 'FG-HEADING-REVIEW';
+        $completedBooking->status = Booking::STATUS_COMPLETED;
+        $completedBooking->save();
+
+        $this->actingAs($user);
+
+        foreach ([
+            $this->get(route('account')),
+            $this->get(route('account.profile')),
+            $this->get(route('account.bookings')),
+            $this->get(route('account.legal-policies')),
+            $this->get(route('bookings.show', $booking)),
+            $this->get(route('account.bookings.testimonials.create', $completedBooking)),
+        ] as $response) {
+            $this->assertCustomerHeadingStructure($response->assertOk()->getContent());
+        }
+
+        $unverifiedUser = $this->makeUser('customer', false);
+        $this->actingAs($unverifiedUser);
+        $this->assertCustomerHeadingStructure(
+            $this->get(route('verification.notice'))->assertOk()->getContent(),
+        );
     }
 
     public function test_customer_fleet_uses_active_database_vehicles_and_loads_schedule_in_the_modal(): void
@@ -345,6 +433,42 @@ class PublicWebsiteTest extends TestCase
         ])->save();
 
         return $user->fresh();
+    }
+
+    private function assertCustomerHeadingStructure(string $html): void
+    {
+        $document = new \DOMDocument;
+        $previousErrorMode = libxml_use_internal_errors(true);
+
+        try {
+            $document->loadHTML($html);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrorMode);
+        }
+
+        $headings = [];
+        foreach ($document->getElementsByTagName('*') as $element) {
+            if (preg_match('/^h([1-6])$/i', $element->tagName, $matches)) {
+                $headings[] = [(int) $matches[1], trim(preg_replace('/\s+/u', ' ', $element->textContent) ?? '')];
+            }
+        }
+
+        $this->assertNotEmpty($headings, 'Expected the page to render at least one heading.');
+        $h1s = array_values(array_filter($headings, fn (array $heading): bool => $heading[0] === 1));
+        $this->assertCount(1, $h1s, 'Expected exactly one H1.');
+        $this->assertNotSame('', $h1s[0][1], 'Expected the H1 to have meaningful text.');
+
+        $previousLevel = 0;
+        foreach ($headings as [$level]) {
+            if ($previousLevel === 0) {
+                $this->assertSame(1, $level, 'The first page heading should be an H1.');
+            } else {
+                $this->assertLessThanOrEqual($previousLevel + 1, $level, 'Heading levels must not skip.');
+            }
+
+            $previousLevel = $level;
+        }
     }
 
     private function assertNoAdminLinks(TestResponse $response): void

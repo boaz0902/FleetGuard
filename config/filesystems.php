@@ -15,6 +15,8 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'booking_documents_disk' => env('BOOKING_DOCUMENTS_DISK', 'private'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
@@ -35,6 +37,14 @@ return [
             'root' => storage_path('app/private'),
             'serve' => true,
             'throw' => false,
+            'report' => false,
+        ],
+
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'serve' => false,
+            'throw' => true,
             'report' => false,
         ],
 
